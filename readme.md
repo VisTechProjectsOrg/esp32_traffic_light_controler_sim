@@ -57,12 +57,12 @@ const char *AP_ssid = "Traffic Lights";
 To configure the light cycle delay use the **Update Light Cycle Delay menu**:
 
 <div style="display: flex; align-items: center;">
-    <img src="src/images/delay_menu.png" alt="Traffic Light" width="300" height="320">
+    <img src="images/delay_menu.png" alt="Traffic Light" width="300" height="320">
 </div>
 
 ## Site preview
 
 <div style="display: flex; align-items: center;">
-    <img src="src/images/main_page.png" alt="Traffic Light" width="400" height="420">
+    <img src="images/main_page.png" alt="Traffic Light" width="400" height="420">
 </div>
 
