@@ -1,0 +1,213 @@
+body {
+font-family: Arial, sans-serif;
+text-align: center;
+padding: 20px;
+background-color: #f4f4f4;
+margin: 0;
+}
+
+h1 {
+color: #333;
+}
+
+.container {
+display: flex;
+flex-direction: row;
+justify-content: center;
+align-items: flex-start;
+gap: 20px;
+}
+
+.traffic-light {
+width: 80%;
+max-width: 200px;
+height: auto;
+}
+
+form {
+width: 100%;
+max-width: 400px;
+margin: 20px 0;
+background: #fff;
+padding: 20px;
+border-radius: 8px;
+box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+
+input,
+select {
+width: 100%;
+padding: 10px;
+margin: 10px 0;
+border: 1px solid #ccc;
+border-radius: 4px;
+box-sizing: border-box;
+text-align: center;
+
+}
+
+input[type='submit'] {
+background-color: #4CAF50;
+color: white;
+border: none;
+cursor: pointer;
+transition: background-color 0.3s ease;
+}
+
+input[type='submit']:hover {
+background-color: #45a049;
+}
+
+button {
+background-color: #4CAF50;
+color: white;
+border: none;
+padding: 10px 20px;
+font-size: 16px;
+cursor: pointer;
+transition: background-color 0.3s ease;
+border-radius: 4px;
+}
+
+button:hover {
+background-color: #45a049;
+}
+
+.switch {
+position: relative;
+display: inline-block;
+width: 60px;
+height: 34px;
+}
+
+.switch input {
+opacity: 0;
+width: 0;
+height: 0;
+}
+
+.slider {
+position: absolute;
+cursor: pointer;
+top: 0;
+left: 0;
+right: 0;
+bottom: 0;
+background-color: #ccc;
+transition: .4s;
+border-radius: 34px;
+}
+
+.slider:before {
+position: absolute;
+content: "";
+height: 26px;
+width: 26px;
+left: 4px;
+bottom: 4px;
+background-color: white;
+transition: .4s;
+border-radius: 50%;
+}
+
+input:checked+.slider {
+background-color: #4CAF50;
+}
+
+input:checked+.slider:before {
+transform: translateX(26px);
+}
+
+.toggle-container {
+display: flex;
+align-items: center;
+gap: 10px;
+}
+
+.cancel-button {
+background-color: #f44336;
+color: white;
+border: none;
+padding: 10px 20px;
+font-size: 16px;
+cursor: pointer;
+border-radius: 4px;
+}
+
+.cancel-button:hover {
+background-color: #d32f2f;
+}
+
+/* Popup Styles */
+.popup {
+display: none;
+position: fixed;
+width: 250px;
+left: 50%;
+top: 50%;
+transform: translate(-50%, -50%);
+background-color: transparent;
+z-index: 1000;
+}
+
+#reconnectPopup {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#refreshButton {
+    padding: 10px;
+    margin-top: 10px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px;
+}
+
+#refreshButton:hover {
+    background-color: #0056b3;
+}
+
+.overlay {
+display: none;
+position: fixed;
+top: 0;
+left: 0;
+width: 100%;
+height: 100%;
+background: rgba(0, 0, 0, 0.5);
+z-index: 999;
+}
+
+@media (max-width: 600px) {
+.container {
+    flex-direction: column;
+    align-items: center;
+}
+
+.traffic-light {
+    width: 80%;
+    max-width: 200px;
+}
+
+form {
+    margin: 20px 0;
+}
+}
