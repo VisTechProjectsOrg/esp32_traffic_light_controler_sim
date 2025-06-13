@@ -20,7 +20,7 @@
 
     <h1 onclick=openPopup_time_waisted()>Welcome to Vis Traffic Light Control</h1>
     <div class="container">
-        <img onclick=openPopup_time_waisted() class="traffic-light" id="traffic-light" src="images/trfc_lt_all_off.png" alt="Traffic Light">
+        <img onclick="openPopup_time_waisted()" class="traffic-light" id="traffic-light" src="images/trfc_lt_all_off.png" alt="Traffic Light">
         <div>
             <!-- Button to Open Light Cycle Delay Form -->
             <button onclick="openPopup()">Update Light Cycle Delay</button>
@@ -74,6 +74,28 @@
                 </label>
                 <span id="toggleThemeModeLabel">Normal Mode</span>
             </div>
+
+            <!-- Car Distance Scale Start (move here) -->
+            <div class="car-scale-container" style="margin-top:30px;">
+                <div class="car-scale-bar" style="position: relative; height: 60px; background: #eee; border: 2px solid #333; max-width: 600px; margin: 0 auto;">
+                    <img id="car-img" src="images/is250.png" alt="Lexus IS250" style="position: absolute; top: 10px; left: 0; height: 40px; transition: left 0.3s;">
+                    <div class="wall" style="position: absolute; right: 0; top: 0; width: 20px; height: 100%; background: #666;"></div>
+                    <div class="ticks" style="position: absolute; bottom: 0; left: 0; right: 20px; height: 10px; display: flex; justify-content: space-between; padding: 0 0 0 10px;">
+                        <div class="tick" data-label="200"></div>
+                        <div class="tick" data-label="180"></div>
+                        <div class="tick" data-label="160"></div>
+                        <div class="tick" data-label="140"></div>
+                        <div class="tick" data-label="120"></div>
+                        <div class="tick" data-label="100"></div>
+                        <div class="tick" data-label="80"></div>
+                        <div class="tick" data-label="60"></div>
+                        <div class="tick" data-label="40"></div>
+                        <div class="tick" data-label="20"></div>
+                        <div class="tick" data-label="0"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Car Distance Scale End -->
 
         </div>
     </div>
