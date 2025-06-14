@@ -1,153 +1,153 @@
 body {
-font-family: Arial, sans-serif;
-text-align: center;
-padding: 20px;
-background-color: #f4f4f4;
-margin: 0;
+    font-family: Arial, sans-serif;
+    text-align: center;
+    padding: 20px;
+    background-color: #f4f4f4;
+    margin: 0;
 }
 
 h1 {
-color: #333;
+    color: #333;
 }
 
 .container {
-display: flex;
-flex-direction: row;
-justify-content: center;
-align-items: flex-start;
-gap: 20px;
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
 }
 
 .traffic-light {
-width: 80%;
-max-width: 200px;
-height: auto;
+    width: 80%;
+    max-width: 200px;
+    height: auto;
 }
 
 form {
-width: 100%;
-max-width: 400px;
-margin: 20px 0;
-background: #fff;
-padding: 20px;
-border-radius: 8px;
-box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+    width: 100%;
+    max-width: 400px;
+    margin: 20px 0;
+    background: #fff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
 }
 
 input,
 select {
-width: 100%;
-padding: 10px;
-margin: 10px 0;
-border: 1px solid #ccc;
-border-radius: 4px;
-box-sizing: border-box;
-text-align: center;
+    width: 100%;
+    padding: 10px;
+    margin: 10px 0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    text-align: center;
 
 }
 
 input[type='submit'] {
-background-color: #4CAF50;
-color: white;
-border: none;
-cursor: pointer;
-transition: background-color 0.3s ease;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
 }
 
 input[type='submit']:hover {
-background-color: #45a049;
+    background-color: #45a049;
 }
 
 button {
-background-color: #4CAF50;
-color: white;
-border: none;
-padding: 10px 20px;
-font-size: 16px;
-cursor: pointer;
-transition: background-color 0.3s ease;
-border-radius: 4px;
+    background-color: #4CAF50;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    border-radius: 4px;
 }
 
 button:hover {
-background-color: #45a049;
+    background-color: #45a049;
 }
 
 .switch {
-position: relative;
-display: inline-block;
-width: 60px;
-height: 34px;
+    position: relative;
+    display: inline-block;
+    width: 60px;
+    height: 34px;
 }
 
 .switch input {
-opacity: 0;
-width: 0;
-height: 0;
+    opacity: 0;
+    width: 0;
+    height: 0;
 }
 
 .slider {
-position: absolute;
-cursor: pointer;
-top: 0;
-left: 0;
-right: 0;
-bottom: 0;
-background-color: #ccc;
-transition: .4s;
-border-radius: 34px;
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
 }
 
 .slider:before {
-position: absolute;
-content: "";
-height: 26px;
-width: 26px;
-left: 4px;
-bottom: 4px;
-background-color: white;
-transition: .4s;
-border-radius: 50%;
+    position: absolute;
+    content: "";
+    height: 26px;
+    width: 26px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
 }
 
 input:checked+.slider {
-background-color: #4CAF50;
+    background-color: #4CAF50;
 }
 
 input:checked+.slider:before {
-transform: translateX(26px);
+    transform: translateX(26px);
 }
 
 .toggle-container {
-display: flex;
-align-items: center;
-gap: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .cancel-button {
-background-color: #f44336;
-color: white;
-border: none;
-padding: 10px 20px;
-font-size: 16px;
-cursor: pointer;
-border-radius: 4px;
+    background-color: #f44336;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 16px;
+    cursor: pointer;
+    border-radius: 4px;
 }
 
 .cancel-button:hover {
-background-color: #d32f2f;
+    background-color: #d32f2f;
 }
 
 /* Popup Styles */
 .popup {
-display: none;
-position: fixed;
-width: 250px;
-left: 50%;
-top: 50%;
-transform: translate(-50%, -50%);
-background-color: transparent;
-z-index: 1000;
+    display: none;
+    position: fixed;
+    width: 250px;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background-color: transparent;
+    z-index: 1000;
 }
 
 #reconnectPopup {
@@ -186,28 +186,100 @@ z-index: 1000;
 }
 
 .overlay {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0, 0, 0, 0.5);
-z-index: 999;
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+}
+
+#setDelayForm div {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 10px;
+    margin-bottom: 20px; /* Add space between checkbox and buttons */
+    gap: 5px;
+}
+
+#setDelayForm input[type="checkbox"] {
+    margin: 0;
+    width: auto;
+    padding: 0;
+    transform: scale(1.5);
+}
+
+#setDelayForm label {
+    margin: 0;
+    text-align: center;
+    flex: 0 0 auto; /* Prevent label from expanding */
+}
+
+/* Override the general input styles for checkboxes */
+input[type="checkbox"] {
+    width: auto;
+    margin: 0;
+    padding: 0;
+}
+
+#carDistancePanel {
+    border: 2px solid #3498db;
+    padding: 5px 10px 2px 10px;  /* Reduced bottom padding */
+    border-radius: 8px;
+    background-color: #fff;
+    display: inline-block;
+    width: auto;
+    margin: 0;
+}
+
+#carDistancePanel h2 {
+    margin: 0 0 3px 0;  /* Reduced bottom margin */
+    padding: 0;
+    line-height: 1;  /* Even tighter line height */
+}
+
+.car_container {
+    margin: 0;
+    padding: 0;
+}
+
+.car_input-group {
+    margin: 3px 0;
+    padding: 0;
+    line-height: 1;
+}
+
+.car_warning {
+    margin: 0;
+    padding: 0;
+    height: 0;
+    line-height: 1;
+    visibility: hidden;
+    opacity: 0;
+}
+
+.car_warning.visible {
+    height: auto;
+    visibility: visible;
+    opacity: 1;
+    margin: 2px 0 2px 0;  /* Equal small margins when visible */
 }
 
 @media (max-width: 600px) {
-.container {
-    flex-direction: column;
-    align-items: center;
-}
+    .container {
+        flex-direction: column;
+        align-items: center;
+    }
 
-.traffic-light {
-    width: 80%;
-    max-width: 200px;
-}
+    .traffic-light {
+        width: 80%;
+        max-width: 200px;
+    }
 
-form {
-    margin: 20px 0;
-}
+    form {
+        margin: 20px 0;
+    }
 }

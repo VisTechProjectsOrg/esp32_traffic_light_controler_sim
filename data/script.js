@@ -1,11 +1,23 @@
 var ws = new WebSocket('ws://' + window.location.hostname + '/ws');
+let distanceSensorEnabled = false; // Add this at the top with other variables
 
 function updateTrafficLight(state) {
     document.getElementById('traffic-light').src = '/images/trfc_lt_' + state + '.png';
 }
 
 function closePopup(event) {
-    if (event) event.preventDefault(); // Prevent button's default behavior
+    if (event) event.preventDefault();
+    
+    // Only apply changes if clicking the Update Settings button
+    if (event && event.target.id === 'setDelays') {
+        const panel = document.getElementById('carDistancePanel');
+        panel.style.display = distanceSensorEnabled ? 'inline-block' : 'none';
+        
+        // Store the state
+        const switch_element = document.getElementById('toggleDistanceSensorSwitch');
+        distanceSensorEnabled = switch_element.checked;
+    }
+    
     document.getElementById("popup").style.display = "none";
     document.getElementById("overlay").style.display = "none";
 }
@@ -13,6 +25,12 @@ function closePopup(event) {
 function openPopup() {
     document.getElementById("popup").style.display = "block";
     document.getElementById("overlay").style.display = "block";
+
+    // Set switch state to match current panel visibility
+    const panel = document.getElementById('carDistancePanel');
+    const switch_element = document.getElementById('toggleDistanceSensorSwitch');
+    switch_element.checked = panel.style.display !== 'none';
+    distanceSensorEnabled = switch_element.checked;
 
     fetch('/get_delays?' + new Date().getTime())  // Adds a unique timestamp, prevents caching
         .then(response => response.json())
@@ -68,6 +86,12 @@ function toggleThemeMode() {
                 .catch(error => console.error("Error fetching current state:", error, "color: red; font-weight: bold;"));
         })
         .catch(error => console.error("Error toggling theme mode:", error, "color: red; font-weight: bold;"));
+}
+
+function toggleDistanceSensor() {
+    const switch_element = document.getElementById('toggleDistanceSensorSwitch');
+    distanceSensorEnabled = switch_element.checked;
+    // Remove the immediate panel visibility change
 }
 
 document.addEventListener("DOMContentLoaded", function () {
