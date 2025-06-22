@@ -4,79 +4,16 @@
 <head>
     <title>Vis Traffic Light Control</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
     <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="/data/distance_scale/style_distance_meter.css">
+    <link rel="stylesheet" href="car-distance-style.css" />
     <script src="effect.js"></script>
     <script src="script.js"></script>
+    <script src="/config.js"></script>
+    <script src="car-distance.js"></script>
 </head>
 
 <body>
-
-    <script>
-        let lastPosition = null;
-        let wheelRotation = 0;
-
-        function updateCarPosition() {
-            const input = document.getElementById('distance');
-            const car = document.getElementById('car');
-            const wheelFront = document.getElementById('car_wheel-front');
-            const wheelRear = document.getElementById('car_wheel-rear');
-            const status = document.getElementById('status');
-            const warning = document.getElementById('warning');
-
-            // Constants
-            const visualMax = 150; // cm is the full scale
-            const warningThreshold = visualMax; // Distance at which the warning is shown
-
-            // Define thresholds for status colors
-            const cautionThreshold = 40;
-            const dangerThreshold = 10;
-            const wallWidth = 20;
-
-            const container = document.querySelector('.car_container');
-            const carWidth = car.getBoundingClientRect().width;
-            const containerWidth = container.clientWidth - wallWidth;
-
-            let distance = parseInt(input.value);
-            // Scale so that at distance=0, front of car is at wall; at distance=visualMax, front is at left edge
-            const adjustedDistance = Math.max(distance, 0);
-            // const leftPos = (containerWidth - carWidth) * (visualMax - adjustedDistance) / visualMax;
-            const leftPos = containerWidth * (visualMax - adjustedDistance) / visualMax - carWidth;
-
-            car.style.left = `${leftPos}px`;
-            wheelFront.style.left = `${leftPos + 203}px`;
-            wheelRear.style.left = `${leftPos + 41}px`;
-
-            // Animate rotation after movement starts
-            if (lastPosition !== null && lastPosition !== leftPos) {
-                const delta = leftPos - lastPosition;
-                wheelRotation += delta * 3.3;
-                setTimeout(() => {
-                    wheelFront.style.transform = `rotate(${wheelRotation}deg)`;
-                    wheelRear.style.transform = `rotate(${wheelRotation}deg)`;
-                });
-            }
-            lastPosition = leftPos;
-
-            // Show warning only when the car's front is completely out of frame (off the left edge)
-            // This happens when leftPos + carWidth <= 0
-            // Solve for distance: distance >= visualMax * (containerWidth / (containerWidth - carWidth))
-            const outOfFrameThreshold = visualMax * (containerWidth / (containerWidth - carWidth));
-            warning.style.visibility = ''; // Remove inline visibility style
-            warning.classList.toggle('visible', distance >= visualMax);
-
-            if (distance < dangerThreshold) {
-                status.style.background = 'red';
-            } else if (distance < cautionThreshold) {
-                status.style.background = 'yellow';
-            } else {
-                status.style.background = 'green';
-            }
-        }
-        // Call updateCarPosition only after all images are loaded
-        window.addEventListener('load', updateCarPosition);
-        document.getElementById('distance').max = visualMax + 10;
-    </script>
 
     <div id="reconnectPopup" style="display: none;">
         <div class="popup-content">
@@ -88,10 +25,10 @@
     <h1 onclick=openPopup_time_waisted()>Welcome to Vis Traffic Light Control</h1>
     <div class="container">
         <img onclick="openPopup_time_waisted()" class="traffic-light" id="traffic-light"
-            src="images/traffic_light/trfc_lt_all_off.png" alt="Traffic Light">
+            src="img/traffic_lt/all_off.png" alt="Traffic Light">
         <div>
             <!-- Button to Open Light Cycle Delay Form -->
-            <button onclick="openPopup()">Update Light Delay / Settings</button>
+            <button onclick="openPopup_settings()">Light Settings</button>
 
             <!-- Light Cycle Delay Popup -->
             <div class="overlay" id="overlay" onclick="closePopup()"></div>
@@ -154,61 +91,34 @@
 
             <br>
 
-            <!-- Add the new container here -->
 
-            <!-- <br> -->
-            <!-- <br> -->
-
-            <div
-                id="carDistancePanel"
-                style="border: 2px solid #3498db; padding: 10px; border-radius: 8px; background-color: #fff; display: inline-block; width: auto;">
-                <!-- Car distance content will go here -->
-
-                <h2><span style="color: #3498db; font-weight: bold;">Car Distance</span> </h2>
-
-                <!-- <h2>Car Distance to Wall</h2> -->
-                <div class="car_container">
-                    <img id="car" class="car-img" src="distance_scale/is250.png" alt="Lexus IS250" />
-                    <img id="car_wheel-front" class="car_wheel" src="distance_scale/is250_wheel.png"
-                        alt="Front Wheel" />
-                    <img id="car_wheel-rear" class="car_wheel" src="distance_scale/is250_wheel.png" alt="Rear Wheel" />
-                    <div class="car_wall"></div>
-                    <div class="car_scale_ticks">
-                        <div class="car_scale_tick" data-label="200"></div>
-                        <div class="car_scale_tick" data-label="180"></div>
-                        <div class="car_scale_tick" data-label="160"></div>
-                        <div class="car_scale_tick" data-label="140"></div>
-                        <div class="car_scale_tick" data-label="120"></div>
-                        <div class="car_scale_tick" data-label="100"></div>
-                        <div class="car_scale_tick" data-label="80"></div>
-                        <div class="car_scale_tick" data-label="60"></div>
-                        <div class="car_scale_tick" data-label="40"></div>
-                        <div class="car_scale_tick" data-label="20"></div>
-                        <div class="car_scale_tick" data-label="0"></div>
-                    </div>
+            <h2>Car Distance to Wall</h2>
+            <div class="car_container">
+                <img id="car" class="car_car-img" src="img/is250/is250.png" alt="Lexus IS250" />
+                <img id="car_wheel-front" class="car_wheel" src="img/is250/is250_wheel.png" alt="Front Wheel" />
+                <img id="car_wheel-rear" class="car_wheel" src="img/is250/is250_wheel.png" alt="Rear Wheel" />
+                <div class="car_wall"></div>
+                <div class="car_ticks">
+                    <div class="car_tick" data-label="200"></div>
+                    <div class="car_tick" data-label="180"></div>
+                    <div class="car_tick" data-label="160"></div>
+                    <div class="car_tick" data-label="140"></div>
+                    <div class="car_tick" data-label="120"></div>
+                    <div class="car_tick" data-label="100"></div>
+                    <div class="car_tick" data-label="80"></div>
+                    <div class="car_tick" data-label="60"></div>
+                    <div class="car_tick" data-label="40"></div>
+                    <div class="car_tick" data-label="20"></div>
+                    <div class="car_tick" data-label="0"></div>
                 </div>
-
-                <div class="car_input-group">
-                    <label for="distance">Distance to wall (cm): </label>
-                    <input type="number" id="distance" min="0" max="160" step="15" value="0"
-                        oninput="updateCarPosition(); this.title = 'Enter distance between 0-' + document.getElementById('distance').max + 'cm';"
-                        style="width: 80px;"
-                        title="Enter distance between 0-160cm" />
-                    <div class="car_status-indicator" id="status"></div>
-                </div>
-                <div class="car_warning" id="warning">⚠️ Car is out of range!</div>
             </div>
-
-            <script>
-            function toggleCarDistanceVisibility() {
-                const panel = document.getElementById('carDistancePanel');
-                if (panel.style.display === 'none') {
-                    panel.style.display = 'inline-block';
-                } else {
-                    panel.style.display = 'none';
-                }
-            }
-            </script>
+            
+            <div class="car_input-group">
+                <label for="distance_to_wall">Distance to wall (in cm): </label>
+                <input type="number" id="distance_to_wall" min="0" max="150" step="15" value="150" oninput="updateCarPosition()" />
+                <div class="car_status-indicator" id="status"></div>
+            </div>
+            <div class="car_warning" id="warning">⚠️ Car is out of range!</div>
 
         </div>
     </div>

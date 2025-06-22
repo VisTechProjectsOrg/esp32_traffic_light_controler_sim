@@ -2,44 +2,48 @@ var ws = new WebSocket('ws://' + window.location.hostname + '/ws');
 let distanceSensorEnabled = false; // Add this at the top with other variables
 
 function updateTrafficLight(state) {
-    document.getElementById('traffic-light').src = '/images/trfc_lt_' + state + '.png';
+    document.getElementById('traffic-light').src = '/img/traffic_lt/' + state + '.png';
 }
 
 function closePopup(event) {
     if (event) event.preventDefault();
-    
+
     // Only apply changes if clicking the Update Settings button
     if (event && event.target.id === 'setDelays') {
         const panel = document.getElementById('carDistancePanel');
         panel.style.display = distanceSensorEnabled ? 'inline-block' : 'none';
-        
+
         // Store the state
         const switch_element = document.getElementById('toggleDistanceSensorSwitch');
         distanceSensorEnabled = switch_element.checked;
     }
-    
+
     document.getElementById("popup").style.display = "none";
     document.getElementById("overlay").style.display = "none";
 }
 
-function openPopup() {
+function openPopup_settings() {
+    console.log("Opening settings popup");
+
     document.getElementById("popup").style.display = "block";
     document.getElementById("overlay").style.display = "block";
 
     // Set switch state to match current panel visibility
     const panel = document.getElementById('carDistancePanel');
     const switch_element = document.getElementById('toggleDistanceSensorSwitch');
-    switch_element.checked = panel.style.display !== 'none';
+    // switch_element.checked = panel.style.display !== 'none';
     distanceSensorEnabled = switch_element.checked;
 
     fetch('/get_delays?' + new Date().getTime())  // Adds a unique timestamp, prevents caching
         .then(response => response.json())
         .then(data => {
+            console.log("Fetched delay values:", data); // <-- Add this
             document.getElementById("red_delay").value = data.red_delay / 1000;
             document.getElementById("yellow_delay").value = data.yellow_delay / 1000;
             document.getElementById("green_delay").value = data.green_delay / 1000;
+            document.getElementById("toggleDistanceSensorSwitch").checked = !!data.distance_sensor;
         })
-        .catch(error => console.error("Error fetching delay values:", error, "color: red; font-weight: bold;"));
+        .catch(error => console.error("Error fetching delay values:", error));
 }
 
 function openPopup_time_waisted() {
@@ -106,12 +110,15 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.light_mode === "cycle_mode") {
                 toggleSwitch.checked = false;
                 toggleSwitchLabel.textContent = "Cycle Mode";
+
             } else if (data.light_mode === "blink_mode") {
                 toggleSwitch.checked = true;
                 toggleSwitchLabel.textContent = "Blink Mode";
+
             } else {
                 console.error("%cUnknown light mode received:", data.light_Mode, "color: orange; font-weight: bold;");
             }
+
         } else if (data.theme_mode) {
             console.log("Theme mode:", data);
             const toggleSwitch = document.getElementById("toggleThemeModeSwitch");
@@ -120,18 +127,32 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.theme_mode === "normal_mode") {
                 toggleSwitch.checked = false;
                 toggleSwitchLabel.textContent = "Normal Mode";
+
             } else if (data.theme_mode === "cat_mode") {
                 toggleSwitch.checked = true;
                 toggleSwitchLabel.textContent = "Cat Mode";
+
             } else {
                 console.error("Unknown theme mode received:", data.theme_mode);
             }
+
         } else if (data.blink_color) {
             console.log("Blink color:", data);
             const blinkColorSelect = document.getElementById("blinkColorSelect");
             blinkColorSelect.value = data.blink_color;
+
         } else if (data.state) {
             updateTrafficLight(data.state);
+
+        } else if (data.distance_cm !== undefined && data.distance_cm !== null) {
+            const distanceInput = document.getElementById("distance_to_wall");
+            const distanceValue = parseInt(data.distance_cm, 10); // convert to integer
+            if (distanceInput && distanceInput.tagName === "INPUT") {
+                distanceInput.value = distanceValue;
+                distanceInput.dispatchEvent(new Event('input', { bubbles: true }));
+                console.log('setting "distance_to_wall" to ', distanceValue, 'cm');
+                updateCarPosition();
+            }
         } else {
             console.error("Unknown data received:", data);
         }

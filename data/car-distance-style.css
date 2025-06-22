@@ -1,0 +1,107 @@
+.car_body {
+  font-family: Arial, sans-serif;
+  margin: 20px;
+}
+
+.car_container {
+  border: 2px solid #333;
+  height: 100px;
+  width: 100%;
+  max-width: 600px;
+  position: relative;
+  background: #eee;
+  overflow: hidden;
+}
+
+.car_wall {
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 20px;
+  height: 100%;
+  background: #666;
+}
+
+.car_car-img {
+  position: absolute;
+  top: 12px;
+  height: 90px;
+  transition: left 0.3s ease;
+}
+
+.car_wheel {
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  pointer-events: none;
+  transition: transform 0.3s ease, left 0.3s ease;
+}
+
+#car_wheel-front {
+  top: 67px;
+  width: 30px;
+  height: 30px;
+}
+
+#car_wheel-rear {
+  top: 67px;
+  width: 30px;
+  height: 30px;
+}
+
+.car_ticks {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 20px;
+  height: 10px;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 0 0 10px;
+  pointer-events: none;
+}
+
+.car_tick {
+  width: 1px;
+  height: 10px;
+  background: #000;
+  position: relative;
+}
+
+.car_tick::after {
+  content: attr(data-label);
+  position: absolute;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 10px;
+  color: #333;
+}
+
+.car_input-group {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.car_status-indicator {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;/* Prevent shrinking in flex layouts */
+  flex-grow: 0; /* Prevent growing in flex layouts */
+  border: 1px solid #000;
+}
+
+.car_warning {
+  margin-top: 10px;
+  color: red;
+  font-weight: bold;
+  visibility: hidden;
+}
+
+.car_warning.visible {
+  visibility: visible;
+  opacity: 1;
+}
