@@ -8,9 +8,9 @@
     </span>
 </div><br>
 <div>
-    <img src="data/images/trfc_lt_all_on.png" alt="Traffic Light" width="100" height="200" style="margin-right: 10px;">
+    <img src="data/img/traffic_lt/all_on.png" alt="Traffic Light" width="100" height="200" style="margin-right: 10px;">
     <img src="images/traffic_light.gif" alt="Traffic Light" width="100" height="200" style="margin-right: 10px;">
-    <img src="data/images/trfc_lt_all_on_cat.png" alt="Traffic Light" width="100" height="200" style="margin-left: 10px;">
+    <img src="data/img/traffic_lt/all_on_cat.png" alt="Traffic Light" width="100" height="200" style="margin-left: 10px;">
 </div>
 
 ## Features
