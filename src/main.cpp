@@ -8,14 +8,17 @@
 #include <config.h>
 #include <ArduinoJson.h>
 #include <WebSocketsServer.h>
+#include <TFMPlus.h>
 
 WebSocketsServer webSocket = WebSocketsServer(81); // Port 81 for WebSocket
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 Preferences preferences;
+TFMPlus tfm;
+HardwareSerial tfmSerial(2); // Use UART2: GPIO16 = RX, GPIO17 = TX (default)
 
-// ANY VARIBLE CHANGES, MODIFY THE CONFIG.H FILE
-// *** Remeber to build and upload all SPIFFS files!!! ****
+// **** ANY VARIBLE CHANGES, MODIFY THE CONFIG.H FILE ****
+// **** Remeber to build and upload all SPIFFS files!!! ****
 
 enum LightState
 {
@@ -25,7 +28,7 @@ enum LightState
   OFF
 };
 
-struct DelaySetting
+struct DefaultSetting
 {
   const char *key;
   uint32_t defaultValue;
@@ -35,44 +38,31 @@ LightState currentLightState = OFF;
 LightState previousLightState = OFF;
 unsigned long previousMillis = 0;
 unsigned long currentDelay = 0;
+
 unsigned long LED_red_delay = 0;
 unsigned long LED_yellow_delay = 0;
 unsigned long LED_green_delay = 0;
-
-// distance sensor variables
-const int trigPin = 22;
-const int echoPin = 23;
-const float SOUND_SPEED = 0.034; // cm/us
 
 bool lightMode = false;
 bool themeMode = false;
 bool blinkState = false;
 bool randomBlinkMode = false;
-bool blinkAllColors = true; // Default to blinking all colors
 int blinkPin = -1;
 unsigned long lastBlinkMillis = 0;
 
-bool distanceSensorEnabled = true; // Default to false, can be set in config.h
-
 int getDistance()
 {
-  long duration;
-  int distance;
+  int16_t distance, strength, temperature;
 
-  digitalWrite(trigPin, LOW);
-  delayMicroseconds(2);
-  digitalWrite(trigPin, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(trigPin, LOW);
-
-  duration = pulseIn(echoPin, HIGH, 25000); // 25ms timeout (~4m max distance)
-  if (duration == 0)
+  if (tfm.getData(distance, strength, temperature))
   {
-    return -1; // No echo received
+    return distance; // Return the distance in cm
   }
-
-  distance = duration * SOUND_SPEED / 2;
-  return round(distance);
+  else
+  {
+    Serial.println("Failed to read from TFMini-Plus.");
+    return -1; // Return -1 if reading fails
+  }
 }
 
 void set_traffic_light(boolean LED_red_state, boolean LED_yellow_state, boolean LED_green_state)
@@ -315,19 +305,23 @@ void handleRoot(AsyncWebServerRequest *request)
   }
 }
 
-void handleGetDelays(AsyncWebServerRequest *request)
+void handleGetConfig(AsyncWebServerRequest *request)
 {
-  Serial.println("Sending get delays");
+  Serial.println("Sending get config");
 
-  String jsonResponse = "{\"red_delay\":" + String(LED_red_delay) +
-                        ",\"yellow_delay\":" + String(LED_yellow_delay) +
-                        ",\"green_delay\":" + String(LED_green_delay) +
-                        ",\"distance_sensor_status\":" + String(distanceSensorEnabled ? "true" : "false") + "}";
+  String jsonResponse = "{\"red_delay\":" + String(LED_red_delay / 1000) +
+                        ",\"yellow_delay\":" + String(LED_yellow_delay / 1000) +
+                        ",\"green_delay\":" + String(LED_green_delay / 1000) +
+                        ",\"distance_max\":" + String(distance_max) +
+                        ",\"distance_warning\":" + String(distance_warning) +
+                        ",\"distance_danger\":" + String(distance_danger) +
+                        ",\"distance_sensor_enabled\":" + String(distance_sensor_enabled ? "true" : "false") +
+                        ",\"version\":\"" + String(VERSION) + "\"}";
 
   request->send(200, "application/json", jsonResponse);
 }
 
-void handleFormSetDelay(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
 {
   JsonDocument doc;
 
@@ -344,28 +338,60 @@ void handleFormSetDelay(AsyncWebServerRequest *request, uint8_t *data, size_t le
   float red = doc["red_delay"];
   float yellow = doc["yellow_delay"];
   float green = doc["green_delay"];
-  bool distanceSensorStatus = doc["distance_sensor_status"];
+  bool distance_sensor_enabled_form = doc["distance_sensor_enabled"];
 
   Serial.println("Action: " + action);
   Serial.println("red: " + String(red));
   Serial.println("yellow: " + String(yellow));
   Serial.println("green: " + String(green));
-  Serial.println("distance_sensor_status: " + String(distanceSensorStatus));
+  Serial.println("distance_max: " + String(distance_max));
+  Serial.println("distance_warning: " + String(distance_warning));
+  Serial.println("distance_danger: " + String(distance_danger));
+  Serial.println("distance_sensor_enabled: " + String(distance_sensor_enabled_form));
 
-  if (action == "set_delays")
+  if (action == "set_config")
   {
+    unsigned long red = doc["red_delay"];
+    unsigned long yellow = doc["yellow_delay"];
+    unsigned long green = doc["green_delay"];
+    bool distance_sensor_enabled_form = doc["distance_sensor_enabled"];
+
+    unsigned long new_distance_max = doc["distance_max"];
+    unsigned long new_distance_warning = doc["distance_warning"];
+    unsigned long new_distance_danger = doc["distance_danger"];
+
+    // Save to Preferences
     preferences.putULong("red_delay", red * 1000);
     preferences.putULong("yellow_delay", yellow * 1000);
     preferences.putULong("green_delay", green * 1000);
-    preferences.putBool("distanceSensorEnabled", distanceSensorStatus);
 
-    LED_red_delay = preferences.getULong("red_delay", 5000);
-    LED_yellow_delay = preferences.getULong("yellow_delay", 3000);
-    LED_green_delay = preferences.getULong("green_delay", 6000);
-    distanceSensorEnabled = preferences.getBool("distanceSensorEnabled", false);
+    preferences.putULong("dist_max", new_distance_max);
+    preferences.putULong("dist_warn", new_distance_warning);
+    preferences.putULong("dist_dang", new_distance_danger);
+    preferences.putBool("dist_sens_en", distance_sensor_enabled_form);
 
-    Serial.println("Updated Delays - R: " + String(LED_red_delay) + "ms Y: " + String(LED_yellow_delay) + "ms G: " + String(LED_green_delay) + "ms Distence sensor:" + distanceSensorEnabled);
-    request->send(200, "application/json", "{\"message\": \"Delays updated!\"}");
+    // Use directly from received values
+    LED_red_delay = red * 1000;
+    LED_yellow_delay = yellow * 1000;
+    LED_green_delay = green * 1000;
+
+    distance_sensor_enabled = distance_sensor_enabled_form;
+    distance_max = new_distance_max;
+    distance_warning = new_distance_warning;
+    distance_danger = new_distance_danger;
+
+    StaticJsonDocument<200> responseDoc;
+    responseDoc["message"] = "Config updated!";
+    responseDoc["red_delay"] = red;
+    responseDoc["yellow_delay"] = yellow;
+    responseDoc["green_delay"] = green;
+    responseDoc["distance_max"] = distance_max;
+    responseDoc["distance_warning"] = distance_warning;
+    responseDoc["distance_danger"] = distance_danger;
+
+    String message;
+    serializeJson(responseDoc, message);
+    request->send(200, "application/json", message);
   }
   else if (action == "reset_values")
   {
@@ -525,7 +551,9 @@ void handleToggleThemeMode(AsyncWebServerRequest *request)
 void handleGetDistance(AsyncWebServerRequest *request)
 {
   int distance = getDistance();
+
   String jsonResponse;
+
   if (distance == -1)
   {
     jsonResponse = "{\"distance_cm\":null}";
@@ -583,11 +611,21 @@ void setup()
 
   set_traffic_light(0, 0, 0);
 
-  pinMode(trigPin, OUTPUT);
-  pinMode(echoPin, INPUT);
+  tfmSerial.begin(115200, SERIAL_8N1, 16, 17); // Start TFMini Serial
+  delay(100);
 
-  Serial.print("Distance Sensor: ");
-  Serial.println(getDistance());
+  if (tfm.begin(&tfmSerial))
+  {
+    // Optional: run self-check
+    Serial.println("Running TFMini self-check...");
+    tfm.sendCommand(0x01, 0); // 0x01 is the self-check command
+    delay(500);               // Give it some time
+    Serial.println("Self-check complete (no result returned).");
+  }
+  else
+  {
+    Serial.println("Failed to connect to TFMini-Plus.");
+  }
 
   if (use_wifi)
   {
@@ -625,22 +663,32 @@ void setup()
 
   preferences.begin("traffic-light", false);
 
-  DelaySetting delays[] = {
+  DefaultSetting defaultSettings[] = {
       {"red_delay", 5000},
       {"yellow_delay", 3000},
-      {"green_delay", 6000}};
+      {"green_delay", 6000},
+      {"dist_max", 150},
+      {"dist_warn", 40},
+      {"dist_dang", 10}};
 
-  for (const auto &delay : delays)
+  for (const auto &setting : defaultSettings)
   {
-    if (!preferences.isKey(delay.key))
+    if (!preferences.isKey(setting.key))
     {
-      preferences.putULong(delay.key, delay.defaultValue);
+      preferences.putULong(setting.key, setting.defaultValue);
     }
   }
 
+  // Load timing delays
   LED_red_delay = preferences.getULong("red_delay", 5000);
   LED_yellow_delay = preferences.getULong("yellow_delay", 3000);
   LED_green_delay = preferences.getULong("green_delay", 6000);
+
+  // Load distance config
+  distance_sensor_enabled = preferences.getBool("dist_sens_en", false);
+  distance_max = preferences.getULong("dist_max", 150);
+  distance_warning = preferences.getULong("dist_warn", 40);
+  distance_danger = preferences.getULong("dist_dang", 10);
 
   // listSPIFFSFiles();
 
@@ -648,14 +696,13 @@ void setup()
 
   server.on("/", HTTP_GET, handleRoot);
   // server.on("/set_delay", HTTP_GET, handleSetDelay);
-  server.on("/get_delays", HTTP_GET, handleGetDelays);
   server.on("/get_current_state", HTTP_GET, handleGetCurrentState);
+  server.on("/get_distance", HTTP_GET, handleGetDistance);
+  server.on("/get_config", HTTP_GET, handleGetConfig);
+  server.on("/set_config", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleFormConfig);
   server.on("/blink_mode", HTTP_GET, handlelightMode);
   server.on("/toggle_light_mode", HTTP_GET, handleToggleLightMode);
   server.on("/toggle_theme_mode", HTTP_GET, handleToggleThemeMode);
-  server.on("/get_distance", HTTP_GET, handleGetDistance);
-  server.on("/set_delays", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleFormSetDelay);
-
 
   //   server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
   //     request->send(200, "application/javascript", "script.js", [](AsyncWebServerResponse *response){
@@ -666,7 +713,12 @@ void setup()
   server.serveStatic("/", SPIFFS, "/");
   server.serveStatic("/images", SPIFFS, "/images");
   server.onNotFound([](AsyncWebServerRequest *request)
-                    { request->send(302, "text/plain", "What ever you where looking for, was not found..."); });
+                    {
+    if (request->header("Accept").indexOf("application/json") != -1) {
+        request->send(404, "application/json", "{\"error\":\"Not found\"}");
+    } else {
+        request->send(404, "text/plain", "What ever you were looking for, was not found...");
+    } });
 
   ws.onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
              {
@@ -699,98 +751,99 @@ void setup()
 
 void loop()
 {
-    static unsigned long lastDistanceCheck = 0;
-    static unsigned long dangerStartTime = 0;
-    static bool cycling = true;
-    static bool hasFlashedInDanger = false;
-    static bool inDangerCycleMode = false;
+  static unsigned long lastDistanceCheck = 0;
+  static unsigned long dangerStartTime = 0;
+  static bool cycling = true;
+  static bool hasFlashedInDanger = false;
+  static bool inDangerCycleMode = false;
 
-    int distance = -1;
-    const int maxDistance = 200;
-    const int cautionThreshold = 40;
-    const int dangerThreshold = 10;
-    const unsigned long dangerHoldTime = 3000; // 3 seconds
+  int distance = -1;
+  const int maxDistance = 200;
+  const int cautionThreshold = 40;
+  const int dangerThreshold = 10;
+  const unsigned long dangerHoldTime = 3000; // 3 seconds
 
-    if (distanceSensorEnabled)
+  // if (false)
+  if (distance_sensor_enabled)
+  {
+    if (millis() - lastDistanceCheck >= 1000)
     {
-        if (millis() - lastDistanceCheck >= 1000)
+      lastDistanceCheck = millis();
+      distance = getDistance();
+      notifyAllClientsDistance(distance);
+      Serial.print("Distance: ");
+      Serial.println(distance);
+
+      // Track how long we've been in danger
+      if (distance != -1 && distance <= dangerThreshold)
+      {
+        if (dangerStartTime == 0 && !hasFlashedInDanger)
+          dangerStartTime = millis();
+      }
+      else
+      {
+        dangerStartTime = 0;
+        hasFlashedInDanger = false; // Reset when leaving danger zone
+        inDangerCycleMode = false;  // Reset cycle mode flag
+        cycling = false;            // Go back to static mode
+        // Serial.println("Exiting danger zone, resetting dangerStartTime");
+      }
+
+      // Out of range: always cycle
+      if (distance == -1 || distance >= maxDistance)
+      {
+        Serial.println("Cycling lights due to distance condition");
+        if (!cycling)
         {
-            lastDistanceCheck = millis();
-            distance = getDistance();
-            notifyAllClientsDistance(distance);
-            Serial.print("Distance: ");
-            Serial.println(distance);
-
-            // Track how long we've been in danger
-            if (distance != -1 && distance <= dangerThreshold)
-            {
-                if (dangerStartTime == 0 && !hasFlashedInDanger)
-                    dangerStartTime = millis();
-            }
-            else
-            {
-                dangerStartTime = 0;
-                hasFlashedInDanger = false; // Reset when leaving danger zone
-                inDangerCycleMode = false;  // Reset cycle mode flag
-                cycling = false;            // Go back to static mode
-                Serial.println("Exiting danger zone, resetting dangerStartTime");
-            }
-
-            // Out of range: always cycle
-            if (distance == -1 || distance >= maxDistance)
-            {
-                Serial.println("Cycling lights due to distance condition");
-                if (!cycling)
-                {
-                    Serial.println("Resuming cycleLights()");
-                    cycling = true;
-                }
-                inDangerCycleMode = false;
-                cycleLights();
-            }
-            // Flash and enter cycle mode if held in danger zone
-            else if (dangerStartTime > 0 && millis() - dangerStartTime >= dangerHoldTime && !hasFlashedInDanger)
-            {
-                Serial.println("Danger zone held for 3 seconds, flashing RED before cycling.");
-                for (int i = 0; i < 3; i++)
-                {
-                    set_traffic_light(1, 0, 0); // FIX THIS DO IT DOES NOT USE DELAY
-                    delay(500);
-                    set_traffic_light(0, 0, 0);
-                    delay(500);
-                }
-                hasFlashedInDanger = true; // Only flash once per danger zone entry
-                inDangerCycleMode = true;  // Enter cycle mode in danger zone
-                cycling = true;
-                cycleLights();
-                return;
-            }
-            // If in cycle mode due to danger zone, keep cycling until car leaves danger zone
-            else if (inDangerCycleMode)
-            {
-                cycleLights();
-            }
-            // Otherwise, show static color based on distance
-            else
-            {
-                cycling = false;
-                if (distance <= dangerThreshold)
-                {
-                    set_traffic_light(1, 0, 0);
-                }
-                else if (distance <= cautionThreshold)
-                {
-                    set_traffic_light(0, 1, 0);
-                }
-                else
-                {
-                    set_traffic_light(0, 0, 1);
-                }
-            }
+          Serial.println("Resuming cycleLights()");
+          cycling = true;
         }
-    }
-    else
-    {
+        inDangerCycleMode = false;
         cycleLights();
+      }
+      // Flash and enter cycle mode if held in danger zone
+      else if (dangerStartTime > 0 && millis() - dangerStartTime >= dangerHoldTime && !hasFlashedInDanger)
+      {
+        Serial.println("Danger zone held for 3 seconds, flashing RED before cycling.");
+        for (int i = 0; i < 3; i++)
+        {
+          set_traffic_light(1, 0, 0); // FIX THIS DO IT DOES NOT USE DELAY
+          delay(500);
+          set_traffic_light(0, 0, 0);
+          delay(500);
+        }
+        hasFlashedInDanger = true; // Only flash once per danger zone entry
+        inDangerCycleMode = true;  // Enter cycle mode in danger zone
+        cycling = true;
+        cycleLights();
+        return;
+      }
+      // If in cycle mode due to danger zone, keep cycling until car leaves danger zone
+      else if (inDangerCycleMode)
+      {
+        cycleLights();
+      }
+      // Otherwise, show static color based on distance
+      else
+      {
+        cycling = false;
+        if (distance <= dangerThreshold)
+        {
+          set_traffic_light(1, 0, 0);
+        }
+        else if (distance <= cautionThreshold)
+        {
+          set_traffic_light(0, 1, 0);
+        }
+        else
+        {
+          set_traffic_light(0, 0, 1);
+        }
+      }
     }
+  }
+  else
+  {
+    cycleLights();
+  }
 }

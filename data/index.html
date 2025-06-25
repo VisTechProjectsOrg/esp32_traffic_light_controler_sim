@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="car-distance-style.css" />
     <script src="effect.js"></script>
     <script src="script.js"></script>
-    <script src="/config.js"></script>
     <script src="car-distance.js"></script>
 </head>
 
@@ -27,35 +26,62 @@
         <img onclick="openPopup_time_waisted()" class="traffic-light" id="traffic-light"
             src="img/traffic_lt/all_off.png" alt="Traffic Light">
         <div>
-            <!-- Button to Open Light Cycle Delay Form -->
-            <button onclick="openPopup_settings()">Light Settings</button>
+            <!-- Button to Open Settings Form -->
+            <button onclick="openPopup_settings()">Settings</button>
 
             <!-- Light Cycle Delay Popup -->
             <div class="overlay" id="overlay" onclick="closePopup()"></div>
-            <div class="popup" id="popup">
-                <form id="setDelayForm">
-                    <label>Red Delay (Sec):</label>
-                    <input type="number" id="red_delay" name="red_delay" step="0.5" required><br>
+          <div class="popup" id="popup">
+        <form id="setConfigForm" class="form-group">
+            <div id="popup-header"><h1>Settings</h1></div>
 
-                    <label>Yellow Delay (Sec):</label>
-                    <input type="number" id="yellow_delay" name="yellow_delay" step="0.5" required><br>
+            <div id="popup-container">
 
-                    <label>Green Delay (Sec):</label>
-                    <input type="number" id="green_delay" name="green_delay" step="0.5" required><br>
+                <div id="popup-first">
+                    <div class="timing-box">
+                        <h3>Light Timings</h3>
+                        
+                        <label for="red_delay">Red Delay (Sec):</label>
+                        <input type="number" id="red_delay" min="0" step="1">
+                        <br>
+                        <label for="yellow_delay">Yellow Delay (Sec):</label>
+                        <input type="number" id="yellow_delay" min="0" step="1">
+                        
+                        <label for="green_delay">Green Delay (Sec):</label>
+                        <input type="number" id="green_delay" min="0" step="1">
+                    </div>
 
                     <div class="toggle-container">
                         <label class="switch">
-                            <input type="checkbox" id="toggleDistanceSensorSwitch" onchange="toggleDistanceSensor()">
+                            <input type="checkbox" id="toggle_distance_sensor_switch" onchange="toggleDistanceSensorInputs()">
                             <span class="slider"></span>
                         </label>
                         <span id="toggleDistanceSensorLabel">Distance Sensor</span>
                     </div>
 
-                    <!-- <input type="submit" value="Update" id="submitDelays"> -->
-                    <button type="button" id="setDelays" onclick="closePopup(event)">Update Settings</button>
-                    <button type="button" class="cancel-button" onclick="closePopup(event)">Cancel</button>
-                </form>
+                </div>
+
+                <div id="popup-second">
+                    <div id="distanceSettings" style="display: none;">
+                        <h3>Distance Warning</h3>
+                        <label>Max (cm):</label>
+                        <input type="number" id="distance_max" name="distance_max" min="1" step="1"><br>
+                        <label>Warning (cm):</label>
+                        <input type="number" id="distance_warning" name="distance_warning" min="1" step="1"><br>
+                        <label>Danger (cm):</label>
+                        <input type="number" id="distance_danger" name="distance_danger" min="1" step="1"><br>
+                    </div>
+                </div>            
             </div>
+
+            <div class="button-row">
+                <button type="button" id="setConfig" onclick="closePopup(event)">Update Settings</button>
+                <button type="button" class="cancel-button" onclick="closePopup(event)">Cancel</button>
+            </div>
+
+            <div class="version-label" id="version_number_label">v0.0</div>
+        </form>
+    </div>
 
             <!-- Toggle Cycle Modes -->
             <form id="blinkModeForm">
@@ -92,33 +118,35 @@
             <br>
 
 
-            <h2>Car Distance to Wall</h2>
-            <div class="car_container">
-                <img id="car" class="car_car-img" src="img/is250/is250.png" alt="Lexus IS250" />
-                <img id="car_wheel-front" class="car_wheel" src="img/is250/is250_wheel.png" alt="Front Wheel" />
-                <img id="car_wheel-rear" class="car_wheel" src="img/is250/is250_wheel.png" alt="Rear Wheel" />
-                <div class="car_wall"></div>
-                <div class="car_ticks">
-                    <div class="car_tick" data-label="200"></div>
-                    <div class="car_tick" data-label="180"></div>
-                    <div class="car_tick" data-label="160"></div>
-                    <div class="car_tick" data-label="140"></div>
-                    <div class="car_tick" data-label="120"></div>
-                    <div class="car_tick" data-label="100"></div>
-                    <div class="car_tick" data-label="80"></div>
-                    <div class="car_tick" data-label="60"></div>
-                    <div class="car_tick" data-label="40"></div>
-                    <div class="car_tick" data-label="20"></div>
-                    <div class="car_tick" data-label="0"></div>
+            <div id="carDistanceBlock">
+                <h2>Car Distance to Wall</h2>
+                <div class="car_container">
+                    <img id="car" class="car_car-img" src="img/is250/is250.png" alt="Lexus IS250" />
+                    <img id="car_wheel-front" class="car_wheel" src="img/is250/is250_wheel.png" alt="Front Wheel" />
+                    <img id="car_wheel-rear" class="car_wheel" src="img/is250/is250_wheel.png" alt="Rear Wheel" />
+                    <div class="car_wall"></div>
+                    <div class="car_ticks">
+                        <div class="car_tick" data-label="200"></div>
+                        <div class="car_tick" data-label="180"></div>
+                        <div class="car_tick" data-label="160"></div>
+                        <div class="car_tick" data-label="140"></div>
+                        <div class="car_tick" data-label="120"></div>
+                        <div class="car_tick" data-label="100"></div>
+                        <div class="car_tick" data-label="80"></div>
+                        <div class="car_tick" data-label="60"></div>
+                        <div class="car_tick" data-label="40"></div>
+                        <div class="car_tick" data-label="20"></div>
+                        <div class="car_tick" data-label="0"></div>
+                    </div>
                 </div>
+                <div class="car_input-group">
+                    <label for="distance_to_wall">Distance to wall (in cm): </label>
+                    <input type="number" id="distance_to_wall" min="0" max="150" step="15" value="150"
+                        oninput="updateCarPosition()" />
+                    <div class="car_status-indicator" id="status"></div>
+                </div>
+                <div class="car_warning" id="warning">⚠️ Car is out of range!</div>
             </div>
-            
-            <div class="car_input-group">
-                <label for="distance_to_wall">Distance to wall (in cm): </label>
-                <input type="number" id="distance_to_wall" min="0" max="150" step="15" value="150" oninput="updateCarPosition()" />
-                <div class="car_status-indicator" id="status"></div>
-            </div>
-            <div class="car_warning" id="warning">⚠️ Car is out of range!</div>
 
         </div>
     </div>

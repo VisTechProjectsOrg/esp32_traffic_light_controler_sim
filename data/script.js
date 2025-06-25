@@ -1,5 +1,9 @@
 var ws = new WebSocket('ws://' + window.location.hostname + '/ws');
-let distanceSensorEnabled = false; // Add this at the top with other variables
+let distanceSensorEnabled = false;
+let originalDistanceSensorEnabled = false;
+let originalDistanceMax = '';
+let originalDistanceWarning = '';
+let originalDistanceDanger = '';
 
 function updateTrafficLight(state) {
     document.getElementById('traffic-light').src = '/img/traffic_lt/' + state + '.png';
@@ -8,14 +12,13 @@ function updateTrafficLight(state) {
 function closePopup(event) {
     if (event) event.preventDefault();
 
-    // Only apply changes if clicking the Update Settings button
-    if (event && event.target.id === 'setDelays') {
-        const panel = document.getElementById('carDistancePanel');
-        panel.style.display = distanceSensorEnabled ? 'inline-block' : 'none';
-
-        // Store the state
-        const switch_element = document.getElementById('toggleDistanceSensorSwitch');
-        distanceSensorEnabled = switch_element.checked;
+    // Only restore if NOT saving (i.e., if Cancel or overlay)
+    if (!event || event.target.id !== 'setConfig') {
+        document.getElementById("toggle_distance_sensor_switch").checked = originalDistanceSensorEnabled;
+        document.getElementById("distance_max").value = originalDistanceMax;
+        document.getElementById("distance_warning").value = originalDistanceWarning;
+        document.getElementById("distance_danger").value = originalDistanceDanger;
+        toggleDistanceSensorInputs();
     }
 
     document.getElementById("popup").style.display = "none";
@@ -28,22 +31,34 @@ function openPopup_settings() {
     document.getElementById("popup").style.display = "block";
     document.getElementById("overlay").style.display = "block";
 
-    // Set switch state to match current panel visibility
-    const panel = document.getElementById('carDistancePanel');
-    const switch_element = document.getElementById('toggleDistanceSensorSwitch');
-    // switch_element.checked = panel.style.display !== 'none';
-    distanceSensorEnabled = switch_element.checked;
+    const switch_element = document.getElementById('toggle_distance_sensor_switch');
 
-    fetch('/get_delays?' + new Date().getTime())  // Adds a unique timestamp, prevents caching
+    fetch('/get_config?' + new Date().getTime())
         .then(response => response.json())
         .then(data => {
-            console.log("Fetched delay values:", data); // <-- Add this
-            document.getElementById("red_delay").value = data.red_delay / 1000;
-            document.getElementById("yellow_delay").value = data.yellow_delay / 1000;
-            document.getElementById("green_delay").value = data.green_delay / 1000;
-            document.getElementById("toggleDistanceSensorSwitch").checked = !!data.distance_sensor;
+            document.getElementById("red_delay").value = data.red_delay;
+            document.getElementById("yellow_delay").value = data.yellow_delay;
+            document.getElementById("green_delay").value = data.green_delay;
+            document.getElementById("toggle_distance_sensor_switch").checked = !!data.distance_sensor_enabled;
+            document.getElementById("distance_max").value = data.distance_max;
+            document.getElementById("distance_warning").value = data.distance_warning;
+            document.getElementById("distance_danger").value = data.distance_danger;
+            document.getElementById("version_number_label").textContent = data.version;
+
+            // Store original values for cancel
+            originalDistanceSensorEnabled = !!data.distance_sensor_enabled;
+            originalDistanceMax = data.distance_max;
+            originalDistanceWarning = data.distance_warning;
+            originalDistanceDanger = data.distance_danger;
+
+            const enabled = !!data.distance_sensor_enabled;
+            document.getElementById('toggle_distance_sensor_switch').checked = enabled;
+            toggleDistanceSensorInputs();
+
+            // Show/hide car distance block on page load
+            document.getElementById("carDistanceBlock").style.display = data.distance_sensor_enabled ? "" : "none";
         })
-        .catch(error => console.error("Error fetching delay values:", error));
+        .catch(error => console.error("Error fetching config values:", error));
 }
 
 function openPopup_time_waisted() {
@@ -92,11 +107,26 @@ function toggleThemeMode() {
         .catch(error => console.error("Error toggling theme mode:", error, "color: red; font-weight: bold;"));
 }
 
-function toggleDistanceSensor() {
-    const switch_element = document.getElementById('toggleDistanceSensorSwitch');
-    distanceSensorEnabled = switch_element.checked;
-    // Remove the immediate panel visibility change
+function toggleDistanceSensorInputs() {
+    const switchElement = document.getElementById('toggle_distance_sensor_switch');
+    const distanceSettings = document.getElementById('distanceSettings');
+    const settingsWrapper = document.querySelector('.settings-wrapper');
+
+    distanceSensorEnabled = switchElement.checked;
+
+    if (distanceSensorEnabled) {
+        distanceSettings.style.display = 'block';
+        distanceSettings.classList.add('active-box');
+        settingsWrapper.classList.remove('single-column');
+        settingsWrapper.style.justifyContent = 'space-between';
+    } else {
+        distanceSettings.style.display = 'none';
+        distanceSettings.classList.remove('active-box');
+        settingsWrapper.classList.add('single-column');
+        settingsWrapper.style.justifyContent = 'center';
+    }
 }
+
 
 document.addEventListener("DOMContentLoaded", function () {
     ws.onmessage = function (event) {
@@ -110,11 +140,9 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.light_mode === "cycle_mode") {
                 toggleSwitch.checked = false;
                 toggleSwitchLabel.textContent = "Cycle Mode";
-
             } else if (data.light_mode === "blink_mode") {
                 toggleSwitch.checked = true;
                 toggleSwitchLabel.textContent = "Blink Mode";
-
             } else {
                 console.error("%cUnknown light mode received:", data.light_Mode, "color: orange; font-weight: bold;");
             }
@@ -127,11 +155,9 @@ document.addEventListener("DOMContentLoaded", function () {
             if (data.theme_mode === "normal_mode") {
                 toggleSwitch.checked = false;
                 toggleSwitchLabel.textContent = "Normal Mode";
-
             } else if (data.theme_mode === "cat_mode") {
                 toggleSwitch.checked = true;
                 toggleSwitchLabel.textContent = "Cat Mode";
-
             } else {
                 console.error("Unknown theme mode received:", data.theme_mode);
             }
@@ -146,11 +172,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
         } else if (data.distance_cm !== undefined && data.distance_cm !== null) {
             const distanceInput = document.getElementById("distance_to_wall");
-            const distanceValue = parseInt(data.distance_cm, 10); // convert to integer
+            const distanceValue = parseInt(data.distance_cm, 10);
+
             if (distanceInput && distanceInput.tagName === "INPUT") {
                 distanceInput.value = distanceValue;
                 distanceInput.dispatchEvent(new Event('input', { bubbles: true }));
-                console.log('setting "distance_to_wall" to ', distanceValue, 'cm');
+                console.log('setting "distance_to_wall" to', distanceValue, 'cm');
                 updateCarPosition();
             }
         } else {
@@ -200,8 +227,40 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch(error => console.error("Error fetching current state:", error));
 
-    document.getElementById("setDelays").addEventListener("click", function () {
-        sendRequest("set_delays");
+    // Set initial visibility of car distance block on first load
+    fetch('/get_config')
+        .then(res => res.json())
+        .then(cfg => {
+            const enabled = cfg.distance_sensor_enabled;
+            const block = document.getElementById("carDistanceBlock");
+            block.style.display = enabled ? "" : "none";
+        })
+        .catch(err => console.error("Error loading initial distance sensor config:", err));
+
+    document.getElementById("setConfig").addEventListener("click", function (event) {
+        const distanceSensorWasEnabled = document.getElementById("toggle_distance_sensor_switch").checked;
+
+        sendRequest("set_config").then(() => {
+            // After saving, re-fetch latest config and update the form values
+            fetch('/get_config')
+                .then(response => response.json())
+                .then(data => {
+                    document.getElementById("red_delay").value = data.red_delay;
+                    document.getElementById("yellow_delay").value = data.yellow_delay;
+                    document.getElementById("green_delay").value = data.green_delay;
+                    document.getElementById("toggle_distance_sensor_switch").checked = !!data.distance_sensor_enabled;
+                    document.getElementById("distance_max").value = data.distance_max;
+                    document.getElementById("distance_warning").value = data.distance_warning;
+                    document.getElementById("distance_danger").value = data.distance_danger;
+
+                    toggleDistanceSensorInputs();
+                });
+        });
+
+        // Update car block visibility immediately
+        document.getElementById("carDistanceBlock").style.display = distanceSensorWasEnabled ? "" : "none";
+
+        closePopup(event); // Close after saving
     });
 
     function sendRequest(action) {
@@ -209,10 +268,14 @@ document.addEventListener("DOMContentLoaded", function () {
             action: action,
             red_delay: parseFloat(document.getElementById("red_delay").value),
             yellow_delay: parseFloat(document.getElementById("yellow_delay").value),
-            green_delay: parseFloat(document.getElementById("green_delay").value)
+            green_delay: parseFloat(document.getElementById("green_delay").value),
+            distance_sensor_enabled: document.getElementById("toggle_distance_sensor_switch").checked,
+            distance_max: document.getElementById("distance_max").value,
+            distance_warning: document.getElementById("distance_warning").value,
+            distance_danger: document.getElementById("distance_danger").value
         };
 
-        fetch("/set_delays", {
+        return fetch("/set_config", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json"
@@ -221,9 +284,9 @@ document.addEventListener("DOMContentLoaded", function () {
         })
             .then(response => response.json())
             .then(data => {
-                console.log("Server Response (set delays):", data);
-                console.log("%cSubmitted successfully new delay values", "color: green; font-weight: bold;");
-                alert("Delays updates successfully!");
+                console.log("Server Response (set config values):", data);
+                console.log("%cSubmitted successfully new config values", "color: green; font-weight: bold;");
+                alert("Settings updated successfully!");
             })
             .catch(error => console.error("Error:", error));
     }
@@ -249,6 +312,8 @@ document.addEventListener("DOMContentLoaded", function () {
         console.log("%cSending:", "color: orange; font-weight: bold;", message);
         ws.send(message);
     }
+
+    
 
     document.getElementById("toggleLightModeSwitch").addEventListener("input", function () {
         sendSliderUpdate("light_mode", this.value);

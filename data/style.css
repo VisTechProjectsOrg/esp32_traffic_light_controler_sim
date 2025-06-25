@@ -142,12 +142,67 @@ input:checked+.slider:before {
 .popup {
     display: none;
     position: fixed;
-    width: 250px;
+    width: 500px;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
     background-color: transparent;
     z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+
+
+
+#popup-header {
+    width: 100%;
+    background-color: red;
+    height: 30px;
+}
+/* #popup-container {
+    width: 200px;
+    background-color: #ffcc33;
+    margin: auto;
+} */
+
+#popup-container {
+    display: flex;
+    align-items: flex-start; /* Aligns tops of children */
+    gap: 20px;
+}
+
+#popup-first {
+    width: 200px;
+    float: left;
+    height: 300px;
+    margin-top: 10px;
+    /* background-color: blue; */
+}
+#popup-second {
+    width: 200px;
+    float: left;
+    height: 300px;
+    /* background-color: green; */
+    padding-left: 10px;
+    margin-top: 10px;
+    /* box-sizing: border-box; */
+}
+#popup-clear {
+    clear: both;
+}
+
+.button-row {
+    margin-top: 75px;
+    text-align: center;
+}
+
+.popup-content {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    text-align: center;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 #reconnectPopup {
@@ -161,14 +216,6 @@ input:checked+.slider:before {
     justify-content: center;
     align-items: center;
     z-index: 1000;
-}
-
-.popup-content {
-    background-color: white;
-    padding: 20px;
-    border-radius: 10px;
-    text-align: center;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 #refreshButton {
@@ -201,7 +248,8 @@ input:checked+.slider:before {
     align-items: center;
     justify-content: center;
     margin-top: 10px;
-    margin-bottom: 20px; /* Add space between checkbox and buttons */
+    margin-bottom: 20px;
+    /* Add space between checkbox and buttons */
     gap: 5px;
 }
 
@@ -215,7 +263,8 @@ input:checked+.slider:before {
 #setDelayForm label {
     margin: 0;
     text-align: center;
-    flex: 0 0 auto; /* Prevent label from expanding */
+    flex: 0 0 auto;
+    /* Prevent label from expanding */
 }
 
 /* Override the general input styles for checkboxes */
@@ -227,7 +276,8 @@ input[type="checkbox"] {
 
 #carDistancePanel {
     border: 2px solid #3498db;
-    padding: 5px 10px 2px 10px;  /* Reduced bottom padding */
+    padding: 5px 10px 2px 10px;
+    /* Reduced bottom padding */
     border-radius: 8px;
     background-color: #fff;
     display: inline-block;
@@ -236,9 +286,11 @@ input[type="checkbox"] {
 }
 
 #carDistancePanel h2 {
-    margin: 0 0 3px 0;  /* Reduced bottom margin */
+    margin: 0 0 3px 0;
+    /* Reduced bottom margin */
     padding: 0;
-    line-height: 1;  /* Even tighter line height */
+    line-height: 1;
+    /* Even tighter line height */
 }
 
 .car_container {
@@ -265,10 +317,75 @@ input[type="checkbox"] {
     height: auto;
     visibility: visible;
     opacity: 1;
-    margin: 2px 0 2px 0;  /* Equal small margins when visible */
+    margin: 2px 0 2px 0;
+    /* Equal small margins when visible */
 }
 
-@media (max-width: 600px) {
+#distanceSettings {
+    margin-top: 12px;
+    margin-bottom: 12px;
+    transition: margin 1.2s;
+}
+
+.timing-box {
+    border: 2px solid #007bff;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 0 6px rgba(0, 123, 255, 0.2);
+    margin-bottom: 16px;
+    transition: all 0.2s ease;
+}
+
+#carDistanceBlock {
+    border: 3px solid #ff820d;
+    /* Neutral gray border */
+    border-radius: 15px;
+    padding: 10px 15px;
+    margin-top: 20px;
+    box-shadow: 0 0 6px rgba(3, 3, 3, 0.2);
+    transition: all 0.3s ease;
+    background: #ffffff;
+}
+
+
+/* Highlighted box for distance sensor settings */
+#distanceSettings.active-box {
+    border: 2px solid #28a745;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 0 6px rgba(40, 167, 69, 0.3);
+    transition: border 0.2s ease, box-shadow 0.2s ease;
+      /* Align it at the top */
+    margin-top: 0px;
+    align-self: flex-start;
+}
+
+.version-label {
+    font-size: 12px;
+    color: #666;
+    text-align: right;
+    margin-top: 8px;
+    opacity: 0.6;
+}
+
+.settings-wrapper {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+/* Center children when there's only one visible (like when toggle is off) */
+.settings-wrapper.single-column {
+    justify-content: center;
+}
+
+#distanceSettings:not(.active-box) {
+    display: none;
+}
+
+/* @media (max-width: 600px) {
     .container {
         flex-direction: column;
         align-items: center;
@@ -282,4 +399,4 @@ input[type="checkbox"] {
     form {
         margin: 20px 0;
     }
-}
+} */
