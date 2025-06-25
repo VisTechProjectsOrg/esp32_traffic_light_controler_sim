@@ -31,69 +31,76 @@
 
             <!-- Light Cycle Delay Popup -->
             <div class="overlay" id="overlay" onclick="closePopup()"></div>
-          <div class="popup" id="popup">
-        <form id="setConfigForm" class="form-group">
-            <div id="popup-header"><h1>Settings</h1></div>
-
-            <div id="popup-container">
-
-                <div id="popup-first">
-                    <div class="timing-box">
-                        <h3>Light Timings</h3>
-                        
-                        <label for="red_delay">Red Delay (Sec):</label>
-                        <input type="number" id="red_delay" min="0" step="1">
-                        <br>
-                        <label for="yellow_delay">Yellow Delay (Sec):</label>
-                        <input type="number" id="yellow_delay" min="0" step="1">
-                        
-                        <label for="green_delay">Green Delay (Sec):</label>
-                        <input type="number" id="green_delay" min="0" step="1">
+            <div class="popup" id="popup">
+                <form id="setConfigForm" class="form-group">
+                    <div id="popup-header">
+                        <h1 class="popup-header">Settings</h1>
                     </div>
 
-                    <div class="toggle-container">
-                        <label class="switch">
-                            <input type="checkbox" id="toggle_distance_sensor_switch" onchange="toggleDistanceSensorInputs()">
-                            <span class="slider"></span>
-                        </label>
-                        <span id="toggleDistanceSensorLabel">Distance Sensor</span>
+                    <div id="popup-container" class="settings-wrapper">
+
+
+                        <div id="popup-first">
+                            <div class="timing-box">
+                                <h3>Light Timings</h3>
+
+                                <label for="red_delay">Red Delay (Sec):</label>
+                                <input type="number" id="red_delay" min="0" step="1">
+                                <br>
+                                <label for="yellow_delay">Yellow Delay (Sec):</label>
+                                <input type="number" id="yellow_delay" min="0" step="1">
+
+                                <label for="green_delay">Green Delay (Sec):</label>
+                                <input type="number" id="green_delay" min="0" step="1">
+                            </div>
+
+                            <div class="toggle-container">
+                                <label class="switch">
+                                    <input type="checkbox" id="toggle_distance_sensor_switch"
+                                        onchange="toggleDistanceSensorInputs()">
+                                    <span class="slider"></span>
+                                </label>
+                                <span id="toggleDistanceSensorLabel">Distance Sensor</span>
+                            </div>
+
+                        </div>
+
+                        <div id="popup-second">
+                            <div class="timing-box" id="distanceSettings" >
+                                <h3>Distance Warning</h3>
+                                <label>Max (cm):</label>
+                                <input type="number" id="distance_max" name="distance_max" min="1" step="1"><br>
+                                <label>Warning (cm):</label>
+                                <input type="number" id="distance_warning" name="distance_warning" min="1" step="1"><br>
+                                <label>Danger (cm):</label>
+                                <input type="number" id="distance_danger" name="distance_danger" min="1" step="1"><br>
+                            </div>
+                        </div>
+
                     </div>
 
-                </div>
-
-                <div id="popup-second">
-                    <div id="distanceSettings" style="display: none;">
-                        <h3>Distance Warning</h3>
-                        <label>Max (cm):</label>
-                        <input type="number" id="distance_max" name="distance_max" min="1" step="1"><br>
-                        <label>Warning (cm):</label>
-                        <input type="number" id="distance_warning" name="distance_warning" min="1" step="1"><br>
-                        <label>Danger (cm):</label>
-                        <input type="number" id="distance_danger" name="distance_danger" min="1" step="1"><br>
+                    <div class="button-row">
+                        <button type="button" id="setConfig" onclick="closePopup(event)">Update</button>
+                        <button type="button" class="cancel-button" onclick="closePopup(event)">Cancel</button>
                     </div>
-                </div>            
+
+                    <div class="version-label" id="version_number_label">v0.0</div>
+                </form>
             </div>
-
-            <div class="button-row">
-                <button type="button" id="setConfig" onclick="closePopup(event)">Update Settings</button>
-                <button type="button" class="cancel-button" onclick="closePopup(event)">Cancel</button>
-            </div>
-
-            <div class="version-label" id="version_number_label">v0.0</div>
-        </form>
-    </div>
 
             <!-- Toggle Cycle Modes -->
-            <form id="blinkModeForm">
-                <label>Blink Color:</label>
-                <select name="color" id="blinkColorSelect">
-                    <option value="all">All Colors</option>
-                    <option value="random">Random</option>
-                    <option value="red">Red</option>
-                    <option value="yellow">Yellow</option>
-                    <option value="green">Green</option>
-                </select>
-            </form>
+            <div class="blink-switch-wrapper">
+
+                <form id="blinkModeForm">
+                    <label>Blink Color:</label>
+                    <select name="color" id="blinkColorSelect">
+                        <option value="all">All Colors</option>
+                        <option value="random">Random</option>
+                        <option value="red">Red</option>
+                        <option value="yellow">Yellow</option>
+                        <option value="green">Green</option>
+                    </select>
+                </form>
 
             <!-- Toggle Light Modes -->
             <div class="toggle-container">
@@ -104,8 +111,6 @@
                 <span id="toggleLightModeLabel">Cycle Mode</span>
             </div>
 
-            <br>
-
             <div class="toggle-container">
                 <label class="switch">
                     <input type="checkbox" id="toggleThemeModeSwitch" onclick="toggleThemeMode()">
@@ -113,13 +118,13 @@
                 </label>
                 <span id="toggleThemeModeLabel">Normal Mode</span>
             </div>
-
+</div>
 
             <br>
 
 
             <div id="carDistanceBlock">
-                <h2>Car Distance to Wall</h2>
+                <h2>Distance to Wall</h2>
                 <div class="car_container">
                     <img id="car" class="car_car-img" src="img/is250/is250.png" alt="Lexus IS250" />
                     <img id="car_wheel-front" class="car_wheel" src="img/is250/is250_wheel.png" alt="Front Wheel" />

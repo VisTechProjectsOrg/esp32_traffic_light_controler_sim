@@ -4,7 +4,6 @@ fetch('/config')
     window.dangerThreshold = cfg.dangerThreshold;
     window.cautionThreshold = cfg.cautionThreshold;
     window.visualMax = cfg.visualMax;
-    // Now use these in your code!
   });
 
 const visualMax = 150;

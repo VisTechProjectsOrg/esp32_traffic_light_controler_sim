@@ -28,8 +28,8 @@ function closePopup(event) {
 function openPopup_settings() {
     console.log("Opening settings popup");
 
-    document.getElementById("popup").style.display = "block";
-    document.getElementById("overlay").style.display = "block";
+    // document.getElementById("popup").style.display = "block";
+    // document.getElementById("overlay").style.display = "block";
 
     const switch_element = document.getElementById('toggle_distance_sensor_switch');
 
@@ -55,10 +55,22 @@ function openPopup_settings() {
             document.getElementById('toggle_distance_sensor_switch').checked = enabled;
             toggleDistanceSensorInputs();
 
+            document.getElementById("popup").style.display = "block";
+            document.getElementById("overlay").style.display = "block";
+
             // Show/hide car distance block on page load
             document.getElementById("carDistanceBlock").style.display = data.distance_sensor_enabled ? "" : "none";
         })
-        .catch(error => console.error("Error fetching config values:", error));
+        .catch(error => {
+            console.error("Error fetching config values:", error);
+            originalDistanceSensorEnabled = false;
+            document.getElementById("toggle_distance_sensor_switch").checked = false;
+            toggleDistanceSensorInputs();
+            // now show the popup anyway
+            document.getElementById("popup").style.display = "block";
+            document.getElementById("overlay").style.display = "block";
+
+        });
 }
 
 function openPopup_time_waisted() {
@@ -111,6 +123,8 @@ function toggleDistanceSensorInputs() {
     const switchElement = document.getElementById('toggle_distance_sensor_switch');
     const distanceSettings = document.getElementById('distanceSettings');
     const settingsWrapper = document.querySelector('.settings-wrapper');
+    const secondPanel = document.getElementById('popup-second');
+
 
     distanceSensorEnabled = switchElement.checked;
 
@@ -125,6 +139,27 @@ function toggleDistanceSensorInputs() {
         settingsWrapper.classList.add('single-column');
         settingsWrapper.style.justifyContent = 'center';
     }
+
+    const on = switchElement.checked;
+
+    if (on) {
+        distanceSettings.style.display = 'block';
+        distanceSettings.classList.add('active-box');
+        settingsWrapper.classList.remove('single-column');
+        settingsWrapper.style.justifyContent = 'space-between';
+
+        // make sure second column is visible
+        secondPanel.style.display = '';
+    } else {
+        distanceSettings.style.display = 'none';
+        distanceSettings.classList.remove('active-box');
+        settingsWrapper.classList.add('single-column');
+        settingsWrapper.style.justifyContent = 'center';
+
+        // hide second column completely
+        secondPanel.style.display = 'none';
+    }
+
 }
 
 
@@ -313,7 +348,7 @@ document.addEventListener("DOMContentLoaded", function () {
         ws.send(message);
     }
 
-    
+
 
     document.getElementById("toggleLightModeSwitch").addEventListener("input", function () {
         sendSliderUpdate("light_mode", this.value);
