@@ -155,12 +155,32 @@ input:checked+.slider:before {
     /* at most 80% of viewport height */
     overflow-y: auto;
     /* scroll if content exceeds this */
+    opacity: 0;
+    visibility: hidden;
+}
+
+.popup.show {
+    opacity: 1;
+    visibility: visible;
+    animation: fadeIn 0.5s ease forwards;
 }
 
 #popup #setConfigForm {
     padding-top: 1px;
     max-width: none;
     width: auto;
+    border: 3px solid #eeea0c;
+    border-radius: 10px;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 .timing-box h3 {
@@ -228,8 +248,8 @@ input:checked+.slider:before {
 
 .button-row {
     margin-top: 20px;
-    text-align: center;
     display: flex;
+    text-align: center;
     gap: 12px;
 }
 
@@ -256,6 +276,7 @@ input:checked+.slider:before {
     margin: 0;
     /* remove any extra margins */
     width: auto;
+    border: 3px solid #067b9e;
 }
 
 #reconnectPopup {
@@ -326,6 +347,19 @@ input[type="checkbox"] {
     margin: 0;
     padding: 0;
 }
+
+.mode-switches {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px;
+    border: 3px solid #02c0c0;
+    border-radius: 10px;
+    background-color: #fff;
+    font-weight: bold;
+}
+
 
 #blinkColorSelect {
     width: 140px;
@@ -446,61 +480,75 @@ input[type="checkbox"] {
     display: none;
 }
 
-
-
-/* @media (max-width: 600px) {
-    .container {
-        flex-direction: column;
-        align-items: center;
-    }
-
-    .traffic-light {
-        width: 80%;
-        max-width: 200px;
-    }
-
-    form {
-        margin: 20px 0;
-    }
-} */
-
-@media (max-width: 500px) {
-
-    /* Center the wrapper’s children */
+@media (max-width: 600px) {
     #popup-container.settings-wrapper {
+        flex-direction: column;
         justify-content: center !important;
         align-items: center !important;
     }
 
-    /* Turn off floats and let each panel shrink+center */
-    #popup-first {
-        margin-top: 10px !important;
-    }
-
     #popup-first,
     #popup-second {
+        width: 100% !important;
+        max-width: 90vw !important;
         float: none !important;
-        width: 85% !important;
-        /* or 85%, tweak as you like */
-        max-width: 300px !important;
-        margin: 0 auto
-            /* auto-center + bottom gap */
+        margin: 10px 0 !important;
     }
 
-    .toggle-container {
-        margin-bottom: 0px !important;
-    }
-
-    #popup-second {
-        margin-top: 0px !important;
-        margin-bottom: 0px !important;
-    }
-
-    /* 2) Pull the buttons up closer */
     .button-row {
-        margin-top: 6px !important;
-        display: flex;
-        justify-content: center;
-        gap: 8px;
+        margin-top: 12px !important;
+        justify-content: center !important;
     }
+}
+
+
+.title-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.title-text {
+    margin: 0;
+    font-size: 28px;
+}
+
+.settings-icon {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+}
+
+.settings-svg {
+    width: 35px;
+    height: 35px;
+    transition: transform 0.2s ease;
+}
+
+.settings-icon:hover .settings-svg {
+    transform: rotate(80deg);
+    filter: hue-rotate(120deg);
+}
+
+.header-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 40px;
+    /* space between title and icon */
+    margin-bottom: 20px;
+}
+
+
+.page-title {
+    margin: 0;
+    font-size: 24px;
 }

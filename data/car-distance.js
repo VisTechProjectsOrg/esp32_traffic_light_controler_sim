@@ -1,4 +1,4 @@
-fetch('/config')
+fetch('/get_config')
   .then(r => r.json())
   .then(cfg => {
     window.dangerThreshold = cfg.dangerThreshold;

@@ -28,22 +28,20 @@ function closePopup(event) {
 function openPopup_settings() {
     console.log("Opening settings popup");
 
-    // document.getElementById("popup").style.display = "block";
-    // document.getElementById("overlay").style.display = "block";
-
-    const switch_element = document.getElementById('toggle_distance_sensor_switch');
+    const popup = document.getElementById("popup");
+    popup.classList.add("show");
 
     fetch('/get_config?' + new Date().getTime())
         .then(response => response.json())
         .then(data => {
-            document.getElementById("red_delay").value = data.red_delay;
-            document.getElementById("yellow_delay").value = data.yellow_delay;
-            document.getElementById("green_delay").value = data.green_delay;
+            document.getElementById("delay_red").value = data.delay_red;
+            document.getElementById("delay_yellow").value = data.delay_yellow;
+            document.getElementById("delay_green").value = data.delay_green;
             document.getElementById("toggle_distance_sensor_switch").checked = !!data.distance_sensor_enabled;
             document.getElementById("distance_max").value = data.distance_max;
             document.getElementById("distance_warning").value = data.distance_warning;
             document.getElementById("distance_danger").value = data.distance_danger;
-            document.getElementById("version_number_label").textContent = data.version;
+            document.getElementById("version_number_label").textContent = "v" + data.version;
 
             // Store original values for cancel
             originalDistanceSensorEnabled = !!data.distance_sensor_enabled;
@@ -205,17 +203,25 @@ document.addEventListener("DOMContentLoaded", function () {
         } else if (data.state) {
             updateTrafficLight(data.state);
 
-        } else if (data.distance_cm !== undefined && data.distance_cm !== null) {
+        } else if (data.distance_cm === null) {
+            console.warn("Distance is null (sensor may be offline):", data);
+        }
+        else if (data.distance_cm !== undefined) {
             const distanceInput = document.getElementById("distance_to_wall");
             const distanceValue = parseInt(data.distance_cm, 10);
 
-            if (distanceInput && distanceInput.tagName === "INPUT") {
-                distanceInput.value = distanceValue;
-                distanceInput.dispatchEvent(new Event('input', { bubbles: true }));
-                console.log('setting "distance_to_wall" to', distanceValue, 'cm');
-                updateCarPosition();
+            if (!isNaN(distanceValue)) {
+                if (distanceInput && distanceInput.tagName === "INPUT") {
+                    distanceInput.value = distanceValue;
+                    distanceInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    console.log('Setting "distance_to_wall" to', distanceValue, 'cm');
+                    updateCarPosition();
+                }
+            } else {
+                console.warn("Distance value is NaN (possibly null):", data);
             }
-        } else {
+        }
+        else {
             console.error("Unknown data received:", data);
         }
 
@@ -280,9 +286,9 @@ document.addEventListener("DOMContentLoaded", function () {
             fetch('/get_config')
                 .then(response => response.json())
                 .then(data => {
-                    document.getElementById("red_delay").value = data.red_delay;
-                    document.getElementById("yellow_delay").value = data.yellow_delay;
-                    document.getElementById("green_delay").value = data.green_delay;
+                    document.getElementById("delay_red").value = data.delay_red;
+                    document.getElementById("delay_yellow").value = data.delay_yellow;
+                    document.getElementById("delay_green").value = data.delay_green;
                     document.getElementById("toggle_distance_sensor_switch").checked = !!data.distance_sensor_enabled;
                     document.getElementById("distance_max").value = data.distance_max;
                     document.getElementById("distance_warning").value = data.distance_warning;
@@ -301,9 +307,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function sendRequest(action) {
         const data = {
             action: action,
-            red_delay: parseFloat(document.getElementById("red_delay").value),
-            yellow_delay: parseFloat(document.getElementById("yellow_delay").value),
-            green_delay: parseFloat(document.getElementById("green_delay").value),
+            delay_red: parseFloat(document.getElementById("delay_red").value),
+            delay_yellow: parseFloat(document.getElementById("delay_yellow").value),
+            delay_green: parseFloat(document.getElementById("delay_green").value),
             distance_sensor_enabled: document.getElementById("toggle_distance_sensor_switch").checked,
             distance_max: document.getElementById("distance_max").value,
             distance_warning: document.getElementById("distance_warning").value,

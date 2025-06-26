@@ -39,13 +39,14 @@ LightState previousLightState = OFF;
 unsigned long previousMillis = 0;
 unsigned long currentDelay = 0;
 
-unsigned long LED_red_delay = 0;
-unsigned long LED_yellow_delay = 0;
-unsigned long LED_green_delay = 0;
+unsigned long LED_delay_red = 0;
+unsigned long LED_delay_yellow = 0;
+unsigned long LED_delay_green = 0;
 
 bool lightMode = false;
 bool themeMode = false;
 bool blinkState = false;
+bool blinkAllColors = true; // Default to blinking all colors drop down menu
 bool randomBlinkMode = false;
 int blinkPin = -1;
 unsigned long lastBlinkMillis = 0;
@@ -216,19 +217,19 @@ void cycleLights()
     {
     case RED: // if red turn it to green
       currentLightState = GREEN;
-      currentDelay = LED_green_delay;
+      currentDelay = LED_delay_green;
       break;
     case GREEN: // if green turn it to yellow
       currentLightState = YELLOW;
-      currentDelay = LED_yellow_delay;
+      currentDelay = LED_delay_yellow;
       break;
     case YELLOW: // if yellow turn it to red
       currentLightState = RED;
-      currentDelay = LED_red_delay;
+      currentDelay = LED_delay_red;
       break;
     case OFF: // if off turn it to red?
       currentLightState = RED;
-      currentDelay = LED_red_delay;
+      currentDelay = LED_delay_red;
       break;
     }
   }
@@ -309,9 +310,9 @@ void handleGetConfig(AsyncWebServerRequest *request)
 {
   Serial.println("Sending get config");
 
-  String jsonResponse = "{\"red_delay\":" + String(LED_red_delay / 1000) +
-                        ",\"yellow_delay\":" + String(LED_yellow_delay / 1000) +
-                        ",\"green_delay\":" + String(LED_green_delay / 1000) +
+  String jsonResponse = "{\"delay_red\":" + String(LED_delay_red / 1000) +
+                        ",\"delay_yellow\":" + String(LED_delay_yellow / 1000) +
+                        ",\"delay_green\":" + String(LED_delay_green / 1000) +
                         ",\"distance_max\":" + String(distance_max) +
                         ",\"distance_warning\":" + String(distance_warning) +
                         ",\"distance_danger\":" + String(distance_danger) +
@@ -335,9 +336,9 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
   }
 
   String action = doc["action"];
-  float red = doc["red_delay"];
-  float yellow = doc["yellow_delay"];
-  float green = doc["green_delay"];
+  float red = doc["delay_red"];
+  float yellow = doc["delay_yellow"];
+  float green = doc["delay_green"];
   bool distance_sensor_enabled_form = doc["distance_sensor_enabled"];
 
   Serial.println("Action: " + action);
@@ -351,9 +352,9 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
 
   if (action == "set_config")
   {
-    unsigned long red = doc["red_delay"];
-    unsigned long yellow = doc["yellow_delay"];
-    unsigned long green = doc["green_delay"];
+    unsigned long red = doc["delay_red"];
+    unsigned long yellow = doc["delay_yellow"];
+    unsigned long green = doc["delay_green"];
     bool distance_sensor_enabled_form = doc["distance_sensor_enabled"];
 
     unsigned long new_distance_max = doc["distance_max"];
@@ -361,9 +362,9 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     unsigned long new_distance_danger = doc["distance_danger"];
 
     // Save to Preferences
-    preferences.putULong("red_delay", red * 1000);
-    preferences.putULong("yellow_delay", yellow * 1000);
-    preferences.putULong("green_delay", green * 1000);
+    preferences.putULong("delay_red", red * 1000);
+    preferences.putULong("delay_yellow", yellow * 1000);
+    preferences.putULong("delay_green", green * 1000);
 
     preferences.putULong("dist_max", new_distance_max);
     preferences.putULong("dist_warn", new_distance_warning);
@@ -371,9 +372,9 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     preferences.putBool("dist_sens_en", distance_sensor_enabled_form);
 
     // Use directly from received values
-    LED_red_delay = red * 1000;
-    LED_yellow_delay = yellow * 1000;
-    LED_green_delay = green * 1000;
+    LED_delay_red = red * 1000;
+    LED_delay_yellow = yellow * 1000;
+    LED_delay_green = green * 1000;
 
     distance_sensor_enabled = distance_sensor_enabled_form;
     distance_max = new_distance_max;
@@ -382,9 +383,9 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
 
     StaticJsonDocument<200> responseDoc;
     responseDoc["message"] = "Config updated!";
-    responseDoc["red_delay"] = red;
-    responseDoc["yellow_delay"] = yellow;
-    responseDoc["green_delay"] = green;
+    responseDoc["delay_red"] = red;
+    responseDoc["delay_yellow"] = yellow;
+    responseDoc["delay_green"] = green;
     responseDoc["distance_max"] = distance_max;
     responseDoc["distance_warning"] = distance_warning;
     responseDoc["distance_danger"] = distance_danger;
@@ -548,28 +549,6 @@ void handleToggleThemeMode(AsyncWebServerRequest *request)
   request->send(200, "text/plain", themeMode ? "Cat mode enabled" : "normal mode enabled");
 }
 
-void handleGetDistance(AsyncWebServerRequest *request)
-{
-  int distance = getDistance();
-
-  String jsonResponse;
-
-  if (distance == -1)
-  {
-    jsonResponse = "{\"distance_cm\":null}";
-  }
-  else
-  {
-    jsonResponse = "{\"distance_cm\":" + String(distance) + "}";
-  }
-
-  Serial.println("Distance: " + String(distance) + " cm | web request");
-
-  ws.textAll(jsonResponse); // Send update to all clients
-
-  request->send(200, "application/json", jsonResponse);
-}
-
 void notifyAllClientsDistance(int distance)
 {
   String jsonResponse;
@@ -664,9 +643,9 @@ void setup()
   preferences.begin("traffic-light", false);
 
   DefaultSetting defaultSettings[] = {
-      {"red_delay", 5000},
-      {"yellow_delay", 3000},
-      {"green_delay", 6000},
+      {"delay_red", 5000},
+      {"delay_yellow", 3000},
+      {"delay_green", 6000},
       {"dist_max", 150},
       {"dist_warn", 40},
       {"dist_dang", 10}};
@@ -680,9 +659,9 @@ void setup()
   }
 
   // Load timing delays
-  LED_red_delay = preferences.getULong("red_delay", 5000);
-  LED_yellow_delay = preferences.getULong("yellow_delay", 3000);
-  LED_green_delay = preferences.getULong("green_delay", 6000);
+  LED_delay_red = preferences.getULong("delay_red", 5000);
+  LED_delay_yellow = preferences.getULong("delay_yellow", 3000);
+  LED_delay_green = preferences.getULong("delay_green", 6000);
 
   // Load distance config
   distance_sensor_enabled = preferences.getBool("dist_sens_en", false);
@@ -695,20 +674,12 @@ void setup()
   webSocket.begin(); // Start WebSocket server
 
   server.on("/", HTTP_GET, handleRoot);
-  // server.on("/set_delay", HTTP_GET, handleSetDelay);
   server.on("/get_current_state", HTTP_GET, handleGetCurrentState);
-  server.on("/get_distance", HTTP_GET, handleGetDistance);
   server.on("/get_config", HTTP_GET, handleGetConfig);
   server.on("/set_config", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleFormConfig);
   server.on("/blink_mode", HTTP_GET, handlelightMode);
   server.on("/toggle_light_mode", HTTP_GET, handleToggleLightMode);
   server.on("/toggle_theme_mode", HTTP_GET, handleToggleThemeMode);
-
-  //   server.on("/script.js", HTTP_GET, [](AsyncWebServerRequest *request){
-  //     request->send(200, "application/javascript", "script.js", [](AsyncWebServerResponse *response){
-  //         response->addHeader("Cache-Control", "no-store, no-cache, must-revalidate");
-  //     });
-  // });
 
   server.serveStatic("/", SPIFFS, "/");
   server.serveStatic("/images", SPIFFS, "/images");
@@ -747,6 +718,11 @@ void setup()
 
   server.begin();
   Serial.println("HTTP server started");
+  Serial.print("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  Serial.print("Hostname: ");
+  Serial.println(WiFi.getHostname());
 }
 
 void loop()
@@ -758,12 +734,16 @@ void loop()
   static bool inDangerCycleMode = false;
 
   int distance = -1;
-  const int maxDistance = 200;
+  const int maxDistance = 200; // fix me get from config eeprom
   const int cautionThreshold = 40;
   const int dangerThreshold = 10;
+
+  // const int maxDistance = preferences.getULong("dist_max", 200);
+  // const int cautionThreshold = preferences.getULong("dist_warn", 40);
+  // const int dangerThreshold = preferences.getULong("dist_dang", 10);
+
   const unsigned long dangerHoldTime = 3000; // 3 seconds
 
-  // if (false)
   if (distance_sensor_enabled)
   {
     if (millis() - lastDistanceCheck >= 1000)
@@ -774,7 +754,7 @@ void loop()
       Serial.print("Distance: ");
       Serial.println(distance);
 
-      // Track how long we've been in danger
+      // Track how long we've been in danger, if we've been in danger for more than 3 seconds, flash RED and enter cycle mode
       if (distance != -1 && distance <= dangerThreshold)
       {
         if (dangerStartTime == 0 && !hasFlashedInDanger)
@@ -844,6 +824,6 @@ void loop()
   }
   else
   {
-    cycleLights();
+    cycleLights(); // If distance sensor is disabled, just cycle the lights
   }
 }

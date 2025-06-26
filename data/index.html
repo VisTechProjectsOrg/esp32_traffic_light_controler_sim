@@ -5,6 +5,7 @@
     <title>Vis Traffic Light Control</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8" />
+    <link rel="icon" href="data:,">
     <link rel="stylesheet" href="style.css">
     <link rel="stylesheet" href="car-distance-style.css" />
     <script src="effect.js"></script>
@@ -21,13 +22,18 @@
         </div>
     </div>
 
-    <h1 onclick=openPopup_time_waisted()>Welcome to Vis Traffic Light Control</h1>
+    <div class="header-container">
+        <h1 class="page-title" onclick="openPopup_time_waisted()">Welcome to Vis Traffic Light Controls</h1>
+        <button class="settings-icon" onclick="openPopup_settings()">
+            <img src="img/settings.svg" alt="Settings" class="settings-svg" >
+        </button>
+    </div>
+
+
     <div class="container">
         <img onclick="openPopup_time_waisted()" class="traffic-light" id="traffic-light"
             src="img/traffic_lt/all_off.png" alt="Traffic Light">
         <div>
-            <!-- Button to Open Settings Form -->
-            <button onclick="openPopup_settings()">Settings</button>
 
             <!-- Light Cycle Delay Popup -->
             <div class="overlay" id="overlay" onclick="closePopup()"></div>
@@ -37,6 +43,8 @@
                         <h1 class="popup-header">Settings</h1>
                     </div>
 
+                    <br>
+
                     <div id="popup-container" class="settings-wrapper">
 
 
@@ -44,14 +52,14 @@
                             <div class="timing-box">
                                 <h3>Light Timings</h3>
 
-                                <label for="red_delay">Red Delay (Sec):</label>
-                                <input type="number" id="red_delay" min="0" step="1">
-                                <br>
-                                <label for="yellow_delay">Yellow Delay (Sec):</label>
-                                <input type="number" id="yellow_delay" min="0" step="1">
+                                <label for="delay_red">Red Delay (Sec):</label>
+                                <input type="number" id="delay_red" min="0" step="1">
+                                
+                                <label for="delay_yellow">Yellow Delay (Sec):</label>
+                                <input type="number" id="delay_yellow" min="0" step="1">
 
-                                <label for="green_delay">Green Delay (Sec):</label>
-                                <input type="number" id="green_delay" min="0" step="1">
+                                <label for="delay_green">Green Delay (Sec):</label>
+                                <input type="number" id="delay_green" min="0" step="1">
                             </div>
 
                             <div class="toggle-container">
@@ -66,14 +74,14 @@
                         </div>
 
                         <div id="popup-second">
-                            <div class="timing-box" id="distanceSettings" >
-                                <h3>Distance Warning</h3>
-                                <label>Max (cm):</label>
-                                <input type="number" id="distance_max" name="distance_max" min="1" step="1"><br>
-                                <label>Warning (cm):</label>
-                                <input type="number" id="distance_warning" name="distance_warning" min="1" step="1"><br>
+                            <div class="timing-box" id="distanceSettings">
+                                <h3>Distance Warnings</h3>
                                 <label>Danger (cm):</label>
                                 <input type="number" id="distance_danger" name="distance_danger" min="1" step="1"><br>
+                                <label>Warning (cm):</label>
+                                <input type="number" id="distance_warning" name="distance_warning" min="1" step="1"><br>
+                                <label>Max (cm):</label>
+                                <input type="number" id="distance_max" name="distance_max" min="1" step="1"><br>
                             </div>
                         </div>
 
@@ -92,7 +100,7 @@
             <div class="blink-switch-wrapper">
 
                 <form id="blinkModeForm">
-                    <label>Blink Color:</label>
+                    <label><b>Blink Color:</b></label>
                     <select name="color" id="blinkColorSelect">
                         <option value="all">All Colors</option>
                         <option value="random">Random</option>
@@ -102,33 +110,38 @@
                     </select>
                 </form>
 
-            <!-- Toggle Light Modes -->
-            <div class="toggle-container">
-                <label class="switch">
-                    <input type="checkbox" id="toggleLightModeSwitch" onclick="toggleLightMode()">
-                    <span class="slider"></span>
-                </label>
-                <span id="toggleLightModeLabel">Cycle Mode</span>
-            </div>
 
-            <div class="toggle-container">
-                <label class="switch">
-                    <input type="checkbox" id="toggleThemeModeSwitch" onclick="toggleThemeMode()">
-                    <span class="slider"></span>
-                </label>
-                <span id="toggleThemeModeLabel">Normal Mode</span>
+                <div class="mode-switches">
+
+                    <!-- Toggle Light Modes -->
+                    <div class="toggle-container">
+                        <label class="switch">
+                            <input type="checkbox" id="toggleLightModeSwitch" onclick="toggleLightMode()">
+                            <span class="slider"></span>
+                        </label>
+                        <span id="toggleLightModeLabel">Cycle Mode</span>
+                    </div>
+
+                    <div class="toggle-container">
+                        <label class="switch">
+                            <input type="checkbox" id="toggleThemeModeSwitch" onclick="toggleThemeMode()">
+                            <span class="slider"></span>
+                        </label>
+                        <span id="toggleThemeModeLabel">Normal Mode</span>
+                    </div>
+
+                </div>
+
             </div>
-</div>
 
             <br>
-
 
             <div id="carDistanceBlock">
                 <h2>Distance to Wall</h2>
                 <div class="car_container">
-                    <img id="car" class="car_car-img" src="img/is250/is250.png" alt="Lexus IS250" />
-                    <img id="car_wheel-front" class="car_wheel" src="img/is250/is250_wheel.png" alt="Front Wheel" />
-                    <img id="car_wheel-rear" class="car_wheel" src="img/is250/is250_wheel.png" alt="Rear Wheel" />
+                    <img id="car" class="car_car-img" src="img/is250/is250.webp" alt="Lexus IS250" />
+                    <img id="car_wheel-front" class="car_wheel" src="img/is250/is250_wheel.webp" alt="Front Wheel" />
+                    <img id="car_wheel-rear" class="car_wheel" src="img/is250/is250_wheel.webp" alt="Rear Wheel" />
                     <div class="car_wall"></div>
                     <div class="car_ticks">
                         <div class="car_tick" data-label="200"></div>
