@@ -58,6 +58,33 @@ function openPopup_settings() {
 
             // Show/hide car distance block on page load
             document.getElementById("carDistanceBlock").style.display = data.distance_sensor_enabled ? "" : "none";
+
+
+            // Update car distance config values
+            window.visualMax = parseInt(data.distance_max);
+            window.warningThreshold = parseInt(data.distance_warning);
+            window.dangerThreshold = parseInt(data.distance_danger);
+
+            // Update input max
+            const distanceInput = document.getElementById("distance_to_wall");
+            distanceInput.max = window.visualMax;
+
+            // Regenerate tick marks
+            const tickContainer = document.querySelector('.car_ticks');
+            tickContainer.innerHTML = ''; // Clear existing ticks
+            const tickCount = 10;
+            const tickStep = Math.floor(window.visualMax / tickCount);
+
+            for (let i = window.visualMax; i >= 0; i -= tickStep) {
+                const tick = document.createElement('div');
+                tick.classList.add('car_tick');
+                tick.setAttribute('data-label', i);
+                tickContainer.appendChild(tick);
+            }
+
+            // Update car immediately
+            updateCarPosition();
+
         })
         .catch(error => {
             console.error("Error fetching config values:", error);
@@ -72,6 +99,7 @@ function openPopup_settings() {
 }
 
 function openPopup_time_waisted() {
+    console.log("%cWhy did I waste my time making this", css_rainbow);
     alert('Why did I waste my time making this');
 }
 
@@ -159,7 +187,6 @@ function toggleDistanceSensorInputs() {
     }
 
 }
-
 
 document.addEventListener("DOMContentLoaded", function () {
     ws.onmessage = function (event) {
