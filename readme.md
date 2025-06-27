@@ -34,9 +34,9 @@ Use [VSCode](https://code.visualstudio.com/) with [PlatformIO](https://platformi
 
 You can configure the pinouts light by modifying the `config.h` file:
 ```cpp
-#define LED_red_pin 16
-#define LED_yellow_pin 17
-#define LED_green_pin 18
+#define LED_red_pin 12
+#define LED_yellow_pin 14
+#define LED_green_pin 27
 ```
 
 As well as wifi/AP info
