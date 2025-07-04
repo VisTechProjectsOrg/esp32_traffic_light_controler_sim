@@ -1,0 +1,57 @@
+name: Update README + Tag Release
+
+on:
+  push:
+    paths:
+      - version.json
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Run update script
+        run: node scripts/updateReadme.js
+
+      - name: Commit README if changed
+        run: |
+          git config user.name "GitHub Actions Bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git diff --quiet || (git add README.md && git commit -m "🔄 Auto-update version in README" && git push)
+
+      - name: Extract version from version.json
+        id: version
+        run: |
+          echo "VERSION=v$(jq -r .firmware version.json)" >> $GITHUB_OUTPUT
+
+      - name: Check if tag exists
+        id: tag-check
+        run: |
+          if git rev-parse "$VERSION" >/dev/null 2>&1; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+          fi
+        env:
+          VERSION: ${{ steps.version.outputs.VERSION }}
+
+      - name: Create Release Tag
+        if: steps.tag-check.outputs.exists == 'false'
+        uses: ncipollo/release-action@v1
+        with:
+          tag: ${{ steps.version.outputs.VERSION }}
+          name: "Firmware Release ${{ steps.version.outputs.VERSION }}"
+          body: |
+            🔄 Auto-created from `version.json`
+            - Firmware: ${{ steps.version.outputs.VERSION }}
+          draft: false
+          prerelease: false
+          artifacts: "build/*.bin"

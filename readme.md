@@ -1,6 +1,6 @@
-# Traffic Light Signal Controller
+# ESP32 OTA Updater
 
-Firmware updates
+This repo provides OTA updates for ESP32 firmware and SPIFFS.
 
-Firmware version:
-SPIFFS version:
+<!--VERSIONS_START-->
+<!--VERSIONS_END-->
