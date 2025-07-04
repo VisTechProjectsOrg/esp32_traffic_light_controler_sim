@@ -39,14 +39,21 @@
             <div class="overlay" id="overlay" onclick="closePopup()"></div>
             <div class="popup" id="popup">
                 <form id="setConfigForm" class="form-group">
-                    <div id="popup-header">
-                        <h1 class="popup-header">Settings</h1>
+
+                    <div id="popup-header" class="popup-header-bar">
+                        <h1 class="popup-title">Settings</h1>
+                        <!-- <button class="firmware-update-btn" onclick="updateFirmware()" title="Update Firmware"> -->
+                        <!-- <button class="firmware-update-btn" onclick="window.location.href='/index_firmware_update.html'" title="Update Firmware">
+                            <img src="img/firmware_update.webp" alt="Update Firmware">
+                        </button> -->
+                        <a href="index_firmware_update.html" class="firmware-update-btn" title="Update Firmware">
+                            <img src="img/firmware_update.webp" alt="Update Firmware">
+                        </a>
                     </div>
 
                     <br>
 
                     <div id="popup-container" class="settings-wrapper">
-
 
                         <div id="popup-first">
                             <div class="timing-box">
@@ -92,7 +99,10 @@
                         <button type="button" class="cancel-button" onclick="closePopup(event)">Cancel</button>
                     </div>
 
-                    <div class="version-label" id="version_number_label">v0.0</div>
+                    <div class="version-row">
+                        <div class="version-label" id="version_number_firmware_label">FW: v0.0</div>
+                        <div class="version-label" id="version_number_spiffs_label">SPIFFS: v0.0</div>
+                    </div>
                 </form>
             </div>
 

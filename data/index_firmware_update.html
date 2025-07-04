@@ -1,0 +1,246 @@
+<!-- OTA GitHub Updater: index_firmware_update.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>OTA Firmware Update</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background: #f8f8f8;
+    }
+
+    .container {
+      background: #fff;
+      border-radius: 12px;
+      padding: 30px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 420px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-top: 0;
+      color: #333;
+    }
+
+    .upload-area {
+      border: 2px dashed #999;
+      border-radius: 10px;
+      padding: 40px 20px;
+      margin: 20px 0;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .upload-area.dragover {
+      background-color: #eef;
+      border-color: #0078D7;
+    }
+
+    #file_input {
+      display: none;
+    }
+
+    #status {
+      font-weight: bold;
+      color: #333;
+      margin-top: 15px;
+    }
+
+    .progress-container {
+      width: 100%;
+      height: 16px;
+      background-color: #eee;
+      border-radius: 10px;
+      overflow: hidden;
+      margin-top: 10px;
+      display: none;
+    }
+
+    .progress-bar {
+      height: 100%;
+      width: 0%;
+      background-color: #4caf50;
+      transition: width 0.3s ease;
+    }
+
+    button {
+      margin: 8px 5px;
+      padding: 10px 16px;
+      border: none;
+      background-color: #0078D7;
+      color: white;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #005fa3;
+    }
+
+    /* Modal styles */
+    #successModal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 9999; display: none; align-items: center; justify-content: center; }
+    .modal-backdrop { position: absolute; width: 100%; height: 100%; background: rgba(0, 0, 0, 0.5); }
+    .modal-box {
+      position: relative;
+      background: #fff;
+      padding: 25px 30px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      max-width: 320px;
+      animation: fadeIn 0.3s ease-out;
+    }
+    .modal-box h3 { margin: 0 0 10px; color: #2e7d32; }
+    .modal-box p { margin-bottom: 20px; color: #555; }
+    .modal-box button { background-color: #2e7d32; }
+    @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>OTA Firmware Update</h2>
+
+    <p id="versionInfo">Checking version...</p>
+
+    <div class="upload-area" id="upload_area">
+      <p>Drag & drop <strong><code>FIRMWARE.bin</code></strong> OR <strong><code>SPIFFS.bin</code></strong> file here<br>
+         or <strong>click to browse</strong></p>
+      <input type="file" id="file_input" accept=".bin">
+    </div>
+
+    <button id="githubFirmware">⬇️ Install Firmware from GitHub</button>
+    <button id="githubSPIFFS">⬇️ Install SPIFFS from GitHub</button>
+
+    <div class="progress-container" id="progress_container">
+      <div class="progress-bar" id="progress_bar"></div>
+    </div>
+    <div id="status">Awaiting file...</div>
+  </div>
+
+  <div id="successModal">
+    <div class="modal-backdrop"></div>
+    <div class="modal-box">
+      <h3>✅ Update Successful</h3>
+      <p>Your device is now rebooting.</p>
+      <button onclick="closeModal()">OK</button>
+    </div>
+  </div>
+
+  <script>
+    const uploadArea = document.getElementById("upload_area");
+    const fileInput = document.getElementById("file_input");
+    const status = document.getElementById("status");
+    const progressBar = document.getElementById("progress_bar");
+    const progressContainer = document.getElementById("progress_container");
+    const versionInfo = document.getElementById("versionInfo");
+
+    // === LOCAL FILE HANDLING ===
+    uploadArea.addEventListener("click", () => fileInput.click());
+    uploadArea.addEventListener("dragover", (e) => { e.preventDefault(); uploadArea.classList.add("dragover"); });
+    uploadArea.addEventListener("dragleave", () => uploadArea.classList.remove("dragover"));
+    uploadArea.addEventListener("drop", (e) => {
+      e.preventDefault(); uploadArea.classList.remove("dragover");
+      const file = e.dataTransfer.files[0];
+      handleUpload(file);
+    });
+    fileInput.addEventListener("change", () => handleUpload(fileInput.files[0]));
+
+    function handleUpload(file) {
+      if (!file || !file.name.endsWith(".bin")) {
+        status.textContent = "❌ Only .bin files are allowed.";
+        return;
+      }
+
+      const isSPIFFS = file.name.toLowerCase().includes("spiffs");
+      status.textContent = `Uploading ${file.name} (${isSPIFFS ? "SPIFFS" : "Firmware"})...`;
+      progressContainer.style.display = "block";
+      progressBar.style.width = "0%";
+
+      const xhr = new XMLHttpRequest();
+      xhr.open("POST", "/update", true);
+
+      xhr.upload.onprogress = function (e) {
+        if (e.lengthComputable) {
+          const percent = ((e.loaded / e.total) * 100).toFixed(0);
+          status.textContent = `Uploading ${file.name} - ${percent}%`;
+          progressBar.style.width = percent + "%";
+        }
+      };
+
+      xhr.onload = function () {
+        if (xhr.status === 200 && xhr.responseText === "OK") {
+          status.textContent = "✅ Upload complete.";
+          progressBar.style.width = "100%";
+          showSuccessModal();
+        } else {
+          status.textContent = "❌ Upload failed.";
+          progressBar.style.backgroundColor = "#f44336";
+        }
+      };
+
+      const form = new FormData();
+      form.append("file", file, file.name);
+      xhr.send(form);
+    }
+
+    function showSuccessModal() {
+      document.getElementById("successModal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("successModal").style.display = "none";
+      window.location.href = "/";
+    }
+
+    // === GITHUB FILE FETCH ===
+    function fetchAndUploadFromGitHub(url, label) {
+      status.textContent = `🔄 Fetching ${label} from GitHub...`;
+      progressContainer.style.display = "block";
+      progressBar.style.width = "0%";
+
+      fetch(url)
+        .then(response => {
+          if (!response.ok) throw new Error("Failed to fetch " + label);
+          return response.blob();
+        })
+        .then(blob => {
+          const file = new File([blob], label, { type: "application/octet-stream" });
+          handleUpload(file);
+        })
+        .catch(err => {
+          status.textContent = `❌ ${err.message}`;
+          progressBar.style.backgroundColor = "#f44336";
+        });
+    }
+
+    document.getElementById("githubFirmware").addEventListener("click", () => {
+      fetchAndUploadFromGitHub("https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/build/firmware.bin", "firmware.bin");
+    });
+
+    document.getElementById("githubSPIFFS").addEventListener("click", () => {
+      fetchAndUploadFromGitHub("https://raw.githubusercontent.com/YOUR_USER/YOUR_REPO/main/build/spiffs.bin", "spiffs.bin");
+    });
+
+    // === VERSION CHECK ===
+    fetch("/get_config")
+      .then(res => res.json())
+      .then(data => {
+        if (data.version)
+          versionInfo.textContent = "Current Version: v" + data.version;
+        else
+          versionInfo.textContent = "Version info unavailable.";
+      })
+      .catch(() => versionInfo.textContent = "Version info unavailable.");
+  </script>
+</body>
+</html>

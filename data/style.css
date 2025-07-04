@@ -166,11 +166,12 @@ input:checked+.slider:before {
 }
 
 #popup #setConfigForm {
-    padding-top: 1px;
+    padding-top: 10px;
     max-width: none;
     width: auto;
     border: 3px solid #eeea0c;
     border-radius: 10px;
+    /* box-sizing: border-box; */
 }
 
 @keyframes fadeIn {
@@ -212,11 +213,58 @@ input:checked+.slider:before {
     top: 0;
 }
 
-/* #popup-container {
-    width: 200px;
-    background-color: #ffcc33;
-    margin: auto;
-} */
+.popup-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 10px;
+    margin-top: 0px;
+}
+
+.popup-title {
+    font-size: 32px;
+    margin: 0;
+    padding: 0;
+}
+
+.firmware-update-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 6px;
+    transition: transform 0.2s ease, filter 0.3s ease, background-color 0.3s ease;
+    position: relative;
+}
+
+.firmware-update-btn:hover {
+    transform: scale(1.25);
+    background-color: rgba(14, 236, 147, 0.682);
+    filter: hue-rotate(80deg) saturate(1.5);
+}
+
+.firmware-update-btn img {
+    width: 38px;
+    height: 38px;
+    transition: transform 0.2s ease;
+}
+
+#drop_zone {
+    border: 3px dashed #4CAF50;
+    padding: 50px;
+    cursor: pointer;
+    background: #f9f9f9;
+    transition: background-color 0.3s;
+}
+
+.hidden {
+    display: none;
+}
+
+
+#popup-container {
+    /* background-color: #ffcc33; */
+}
 
 #popup-container {
     display: flex;
@@ -245,6 +293,20 @@ input:checked+.slider:before {
 #popup-clear {
     clear: both;
 }
+
+.version-row {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    /* spacing between FW and SPIFFS */
+    margin-top: 10px;
+}
+
+.version-label {
+    font-weight: bold;
+    color: #444;
+}
+
 
 .button-row {
     margin-top: 20px;

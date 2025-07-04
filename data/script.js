@@ -41,7 +41,8 @@ function openPopup_settings() {
             document.getElementById("distance_max").value = data.distance_max;
             document.getElementById("distance_warning").value = data.distance_warning;
             document.getElementById("distance_danger").value = data.distance_danger;
-            document.getElementById("version_number_label").textContent = "v" + data.version;
+            document.getElementById("version_number_firmware_label").textContent = "FW: v" + data.version_firmware;
+            document.getElementById("version_number_spiffs_label").textContent = "SPIFFS: v" + data.version_spiffs;
 
             // Store original values for cancel
             originalDistanceSensorEnabled = !!data.distance_sensor_enabled;
@@ -189,6 +190,7 @@ function toggleDistanceSensorInputs() {
 }
 
 document.addEventListener("DOMContentLoaded", function () {
+
     ws.onmessage = function (event) {
         let data = JSON.parse(event.data);
 
@@ -320,6 +322,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     document.getElementById("distance_max").value = data.distance_max;
                     document.getElementById("distance_warning").value = data.distance_warning;
                     document.getElementById("distance_danger").value = data.distance_danger;
+                    document.getElementById("version_number_firmware_label").textContent = "FW: v" + (data.version || "0.0");
+                    document.getElementById("version_number_spiffs_label").textContent = "SPIFFS: v" + (data.spiffs_version || "0.0");
 
                     toggleDistanceSensorInputs();
                 });

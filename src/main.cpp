@@ -9,6 +9,8 @@
 #include <ArduinoJson.h>
 #include <WebSocketsServer.h>
 #include <TFMPlus.h>
+#include <ota_updater.h>
+
 
 WebSocketsServer webSocket = WebSocketsServer(81); // Port 81 for WebSocket
 AsyncWebServer server(80);
@@ -327,7 +329,8 @@ void handleGetConfig(AsyncWebServerRequest *request)
                         ",\"distance_warning\":" + String(distance_warning) +
                         ",\"distance_danger\":" + String(distance_danger) +
                         ",\"distance_sensor_enabled\":" + String(distance_sensor_enabled ? "true" : "false") +
-                        ",\"version\":\"" + String(VERSION) + "\"}";
+                        ",\"version_firmware\":\"" + String(VERSION_FIRMWARE) + "\"" +
+                        ",\"version_spiffs\":\"" + String(VERSION_SPIFFS) + "\"}";
 
   request->send(200, "application/json", jsonResponse);
 }
@@ -683,6 +686,7 @@ void setup()
   webSocket.begin(); // Start WebSocket server
 
   server.on("/", HTTP_GET, handleRoot);
+  server.on("/firmware_update", HTTP_GET, handleFirmwareUpdate);
   server.on("/get_current_state", HTTP_GET, handleGetCurrentState);
   server.on("/get_config", HTTP_GET, handleGetConfig);
   server.on("/set_config", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleFormConfig);
@@ -732,6 +736,9 @@ void setup()
 
   Serial.print("Hostname: ");
   Serial.println(WiFi.getHostname());
+
+  setupOTA(server);  // Enable OTA route
+  Serial.println("OTA setup complete");
 }
 
 void loop()
