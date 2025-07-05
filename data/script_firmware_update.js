@@ -3,6 +3,9 @@
 let uploadInProgress = false;
 
 document.addEventListener("DOMContentLoaded", () => {
+  // Add fade-in effect to the container
+  document.querySelectorAll('.container').forEach(el => el.classList.add('fade-in'));
+
   const dropArea = document.getElementById("drop-area");
   const fileInput = document.getElementById("file_input");
   const progressBar = document.getElementById("progress_bar");
@@ -12,7 +15,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const spiffsBtn = document.getElementById("githubSPIFFS");
   const versionInfo = document.getElementById("versionInfo");
 
-  // dropArea.addEventListener("click", () => fileInput.click());
+  dropArea.addEventListener("click", () => fileInput.click());
 
   dropArea.addEventListener("dragover", (e) => {
     e.preventDefault();
@@ -63,11 +66,30 @@ document.addEventListener("DOMContentLoaded", () => {
             spiffsBtn.textContent = `✅ SPIFFS is Up-to-Date`;
           }
         })
-        .catch(() => {
+        .catch(err => {
+          console.error("Failed to fetch version info from GitHub:", err);
+
           firmwareBtn.textContent = "⚠️ Firmware check failed";
           spiffsBtn.textContent = "⚠️ SPIFFS check failed";
+
+          firmwareBtn.classList.add("error");
+          spiffsBtn.classList.add("error");
+
+          firmwareBtn.disabled = true;
+          spiffsBtn.disabled = true;
         });
-    });
+    }).catch(err => {
+      console.error("Failed to fetch version info from GitHub:", err);
+
+      firmwareBtn.textContent = "⚠️ Firmware check failed";
+      spiffsBtn.textContent = "⚠️ SPIFFS check failed";
+
+      firmwareBtn.classList.add("error");
+      spiffsBtn.classList.add("error");
+
+      firmwareBtn.disabled = true;
+      spiffsBtn.disabled = true;
+    });;
 
   firmwareBtn.addEventListener("click", () => {
     fetchAndUploadFromGitHub("https://raw.githubusercontent.com/VisTechProjects/esp32_traffic_light_controler_sim/firmware_prod/build/firmware.bin", "firmware.bin");

@@ -34,6 +34,9 @@ function openPopup_settings() {
     fetch('/get_config?' + new Date().getTime())
         .then(response => response.json())
         .then(data => {
+
+            console.log("Fetched config values:", data);
+
             document.getElementById("delay_red").value = data.delay_red;
             document.getElementById("delay_yellow").value = data.delay_yellow;
             document.getElementById("delay_green").value = data.delay_green;
@@ -41,6 +44,8 @@ function openPopup_settings() {
             document.getElementById("distance_max").value = data.distance_max;
             document.getElementById("distance_warning").value = data.distance_warning;
             document.getElementById("distance_danger").value = data.distance_danger;
+            document.getElementById("version_number_firmware_label").textContent = "FW: v" + (data.version_firmware || "0.0");
+            document.getElementById("version_number_spiffs_label").textContent = "SPIFFS: v" + (data.version_spiffs || "0.0");
 
             // Store original values for cancel
             originalDistanceSensorEnabled = !!data.distance_sensor_enabled;

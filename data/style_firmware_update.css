@@ -16,7 +16,13 @@
      width: 100%;
      max-width: 420px;
      text-align: center;
+     opacity: 0;
+     transition: opacity 0.6s ease-in-out;
  }
+
+   .container.fade-in {
+    opacity: 1;
+  }
 
  h2 {
      margin-top: 0;
@@ -48,11 +54,11 @@
  }
 
  .button-group {
-  display: flex;
-  justify-content: center;
-  gap: 10px;
-  margin: 15px 0;
-}
+     display: flex;
+     justify-content: center;
+     gap: 10px;
+     margin: 15px 0;
+ }
 
  .progress-container {
      width: 100%;
@@ -75,12 +81,17 @@
      margin: 8px 5px;
      padding: 10px 16px;
      border: none;
-     background-color: hsla(2, 94%, 34%, 0.774);
+     background-color: #f4c542;
      color: white;
      border-radius: 6px;
      font-weight: bold;
      cursor: pointer;
  }
+
+ button.error {
+  background-color: #d9534f !important;
+  color: #fff;
+}
 
  button:disabled {
      background-color: #aaa;
@@ -126,7 +137,7 @@
      text-align: center;
      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
      max-width: 320px;
-     animation: fadeIn 0.5 ease-out;
+     animation: fadeIn 1.2 ease-out;
  }
 
  .modal-box h3 {
@@ -154,22 +165,37 @@
          transform: scale(1);
      }
  }
- 
-#drop-area {
-  border: 2px dashed #666;
-  border-radius: 10px;
-  padding: 30px;
-  text-align: center;
-  margin: 20px 0;
-  cursor: pointer;
-  transition: border-color 0.3s ease;
-}
 
-#drop-area input[type="file"] {
-  display: none;
-}
+ #drop-area {
+     border: 3px dashed #666;
+     border-radius: 20px;
+     padding: 30px;
+     text-align: center;
+     margin: 20px 0;
+     cursor: pointer;
+     transition: border-color 0.3s ease;
+ }
 
-#drop-area:hover {
-  border-color: #333;
-}
+ #drop-area input[type="file"] {
+     display: none;
+ }
 
+ #drop-area:hover {
+     border-color: #180ae2;
+ }
+
+ code {
+     background-color: #f0f0f0;
+     font-weight: bold;
+     padding: 2px 6px;
+     border-radius: 4px;
+     font-family: monospace;
+     font-size: 90%;
+     color: #333;
+     display: inline-block;
+ }
+
+ .code.button.fetching {
+    background-color: #f4c542 !important;
+    color: #000;
+  }
