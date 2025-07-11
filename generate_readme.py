@@ -14,7 +14,8 @@ firmware_ver = fw_match.group(1) if fw_match else "unknown"
 spiffs_ver = spiffs_match.group(1) if spiffs_match else "unknown"
 
 # Create README content
-readme = f"""# ESP32 Traffic Light Controller Simulator
+readme = f"""
+# ESP32 Traffic Light Controller Simulator TEST 123
 
 **Firmware Version:** {firmware_ver}  
 **SPIFFS Version:** {spiffs_ver}
@@ -25,9 +26,10 @@ This project simulates a traffic light controller using ESP32.
 - WiFi connectivity
 - Configurable delays
 - Distance-based flashing logic
+
 """
 
-with open("README.md", "w") as f:
+with open("README_test.md", "w") as f:
     f.write(readme)
 
 print("README.md updated.")
