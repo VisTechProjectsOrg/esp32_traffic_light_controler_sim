@@ -15,7 +15,7 @@ spiffs_ver = spiffs_match.group(1) if spiffs_match else "unknown"
 
 # Create README content
 readme = f"""
-# ESP32 Traffic Light Controller Simulator TEST 123
+# ESP32 Traffic Light Controller Simulator TEST NEW
 
 **Firmware Version:** {firmware_ver}  
 **SPIFFS Version:** {spiffs_ver}
