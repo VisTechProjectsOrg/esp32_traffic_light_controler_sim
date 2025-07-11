@@ -1,35 +1,28 @@
 import re
 
-# Path to config.h
-config_path = "src/config.h"
+with open("src/config.h", "r") as f:
+    config = f.read()
 
-with open(config_path, "r") as f:
-    content = f.read()
+# Match version strings
+fw_match = re.search(r'#define VERSION_FIRMWARE\s+"(.+?)"', config)
+spiffs_match = re.search(r'#define VERSION_SPIFFS\s+"(.+?)"', config)
 
-# Extract versions using regex
-fw_match = re.search(r'#define VERSION_FIRMWARE\s+"(.+?)"', content)
-spiffs_match = re.search(r'#define VERSION_SPIFFS\s+"(.+?)"', content)
+# Fallbacks if not found
+firmware_version = fw_match.group(1) if fw_match else "unknown"
+spiffs_version = spiffs_match.group(1) if spiffs_match else "unknown"
 
-firmware_ver = fw_match.group(1) if fw_match else "unknown"
-spiffs_ver = spiffs_match.group(1) if spiffs_match else "unknown"
+# Load template
+with open("README_template.md", "r") as f:
+    template = f.read()
 
-# Create README content
-readme = f"""
-# ESP32 Traffic Light Controller Simulator TEST NEW
+# Replace placeholders
+readme = (
+    template.replace("{{FIRMWARE_VERSION}}", firmware_version)
+            .replace("{{SPIFFS_VERSION}}", spiffs_version)
+)
 
-**Firmware Version:** {firmware_ver}  
-**SPIFFS Version:** {spiffs_ver}
-
-This project simulates a traffic light controller using ESP32.
-
-## Features
-- WiFi connectivity
-- Configurable delays
-- Distance-based flashing logic
-
-"""
-
-with open("README_test.md", "w") as f:
+# Write final README
+with open("README.md", "w") as f:
     f.write(readme)
 
-print("README.md updated.")
+print("README.md updated from template.")
