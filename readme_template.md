@@ -10,7 +10,6 @@
 <div>
     <img src="data/img/traffic_lt/all_on.png" alt="Traffic Light" width="100" height="200" style="margin-right: 10px;">
     <img src="images/traffic_light.gif" alt="Traffic Light" width="100" height="200" style="margin-right: 10px;">
-    <img src="data/img/traffic_lt/all_on_cat.png" alt="Traffic Light" width="100" height="200" style="margin-left: 10px;">
 </div>
 
 ## Features
@@ -34,20 +33,18 @@ Use [VSCode](https://code.visualstudio.com/) with [PlatformIO](https://platformi
 
 You can configure the pinouts light by modifying the `config.h` file:
 ```cpp
-#define LED_red_pin 16
-#define LED_yellow_pin 17
-#define LED_green_pin 18
+#define LED_red_pin 12
+#define LED_yellow_pin 14
+#define LED_green_pin 27
 ```
 
 As well as wifi/AP info
 ```cpp
-bool use_wifi = false; // connect to WiFi or create an access point
-
 // for connecting to a network, use_wifi must be true
 const char *ssid = "SSID";
 const char *password = "PW";
 
-// or set up an open (or protected) access point
+// or set up an open (or protected) access point, uncommenting will override connecting to wifi
 const char *AP_ssid = "Traffic Lights";
 // const char *AP_pass = "1234578"; //uncomment me to add a password
 ```
@@ -68,7 +65,23 @@ To configure the light cycle delays, distance warnings or firmware updates use t
 
 <br>
 
+## OTA updates:
+
+OTA updates are available (if connected to wifi)
+
+<div style="display: flex; align-items: center;">
+    <table>
+      <tr>
+        <td><img src="images/ota_page.png" alt="OTA Updates" width="500" height="431"></td>
+        <td><img src="images/ota_page_update_avail.png" alt="OTA Updates" width="500" height="431"></td>
+      </tr>
+    </table>
+</div>
+
+<br>
+
 ## Current firmware version:
 
-**Firmware Version:** v{{FIRMWARE_VERSION}}  
-**SPIFFS Version:** v{{SPIFFS_VERSION}}
+
+**Firmware Version:** `v{{FIRMWARE_VERSION}}`
+**SPIFFS Version:** `v{{SPIFFS_VERSION}}`

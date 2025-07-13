@@ -9,7 +9,7 @@ void setupOTA(AsyncWebServer &server)
   server.on("/update", HTTP_POST, [](AsyncWebServerRequest *request)
             {
     bool hasError = Update.hasError();
- request->send(200, "text/plain", "OK");
+    request->send(200, "text/plain", "OK");
 
 static bool shouldReboot = false;
 
