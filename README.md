@@ -2,8 +2,8 @@
 
 This branch contains OTA firmware updates for the ESP32.
 
-**Firmware Version:** `v0.2`  
-**SPIFFS Version:** `v0.2`
+**Firmware Version:** 0.1  
+**SPIFFS Version:** 0.1
 
 ## Files
 - `firmware.bin` - main firmware binary
