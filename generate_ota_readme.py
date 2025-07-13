@@ -23,4 +23,4 @@ This branch contains OTA firmware updates for the ESP32.
 with open("README.md", "w") as f:
     f.write(readme_content)
 
-print("📄 README.md generated.")
+print("README.md generated.")
