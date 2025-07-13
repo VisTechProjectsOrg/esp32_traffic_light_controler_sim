@@ -1,0 +1,2 @@
+#define VERSION_FIRMWARE "0.1"
+#define VERSION_SPIFFS "0.1"

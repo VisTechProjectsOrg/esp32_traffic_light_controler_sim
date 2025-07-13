@@ -1,6 +1,6 @@
 import re
 
-with open("src/config.h", "r") as f:
+with open("src/version.h", "r") as f:
     config = f.read()
 
 # Match version strings
@@ -12,7 +12,7 @@ firmware_version = fw_match.group(1) if fw_match else "unknown"
 spiffs_version = spiffs_match.group(1) if spiffs_match else "unknown"
 
 # Load template
-with open("README_template.md", "r") as f:
+with open("readme_template.md", "r") as f:
     template = f.read()
 
 # Replace placeholders

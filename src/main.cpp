@@ -10,6 +10,7 @@
 #include <WebSocketsServer.h>
 #include <TFMPlus.h>
 #include <ota_updater.h>
+#include <version.h>
 
 
 WebSocketsServer webSocket = WebSocketsServer(81); // Port 81 for WebSocket
