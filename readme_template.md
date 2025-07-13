@@ -1,4 +1,4 @@
-# Traffic Light Signal Controller v{{FIRMWARE_VERSION}}  
+# Traffic Light Signal Controller <code>v{{FIRMWARE_VERSION}}</code>
 
 <div style="display: flex; align-items: center; flex-wrap: nowrap;">
     <span style="font-size: 20px; max-width: 500px; text-align: justify;">
@@ -38,6 +38,15 @@ You can configure the pinouts light by modifying the `config.h` file:
 #define LED_green_pin 27
 ```
 
+Configure delays and distance sensor
+
+```cpp
+unsigned long blinkInterval = 1000;        // Traffic light blink mode interval in milliseconds
+const unsigned long dangerHoldTime = 3000; // How long you must stay in the danger zone before flashing (3s)
+
+#define DISTANCE_SENSOR_ENABLED // programticly enable distance sensor
+```
+
 As well as wifi/AP info
 ```cpp
 // for connecting to a network, use_wifi must be true
@@ -54,13 +63,13 @@ const char *AP_ssid = "Traffic Lights";
 To configure the light cycle delays, distance warnings or firmware updates use the **Settings menu**:
 
 <div style="display: flex; align-items: center;">
-    <img src="images/options_menu.png" alt="Traffic Light" width="300" height="320">
+    <img src="images/options_menu.png" alt="Traffic Light" width="400" height="430">
 </div>
 
 ## Site preview
 
 <div style="display: flex; align-items: center;">
-    <img src="images/main_page.png" alt="Traffic Light" width="400" height="420">
+    <img src="images/main_page.png" alt="Traffic Light" width="572" height="501">
 </div>
 
 <br>
@@ -79,6 +88,7 @@ OTA updates are available (if connected to wifi)
 </div>
 
 <br>
+
 
 ## Current firmware version:
 

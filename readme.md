@@ -1,4 +1,4 @@
-# Traffic Light Signal Controller v0.1  
+# Traffic Light Signal Controller <code>v0.1</code>
 
 <div style="display: flex; align-items: center; flex-wrap: nowrap;">
     <span style="font-size: 20px; max-width: 500px; text-align: justify;">
