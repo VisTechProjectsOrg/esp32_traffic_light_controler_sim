@@ -5,12 +5,13 @@
 
 .car_container {
   border: 2px solid #333;
-  height: 100px;
+  height: 120px;
   width: 100%;
   max-width: 600px;
   position: relative;
   background: #eee;
   overflow: hidden;
+  /* overflow: visible; */ /* Uncomment to see the car image overflow and have laugh */
 }
 
 .car_wall {
@@ -24,7 +25,7 @@
 
 .car_car-img {
   position: absolute;
-  top: 12px;
+  top: 32px;
   height: 90px;
   transition: left 0.3s ease;
 }
@@ -38,45 +39,40 @@
 }
 
 #car_wheel-front {
-  top: 67px;
+  top: 87px;
   width: 30px;
   height: 30px;
 }
 
 #car_wheel-rear {
-  top: 67px;
+  top: 87px;
   width: 30px;
   height: 30px;
 }
 
 .car_ticks {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 20px;
-  height: 10px;
   display: flex;
   justify-content: space-between;
-  padding: 0 0 0 10px;
-  pointer-events: none;
+  flex-direction: row-reverse;    /* ← reverse the order of the ticks */
+  width: calc(100% - 20px);
+  padding-left: 10px;
 }
 
 .car_tick {
-  width: 1px;
+  position: relative;    /* keep this so ::after is positioned relative to the tick */
+  width: 2px;
   height: 10px;
   background: #000;
-  position: relative;
 }
 
+/* Remove any justify-content here—it doesn’t apply to a single element. */
+
+
+
 .car_tick::after {
-  content: attr(data-label);
-  position: absolute;
-  top: 10px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 10px;
-  color: #333;
+  left: calc(100% + 0px);
 }
+
 
 .car_input-group {
   margin-top: 20px;

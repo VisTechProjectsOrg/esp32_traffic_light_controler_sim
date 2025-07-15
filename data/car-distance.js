@@ -1,30 +1,15 @@
 // car-distance.js
 
-let visualMax = 150;
-let cautionThreshold = 40;
-let dangerThreshold = 10;
+let visualMax = 20;
+let cautionThreshold = 3;
+let dangerThreshold = 0.5;
 
 let lastPosition = null;
 let wheelRotation = 0;
 
-// 1) Build tick marks based on current visualMax
-function generateTicks() {
-  const container = document.querySelector('.car_ticks');
-  if (!container) return;
-  container.innerHTML = '';
-  const step = Math.max(Math.floor(visualMax / 10), 1);
-  for (let v = visualMax; v >= 0; v -= step) {
-    const d = document.createElement('div');
-    d.className = 'car_tick';
-    d.dataset.label = v;
-    container.appendChild(d);
-  }
-}
-
-// 2) Position car, spin wheels, update status & warning
 function updateCarPosition() {
   const inp = document.getElementById('distance_to_wall');
-  const dist = Math.max(parseInt(inp.value, 10) || 0, 0);
+  const dist = Math.max(parseFloat(inp.value) || 0, 0);
   const car = document.getElementById('car');
   const wf = document.getElementById('car_wheel-front');
   const wr = document.getElementById('car_wheel-rear');
@@ -58,23 +43,44 @@ function updateCarPosition() {
   else status.style.background = 'green';
 }
 
-// 3) Fetch your config and apply the three values
 function loadAndApplyConfig() {
-  fetch('/get_config')
-    .then(r => r.json())
-    .then(cfg => {
-      visualMax = +cfg.distance_max;
-      cautionThreshold = +cfg.distance_warning;
-      dangerThreshold = +cfg.distance_danger;
+  // 1) Pick the right URL based on environment
+  const isLocal = window.location.protocol === 'file:' ||
+                  window.location.hostname === 'localhost';
+  const url     = isLocal ? 'config.json' : '/get_config';
 
-      // update slider range
-      document.getElementById('distance_to_wall').max = visualMax;
-
-      // redraw ticks & car
-      generateTicks();
-      updateCarPosition();
+  fetch(url)
+    .then(res => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
     })
-    .catch(e => console.error('Failed to load /get_config:', e));
+    .then(cfg => applyConfig(cfg))
+    .catch(err => {
+      console.warn('⚠️ loadAndApplyConfig failed, using defaults:', err);
+      // 2) Defaults in feet
+      applyConfig({
+        distance_max:      20,  // e.g. 20 ft
+        distance_warning:  1,
+        distance_danger:   0.5
+      });
+    });
+}
+
+function applyConfig(cfg) {
+  // 3) Parse floats
+
+  console.log('Applying config:', cfg);
+
+  visualMax        = parseFloat(cfg.distance_max);
+  cautionThreshold = parseFloat(cfg.distance_warning);
+  dangerThreshold  = parseFloat(cfg.distance_danger);
+
+  const slider = document.getElementById('distance_to_wall');
+  slider.max   = visualMax.toFixed(2);
+  slider.step  = (visualMax / 10).toFixed(2);  // ten intervals by default
+  // slider.step = "1" // set step to 1 ft 
+
+  updateCarPosition();
 }
 
 // 4) Wire it all up, including the Update button

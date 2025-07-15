@@ -8,17 +8,17 @@
 #include <config.h>
 #include <ArduinoJson.h>
 #include <WebSocketsServer.h>
-#include <TFMPlus.h>
 #include <ota_updater.h>
 #include <version.h>
 
+#ifdef DISTANCE_SENSOR_ENABLED
+#include <LidarHelper.h>
+#endif
 
-WebSocketsServer webSocket = WebSocketsServer(81); // Port 81 for WebSocket
+// WebSocketsServer webSocket = WebSocketsServer(81); // Port 81 for WebSocket
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 Preferences preferences;
-TFMPlus tfm;
-HardwareSerial tfmSerial(2); // Use UART2: GPIO16 = RX, GPIO17 = TX (default)
 
 // **** ANY VARIBLE CHANGES, MODIFY THE CONFIG.H FILE ****
 // **** Remeber to build and upload all SPIFFS files!!! ****
@@ -37,6 +37,7 @@ struct DefaultSetting
   uint32_t defaultValue;
 };
 
+// default settings for the traffic light
 LightState currentLightState = OFF;
 LightState previousLightState = OFF;
 
@@ -48,11 +49,11 @@ unsigned long LED_delay_yellow = 0;
 unsigned long LED_delay_green = 0;
 
 // default delays for the traffic light, get overwritten by the web interface
-unsigned long distance_max = 0;
-unsigned long distance_warning = 0;
-unsigned long distance_danger = 0;
+float distance_max = 0;
+float distance_warning = 0;
+float distance_danger = 0;
 
-bool distance_sensor_enabled = false; // Default to false
+bool distance_sensor_enabled = false; // Default value false
 
 bool lightMode = false;
 bool themeMode = false;
@@ -63,21 +64,6 @@ bool randomBlinkMode = false;
 int blinkPin = -1;
 
 unsigned long lastBlinkMillis = 0;
-
-int getDistance()
-{
-  int16_t distance, strength, temperature;
-
-  if (tfm.getData(distance, strength, temperature))
-  {
-    return distance; // Return the distance in cm
-  }
-  else
-  {
-    Serial.println("Failed to read from TFMini-Plus.");
-    return -1; // Return -1 if reading fails
-  }
-}
 
 void set_traffic_light(boolean LED_red_state, boolean LED_yellow_state, boolean LED_green_state)
 {
@@ -276,23 +262,21 @@ void notifyAllClients(String message)
   }
 }
 
-void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
-{
-  switch (type)
-  { // ment to send popup message telling the user to refresh the page on reconnect
-  case WStype_DISCONNECTED:
-    Serial.printf("Client %u disconnected\n", num);
-    break;
-  case WStype_CONNECTED:
-    Serial.printf("Client %u connected from %s\n", num, webSocket.remoteIP(num).toString().c_str());
-    // Send a message to the client once connected (optional)
-    // webSocket.sendTXT(num, "Hello from ESP32");
-    break;
-  case WStype_TEXT:
-    Serial.printf("Message from client %u: %s\n", num, payload);
-    break;
-  }
-}
+// void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
+// {
+//   switch (type)
+//   { // ment to send popup message telling the user to refresh the page on reconnect
+//   case WStype_DISCONNECTED:
+//     Serial.printf("Client %u disconnected\n", num);
+//     break;
+//   case WStype_CONNECTED:
+//     Serial.printf("Client %u connected from %s\n", num, webSocket.remoteIP(num).toString().c_str());
+//     break;
+//   case WStype_TEXT:
+//     Serial.printf("Message from client %u: %s\n", num, payload);
+//     break;
+//   }
+// }
 
 void handleRoot(AsyncWebServerRequest *request)
 {
@@ -358,9 +342,9 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     LED_delay_red = doc["delay_red"].as<unsigned long>() * 1000; // Convert seconds to milliseconds
     LED_delay_yellow = doc["delay_yellow"].as<unsigned long>() * 1000;
     LED_delay_green = doc["delay_green"].as<unsigned long>() * 1000;
-    distance_max = doc["distance_max"].as<unsigned long>();
-    distance_warning = doc["distance_warning"].as<unsigned long>();
-    distance_danger = doc["distance_danger"].as<unsigned long>();
+    distance_max = doc["distance_max"].as<float>();
+    distance_warning = doc["distance_warning"].as<float>();
+    distance_danger = doc["distance_danger"].as<float>();
     distance_sensor_enabled = doc["distance_sensor_enabled"].as<bool>();
 
     Serial.println("Action: " + action);
@@ -378,9 +362,9 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     preferences.putULong("delay_red", LED_delay_red);
     preferences.putULong("delay_yellow", LED_delay_yellow);
     preferences.putULong("delay_green", LED_delay_green);
-    preferences.putULong("dist_max", distance_max);
-    preferences.putULong("dist_warn", distance_warning);
-    preferences.putULong("dist_dang", distance_danger);
+    preferences.putFloat("dist_max", distance_max);
+    preferences.putFloat("dist_warn", distance_warning);
+    preferences.putFloat("dist_dang", distance_danger);
     preferences.putBool("dist_sens_en", distance_sensor_enabled);
 
     // StaticJsonDocument<200> responseDoc;
@@ -389,9 +373,9 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     responseDoc["delay_red"] = preferences.getULong("delay_red", -1);
     responseDoc["delay_yellow"] = preferences.getULong("delay_yellow", -1);
     responseDoc["delay_green"] = preferences.getULong("delay_green", -1);
-    responseDoc["distance_max"] = preferences.getULong("dist_max", -1);
-    responseDoc["distance_warning"] = preferences.getULong("dist_warn", -1);
-    responseDoc["distance_danger"] = preferences.getULong("dist_dang", -1);
+    responseDoc["distance_max"] = preferences.getFloat("dist_max", -1);
+    responseDoc["distance_warning"] = preferences.getFloat("dist_warn", -1);
+    responseDoc["distance_danger"] = preferences.getFloat("dist_dang", -1);
     responseDoc["distance_sensor_enabled"] = preferences.getBool("dist_sens_en", false);
 
     String message;
@@ -553,19 +537,19 @@ void handleToggleThemeMode(AsyncWebServerRequest *request)
   request->send(200, "text/plain", themeMode ? "Cat mode enabled" : "normal mode enabled");
 }
 
-void notifyAllClientsDistance(int distance)
+void notifyAllClientsDistance(float distance, int16_t &outTemp)
 {
   String jsonResponse;
   if (distance == -1)
   {
-    jsonResponse = "{\"distance_cm\":null}";
+    jsonResponse = "{\"distance\":null,\"sensor_temp\":" + String(outTemp) + "}";
   }
   else
   {
-    jsonResponse = "{\"distance_cm\":" + String(distance) + "}";
+    jsonResponse = "{\"distance\":" + String(distance) + ",\"sensor_temp\":" + String(outTemp) + "}";
   }
   ws.textAll(jsonResponse);
-  // Serial.println("Distance: " + String(distance) + " cm | notify all clients");
+  // Serial.println("Distance: " + String(distance) + " FT, Temp: " + String(outTemp) + " C | notify all
 }
 
 void listSPIFFSFiles()
@@ -594,21 +578,9 @@ void setup()
 
   set_traffic_light(0, 0, 0);
 
-  tfmSerial.begin(115200, SERIAL_8N1, 16, 17); // Start TFMini Serial
-  delay(100);
-
-  if (tfm.begin(&tfmSerial))
-  {
-    // Optional: run self-check
-    Serial.println("Running TFMini self-check...");
-    tfm.sendCommand(0x01, 0); // 0x01 is the self-check command
-    delay(500);               // Give it some time
-    Serial.println("Self-check complete (no result returned).");
-  }
-  else
-  {
-    Serial.println("Failed to connect to TFMini-Plus.");
-  }
+#ifdef DISTANCE_SENSOR_ENABLED
+  setupLidar();
+#endif
 
 #ifdef WIFI_SSID
   // WIFI
@@ -678,13 +650,13 @@ void setup()
 
   Serial.println("Distance sensor enabled: " + String(distance_sensor_enabled ? "true" : "false"));
 
-  distance_max = preferences.getULong("dist_max", -1);
-  distance_warning = preferences.getULong("dist_warn", -1);
-  distance_danger = preferences.getULong("dist_dang", -1);
+  distance_max = preferences.getFloat("dist_max", -1);
+  distance_warning = preferences.getFloat("dist_warn", -1);
+  distance_danger = preferences.getFloat("dist_dang", -1);
 
   // listSPIFFSFiles();
 
-  webSocket.begin(); // Start WebSocket server
+  // webSocket.begin(); // Start WebSocket server
 
   server.on("/", HTTP_GET, handleRoot);
   server.on("/firmware_update", HTTP_GET, handleFirmwareUpdate);
@@ -738,7 +710,7 @@ void setup()
   Serial.print("Hostname: ");
   Serial.println(WiFi.getHostname());
 
-  setupOTA(server);  // Enable OTA route
+  setupOTA(server); // Enable OTA route
   Serial.println("OTA setup complete");
 }
 
@@ -757,7 +729,7 @@ void loop()
   static bool flashOn = false;
   static unsigned long lastFlashToggle = 0;
 
-  int distance = -1;
+  float distance = -1;
 
   // —— 1) Handle non-blocking red-flash mode ——
   if (dangerFlashing)
@@ -793,8 +765,17 @@ void loop()
     if (millis() - lastDistanceCheck >= 500)
     {
       lastDistanceCheck = millis();
-      distance = getDistance();
-      notifyAllClientsDistance(distance);
+
+      int16_t distance_cm, strength, temp;
+      float distance_ft;
+
+      getOptimalMeasurement(distance_cm, distance, strength, temp);
+
+      Serial.printf("Distance: %d cm, %.2f ft, Strength: %d, Temp: %d C\n", distance_cm, distance, strength, temp);
+
+      // distance = roundf(distance * 10) / 10.0f;
+
+      notifyAllClientsDistance(distance, temp);
 
       // start timing how long we've been in the danger zone
       if (distance != -1 && distance <= distance_danger)

@@ -83,12 +83,12 @@
                         <div id="popup-second">
                             <div class="timing-box" id="distanceSettings">
                                 <h3>Distance Warnings</h3>
-                                <label>Danger (cm):</label>
-                                <input type="number" id="distance_danger" name="distance_danger" min="1" step="1"><br>
-                                <label>Warning (cm):</label>
-                                <input type="number" id="distance_warning" name="distance_warning" min="1" step="1"><br>
-                                <label>Max Distance (cm):</label>
-                                <input type="number" id="distance_max" name="distance_max" min="1" step="1"><br>
+                                <label>Danger (ft):</label>
+                                <input type="number" id="distance_danger" name="distance_danger" min="0.25" step="0.25"><br>
+                                <label>Warning (ft):</label>
+                                <input type="number" id="distance_warning" name="distance_warning" min="0.25" step="0.25"><br>
+                                <label>Max Distance (ft):</label>
+                                <input type="number" id="distance_max" name="distance_max" min="0.25" step="0.25"><br>
                             </div>
                         </div>
 
@@ -153,6 +153,7 @@
                     <img id="car_wheel-front" class="car_wheel" src="img/is250/is250_wheel.webp" alt="Front Wheel" />
                     <img id="car_wheel-rear" class="car_wheel" src="img/is250/is250_wheel.webp" alt="Rear Wheel" />
                     <div class="car_wall"></div>
+                    <!-- <div class="car_ticks"></div> -->
                     <div class="car_ticks">
                         <div class="car_tick" data-label="200"></div>
                         <div class="car_tick" data-label="180"></div>
@@ -168,8 +169,8 @@
                     </div>
                 </div>
                 <div class="car_input-group">
-                    <label for="distance_to_wall">Distance to wall (in cm): </label>
-                    <input type="number" id="distance_to_wall" min="0" max="150" step="15" value="150"
+                    <label for="distance_to_wall">Distance to wall (ft): </label>
+                    <input type="number" id="distance_to_wall" min="0" max="20" step="1" value="1"
                         oninput="updateCarPosition()" />
                     <div class="car_status-indicator" id="status"></div>
                 </div>

@@ -1,0 +1,5 @@
+{
+  "distance_max":     2.5,
+  "distance_warning": 1.0,
+  "distance_danger":  0.5
+}

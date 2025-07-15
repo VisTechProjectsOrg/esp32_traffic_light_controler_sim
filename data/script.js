@@ -74,17 +74,18 @@ function openPopup_settings() {
             distanceInput.max = window.visualMax;
 
             // Regenerate tick marks
-            const tickContainer = document.querySelector('.car_ticks');
-            tickContainer.innerHTML = ''; // Clear existing ticks
-            const tickCount = 10;
-            const tickStep = Math.floor(window.visualMax / tickCount);
+            // const tickContainer = document.querySelector('.car_ticks');
+            // tickContainer.innerHTML = ''; // Clear existing ticks
+            // const tickCount = 10;
+            // let tickStep = Math.floor(window.visualMax / tickCount);
+            // if (tickStep < 1) tickStep = 1;
 
-            for (let i = window.visualMax; i >= 0; i -= tickStep) {
-                const tick = document.createElement('div');
-                tick.classList.add('car_tick');
-                tick.setAttribute('data-label', i);
-                tickContainer.appendChild(tick);
-            }
+            // for (let i = window.visualMax; i >= 0; i -= tickStep) {
+            //     const tick = document.createElement('div');
+            //     tick.classList.add('car_tick');
+            //     tick.setAttribute('data-label', i);
+            //     tickContainer.appendChild(tick);
+            // }
 
             // Update car immediately
             updateCarPosition();
@@ -235,18 +236,21 @@ document.addEventListener("DOMContentLoaded", function () {
         } else if (data.state) {
             updateTrafficLight(data.state);
 
-        } else if (data.distance_cm === null) {
+        } else if (data.distance === null) {
             console.warn("Distance is null (sensor may be offline):", data);
-        }
-        else if (data.distance_cm !== undefined) {
-            const distanceInput = document.getElementById("distance_to_wall");
-            const distanceValue = parseInt(data.distance_cm, 10);
 
-            if (!isNaN(distanceValue)) {
+        } else if (data.distance !== undefined) {
+            const distanceInput = document.getElementById("distance_to_wall");
+
+            if (!isNaN(data.distance)) {
+                const distanceValue = Number.parseFloat(data.distance);
+                // console.log("Distance data received:", data.distance);
+                // console.log("Distance data parsed:", distanceValue);
+
                 if (distanceInput && distanceInput.tagName === "INPUT") {
                     distanceInput.value = distanceValue;
                     distanceInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    console.log('Setting "distance_to_wall" to', distanceValue, 'cm');
+                    console.log('Setting "distance_to_wall" to', distanceValue, 'ft');
                     updateCarPosition();
                 }
             } else {
