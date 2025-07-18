@@ -9,49 +9,84 @@ const int16_t DIST_STR_THRESHOLD = 1000;
 DistanceMode currentMode = SHORT_MODE;
 TFMPlus tfm;
 
+// — non‑blocking state vars —
+static unsigned long lastModeSwitch = 0;
+static DistanceMode pendingMode = SHORT_MODE;
+static bool modeChangePending = false;
+
 void setupLidar()
 {
     LIDAR_SERIAL.begin(115200, SERIAL_8N1, LIDAR_RX, LIDAR_TX);
-    delay(500);
     tfm.begin(&LIDAR_SERIAL);
-    setDistanceMode(SHORT_MODE);
+
+    // schedule an initial mode set
+    pendingMode = currentMode;
+    modeChangePending = true;
+    lastModeSwitch = millis();
 }
 
-const char *modeName(DistanceMode m)
+void requestDistanceMode(DistanceMode m, bool save)
 {
-    return m == SHORT_MODE ? "Short" : "Long";
-}
+    // ignore redundant requests
+    if ((modeChangePending && pendingMode == m) || currentMode == m)
+        return;
 
-void setDistanceMode(DistanceMode m, bool save)
-{
-    byte cmd[] = {0x5A, 0x06, 0x00, 0x00, (byte)m, (byte)(save ? 1 : 0)};
+    byte cmd[] = {
+        0x5A, 0x06, 0x00, 0x00,
+        static_cast<byte>(m),
+        static_cast<byte>(save ? 1 : 0)};
     LIDAR_SERIAL.write(cmd, sizeof(cmd));
-    currentMode = m;
+
+    pendingMode = m;
+    modeChangePending = true;
+    lastModeSwitch = millis();
+}
+
+void processModeSwitch()
+{
+    if (!modeChangePending)
+        return;
+    if (millis() - lastModeSwitch >= DIST_MODE_SWITCH_DELAY_MS)
+    {
+        currentMode = pendingMode;
+        modeChangePending = false;
+    }
 }
 
 void autoSwitchMode(int16_t dist, int16_t str)
 {
-    if ((dist > DIST_THRESHOLD_FT || str < DIST_STR_THRESHOLD) && currentMode != LONG_MODE)
+    if ((dist > DIST_THRESHOLD_FT || str < DIST_STR_THRESHOLD) &&
+        currentMode != LONG_MODE)
     {
-        setDistanceMode(LONG_MODE);
-        delay(DIST_MODE_SWITCH_DELAY_MS);
+        requestDistanceMode(LONG_MODE);
     }
-    else if (dist <= DIST_THRESHOLD_FT && str >= DIST_STR_THRESHOLD && currentMode != SHORT_MODE)
+    else if (dist <= DIST_THRESHOLD_FT && str >= DIST_STR_THRESHOLD &&
+             currentMode != SHORT_MODE)
     {
-        setDistanceMode(SHORT_MODE);
-        delay(DIST_MODE_SWITCH_DELAY_MS);
+        requestDistanceMode(SHORT_MODE);
     }
 }
-bool getOptimalMeasurement(int16_t &outDist,float &outDist_ft, int16_t &outStr, int16_t &outTemp)
+
+bool getOptimalMeasurement(int16_t &outDist,
+                           float &outDist_ft,
+                           int16_t &outStr,
+                           int16_t &outTemp)
 {
     int16_t d, s, t;
+
+    // first sample
     if (!tfm.getData(d, s, t))
         return false;
+
+    // maybe queue a mode change
     autoSwitchMode(d, s);
+    processModeSwitch();
+
+    // second sample in the (potentially) new mode
     if (tfm.getData(d, s, t))
     {
         outDist = d;
-        outDist_ft = d * 0.0328084; // Convert cm to feet
+        outDist_ft = d * 0.0328084f; // cm→ft
         outStr = s;
         outTemp = t;
         return true;

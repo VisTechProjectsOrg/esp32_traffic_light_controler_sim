@@ -73,20 +73,6 @@ function openPopup_settings() {
             const distanceInput = document.getElementById("distance_to_wall");
             distanceInput.max = window.visualMax;
 
-            // Regenerate tick marks
-            // const tickContainer = document.querySelector('.car_ticks');
-            // tickContainer.innerHTML = ''; // Clear existing ticks
-            // const tickCount = 10;
-            // let tickStep = Math.floor(window.visualMax / tickCount);
-            // if (tickStep < 1) tickStep = 1;
-
-            // for (let i = window.visualMax; i >= 0; i -= tickStep) {
-            //     const tick = document.createElement('div');
-            //     tick.classList.add('car_tick');
-            //     tick.setAttribute('data-label', i);
-            //     tickContainer.appendChild(tick);
-            // }
-
             // Update car immediately
             updateCarPosition();
 
@@ -151,47 +137,23 @@ function toggleThemeMode() {
 }
 
 function toggleDistanceSensorInputs() {
-    const switchElement = document.getElementById('toggle_distance_sensor_switch');
-    const distanceSettings = document.getElementById('distanceSettings');
-    const settingsWrapper = document.querySelector('.settings-wrapper');
+    const on = document.getElementById('toggle_distance_sensor_switch').checked;
+    const distanceBox = document.getElementById('distanceSettings');
+    const wrapper = document.querySelector('.settings-wrapper');
     const secondPanel = document.getElementById('popup-second');
 
+    // Panel show/hide
+    distanceBox.style.display = on ? 'block' : 'none';
+    distanceBox.classList.toggle('active-box', on);
 
-    distanceSensorEnabled = switchElement.checked;
+    // Layout: two‑column vs single
+    wrapper.classList.toggle('single-column', !on);
+    wrapper.style.justifyContent = on ? 'space-between' : 'center';
 
-    if (distanceSensorEnabled) {
-        distanceSettings.style.display = 'block';
-        distanceSettings.classList.add('active-box');
-        settingsWrapper.classList.remove('single-column');
-        settingsWrapper.style.justifyContent = 'space-between';
-    } else {
-        distanceSettings.style.display = 'none';
-        distanceSettings.classList.remove('active-box');
-        settingsWrapper.classList.add('single-column');
-        settingsWrapper.style.justifyContent = 'center';
-    }
-
-    const on = switchElement.checked;
-
-    if (on) {
-        distanceSettings.style.display = 'block';
-        distanceSettings.classList.add('active-box');
-        settingsWrapper.classList.remove('single-column');
-        settingsWrapper.style.justifyContent = 'space-between';
-
-        // make sure second column is visible
-        secondPanel.style.display = '';
-    } else {
-        distanceSettings.style.display = 'none';
-        distanceSettings.classList.remove('active-box');
-        settingsWrapper.classList.add('single-column');
-        settingsWrapper.style.justifyContent = 'center';
-
-        // hide second column completely
-        secondPanel.style.display = 'none';
-    }
-
+    // Entire second column
+    secondPanel.style.display = on ? '' : 'none';
 }
+
 
 document.addEventListener("DOMContentLoaded", function () {
 
@@ -399,4 +361,25 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("toggleThemeModeSwitch").addEventListener("input", function () {
         sendSliderUpdate("theme_mode", this.value);
     });
+
+    // Reset OTA state when main page becomes visible
+    document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) {
+            // Page is now visible, reset OTA state
+            fetch('/reset_ota_state', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                }
+            }).catch(err => console.log('Failed to reset OTA state:', err));
+        }
+    });
+
+    // Also reset when page loads
+    fetch('/reset_ota_state', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    }).catch(err => console.log('Failed to reset OTA state:', err));
 });

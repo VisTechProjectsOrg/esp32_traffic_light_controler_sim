@@ -122,6 +122,7 @@ input:checked+.slider:before {
     display: flex;
     align-items: center;
     gap: 10px;
+    justify-content: center;
 }
 
 .cancel-button {
@@ -257,10 +258,6 @@ input:checked+.slider:before {
     transition: background-color 0.3s;
 }
 
-.hidden {
-    display: none;
-}
-
 
 #popup-container {
     /* background-color: #ffcc33; */
@@ -294,25 +291,25 @@ input:checked+.slider:before {
     clear: both;
 }
 
-.version-row {
-    display: flex;
-    justify-content: center;
-    gap: 20px;
-    /* spacing between FW and SPIFFS */
-    margin-top: 10px;
-}
-
 .version-label {
     font-weight: bold;
     color: #444;
 }
 
+.version-row {
+    /* spacing between FW and SPIFFS */
+    display: flex;
+    margin-top: 10px;
+    justify-content: center;
+    gap: 20px;
+}
 
 .button-row {
-    margin-top: 20px;
     display: flex;
+    margin-top: 20px;
     text-align: center;
     gap: 12px;
+    justify-content: center;
 }
 
 .popup-content {
@@ -478,9 +475,17 @@ input[type="checkbox"] {
 }
 
 #distanceSettings {
-    margin-top: 12px;
-    margin-bottom: 12px;
-    transition: margin 1.2s;
+  transition: opacity 0.2s ease, height 0.2s ease;
+  opacity: 1;
+  height: auto;
+  overflow: hidden;
+}
+
+/* hide-but-keep-space */
+#distanceSettings:not(.active-box) {
+  opacity: 0;
+  height: 0;
+  padding: 0;    /* if you want to collapse the inner padding too */
 }
 
 .timing-box {
@@ -533,13 +538,8 @@ input[type="checkbox"] {
     flex-wrap: wrap;
 }
 
-/* Center children when there's only one visible (like when toggle is off) */
-.settings-wrapper.single-column {
-    justify-content: center;
-}
-
-#distanceSettings:not(.active-box) {
-    display: none;
+.hidden {
+  display: none !important;
 }
 
 @media (max-width: 600px) {
@@ -561,6 +561,18 @@ input[type="checkbox"] {
         margin-top: 12px !important;
         justify-content: center !important;
     }
+}
+
+.distance‑switch-row {
+    display: flex;
+    align-items: center;
+    /* vertically align label + text */
+    justify-content: center;
+    /* horizontally center the whole block */
+    gap: 8px;
+    /* optional spacing between toggle and text */
+    margin: 20px 0;
+    /* optional top/bottom spacing */
 }
 
 

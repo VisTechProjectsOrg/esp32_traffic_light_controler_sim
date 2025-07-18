@@ -7,6 +7,7 @@
 #include <ESPmDNS.h>
 #include <config.h>
 #include <ArduinoJson.h>
+#include "WifiManager.h"
 #include <WebSocketsServer.h>
 #include <ota_updater.h>
 #include <version.h>
@@ -15,7 +16,6 @@
 #include <LidarHelper.h>
 #endif
 
-// WebSocketsServer webSocket = WebSocketsServer(81); // Port 81 for WebSocket
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 Preferences preferences;
@@ -262,22 +262,6 @@ void notifyAllClients(String message)
   }
 }
 
-// void webSocketEvent(uint8_t num, WStype_t type, uint8_t *payload, size_t length)
-// {
-//   switch (type)
-//   { // ment to send popup message telling the user to refresh the page on reconnect
-//   case WStype_DISCONNECTED:
-//     Serial.printf("Client %u disconnected\n", num);
-//     break;
-//   case WStype_CONNECTED:
-//     Serial.printf("Client %u connected from %s\n", num, webSocket.remoteIP(num).toString().c_str());
-//     break;
-//   case WStype_TEXT:
-//     Serial.printf("Message from client %u: %s\n", num, payload);
-//     break;
-//   }
-// }
-
 void handleRoot(AsyncWebServerRequest *request)
 {
   IPAddress requesterIP = request->client()->remoteIP();
@@ -291,6 +275,8 @@ void handleRoot(AsyncWebServerRequest *request)
   Serial.print("User-Agent: ");
   Serial.println(userAgent);
 
+  otaPageActive = false;
+
   if (SPIFFS.exists("/index.html"))
   {
     cycleLights();
@@ -299,7 +285,7 @@ void handleRoot(AsyncWebServerRequest *request)
   else
   {
     Serial.println("index.html not found");
-    request->send(404, "/index_page_not_found.html", "text/html");
+    request->send(SPIFFS, "/index_page_not_found.html", "text/html; charset=utf-8");
   }
 }
 
@@ -367,7 +353,6 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     preferences.putFloat("dist_dang", distance_danger);
     preferences.putBool("dist_sens_en", distance_sensor_enabled);
 
-    // StaticJsonDocument<200> responseDoc;
     JsonDocument responseDoc;
     responseDoc["message"] = "Config updated!";
     responseDoc["delay_red"] = preferences.getULong("delay_red", -1);
@@ -537,6 +522,13 @@ void handleToggleThemeMode(AsyncWebServerRequest *request)
   request->send(200, "text/plain", themeMode ? "Cat mode enabled" : "normal mode enabled");
 }
 
+void handleFirmwareUpdateStateReset(AsyncWebServerRequest *request)
+{
+  otaPageActive = false;
+  Serial.println("OTA Page Active reset to false");
+  request->send(200, "application/json", "{\"message\": \"OTA state reset\"}");
+}
+
 void notifyAllClientsDistance(float distance, int16_t &outTemp)
 {
   String jsonResponse;
@@ -570,7 +562,7 @@ void listSPIFFSFiles()
 void setup()
 {
   Serial.begin(115200);
-  Serial.println("Starting");
+  Serial.println("\nStarting");
 
   pinMode(LED_red_pin, OUTPUT);
   pinMode(LED_yellow_pin, OUTPUT);
@@ -582,29 +574,26 @@ void setup()
   setupLidar();
 #endif
 
-#ifdef WIFI_SSID
-  // WIFI
-  WiFi.begin(WIFI_SSID, WIFI_PASS);
-  Serial.println("Connecting to WiFi...");
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(500);
-    Serial.println("Connecting to WiFi...");
-  }
-  Serial.println("Connected to WiFi");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-#else
-// AP
-#ifdef AP_PASS
-  WiFi.softAP(AP_SSID, AP_PASS);
-#else
-  WiFi.softAP(AP_SSID);
-  Serial.println("No AP password defined, setting up AP without password");
+// 1) Prevent ambiguous dual‑modes:
+#if defined(WIFI_SSID) && defined(WIFI_PASS) && defined(AP_SSID)
+#error "You cannot define both WIFI_SSID/PASS and AP_SSID (with or without AP_PASS)."
 #endif
-  Serial.println("Access Point Started");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.softAPIP());
+
+// 2) Station mode if both creds are set
+#if defined(WIFI_SSID) && defined(WIFI_PASS)
+  WifiManager::beginStation(WIFI_SSID, WIFI_PASS, server);
+// 3) AP mode if SSID is set
+#elif defined(AP_SSID)
+// 3a) Secured AP if password provided
+#ifdef AP_PASS
+  WifiManager::beginAP(AP_SSID, AP_PASS, server);
+// 3b) Open AP otherwise
+#else
+  WifiManager::beginAP(AP_SSID, /* open‑auth */ "", server);
+#endif
+// 4) Error if neither mode was configured
+#else
+#error "You must define either WIFI_SSID/PASS or AP_SSID (optionally AP_PASS) in config.h"
 #endif
 
   if (!MDNS.begin("trafficlights"))
@@ -612,7 +601,7 @@ void setup()
     Serial.println("Error setting up MDNS responder!");
   }
 
-  if (!SPIFFS.begin(true))
+  if (!SPIFFS.begin(false))
   {
     Serial.println("Failed to mount file system");
     return;
@@ -656,10 +645,9 @@ void setup()
 
   // listSPIFFSFiles();
 
-  // webSocket.begin(); // Start WebSocket server
-
   server.on("/", HTTP_GET, handleRoot);
-  server.on("/firmware_update", HTTP_GET, handleFirmwareUpdate);
+  server.on("/update_firmware", HTTP_GET, handleFirmwareUpdate);
+  server.on("/reset_ota_state", HTTP_POST, handleFirmwareUpdateStateReset);
   server.on("/get_current_state", HTTP_GET, handleGetCurrentState);
   server.on("/get_config", HTTP_GET, handleGetConfig);
   server.on("/set_config", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleFormConfig);
@@ -674,13 +662,17 @@ void setup()
     if (request->header("Accept").indexOf("application/json") != -1) {
         request->send(404, "application/json", "{\"error\":\"Not found\"}");
     } else {
-        request->send(404, "text/plain", "What ever you were looking for, was not found...");
+        auto res = request->beginResponse(SPIFFS,"/index_page_not_found.html","text/html; charset=utf-8");
+        res->setCode(404);
+        request->send(res);
     } });
 
   ws.onEvent([](AsyncWebSocket *server, AsyncWebSocketClient *client, AwsEventType type, void *arg, uint8_t *data, size_t len)
              {
               if (type == WS_EVT_CONNECT) {
                 Serial.println("WebSocket client connected");
+                otaPageActive = false;
+                
                 // Send the current state to the client
                 String state = "all_off";
                 if (currentLightState == RED) state = "red";
@@ -704,11 +696,6 @@ void setup()
 
   server.begin();
   Serial.println("HTTP server started");
-  Serial.print("IP address: ");
-  Serial.println(WiFi.localIP());
-
-  Serial.print("Hostname: ");
-  Serial.println(WiFi.getHostname());
 
   setupOTA(server); // Enable OTA route
   Serial.println("OTA setup complete");
@@ -759,7 +746,7 @@ void loop()
   }
 
   // —— 2) Distance-sensor logic ——
-  if (distance_sensor_enabled)
+  if (distance_sensor_enabled && !otaPageActive) // Only check distance if sensor is enabled and OTA page is not active
   {
     // only check twice per second
     if (millis() - lastDistanceCheck >= 500)
@@ -772,8 +759,6 @@ void loop()
       getOptimalMeasurement(distance_cm, distance, strength, temp);
 
       Serial.printf("Distance: %d cm, %.2f ft, Strength: %d, Temp: %d C\n", distance_cm, distance, strength, temp);
-
-      // distance = roundf(distance * 10) / 10.0f;
 
       notifyAllClientsDistance(distance, temp);
 
@@ -830,5 +815,12 @@ void loop()
   else
   {
     cycleLights(); // sensor disabled → just cycle lights
+  }
+
+  // Handle scheduled reboot
+  if (shouldReboot && millis() >= rebootTime)
+  {
+    Serial.println("ESP Rebooting now...");
+    ESP.restart();
   }
 }
