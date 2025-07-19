@@ -1,4 +1,4 @@
 .pio
 .vscode
 src/config.h
-__pycache__
+__pycache__/
