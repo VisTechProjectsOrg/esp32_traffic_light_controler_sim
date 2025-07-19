@@ -27,11 +27,11 @@
 
 ## Why did I make this...
 
-Because why tf not, I had nothing better to do and I acquired a broken traffic... and **of course** it needed a awesome wifi controller, and it was fun to build.
+Because why tf not, I had nothing better to do and I acquired a broken traffic light... and **of course** it needed a awesome wifi controller, and it was fun to build.
 
-## Configuration (ESP32 or other wifi module)
+## Configuration (ESP32)
 
-Use [VSCode](https://code.visualstudio.com/) with [PlatformIO](https://platformio.org/install/ide?install=vscode) to compile the and upload the code to your ESP.
+Use [VSCode](https://code.visualstudio.com/) **with** [PlatformIO](https://platformio.org/install/ide?install=vscode) to compile the and upload the code to your ESP.
 
 You can configure the pinouts light by modifying the `config.h` file:
 ```cpp
@@ -57,12 +57,12 @@ const char *password = "PW";
 
 // or set up an open (or protected) access point, uncommenting will override connecting to wifi
 const char *AP_ssid = "Traffic Lights";
-// const char *AP_pass = "1234578"; //uncomment me to add a password
+// const char *AP_pass = "1234578"; //uncomment me to add a password, 8 char minimum
 ```
 
 ## Site configuration
 
-To configure the light cycle delays, distance warnings or firmware updates use the **Settings menu**:
+To configure the light cycle delays, distance warnings or [update firmware](#ota-updates) from the **Settings menu**:
 
 <div style="display: flex; align-items: center;">
     <img src="images/options_menu.png" alt="Traffic Light" width="400" height="430">
@@ -78,19 +78,17 @@ To configure the light cycle delays, distance warnings or firmware updates use t
 
 ## OTA updates:
 
-OTA updates are available (if connected to wifi)
+OTA updates are available if connected to wifi. You can also drap and drop valid <code>FIRMWARE.BIN</code> and <code>SPIFFS.BIN</code> files as well.
 
 <div style="display: flex; align-items: center;">
     <table>
       <tr>
-        <td><img src="images/ota_page.png" alt="OTA Updates" width="500" height="431"></td>
-        <td><img src="images/ota_page_update_avail.png" alt="OTA Updates" width="500" height="431"></td>
+        <td><img src="images/ota_page.png" alt="OTA Updates" width="500" height="431"> <img src="images/ota_page_update_avail.png" alt="OTA Updates" width="500" height="431"> <img src="images/ota_page_update_fail.png" alt="OTA Updates" width="500" height="431"></td>
       </tr>
     </table>
 </div>
 
 <br>
-
 
 ## Current firmware version available:
 
