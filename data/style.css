@@ -143,7 +143,6 @@ input:checked+.slider:before {
 .popup {
     display: none;
     position: fixed;
-    /* width: 500px; */
     width: auto;
     left: 50%;
     top: 10%;
@@ -153,9 +152,7 @@ input:checked+.slider:before {
     justify-content: center;
     align-items: center;
     max-height: 95vh;
-    /* at most 80% of viewport height */
     overflow-y: auto;
-    /* scroll if content exceeds this */
     opacity: 0;
     visibility: hidden;
 }
@@ -172,7 +169,6 @@ input:checked+.slider:before {
     width: auto;
     border: 3px solid #eeea0c;
     border-radius: 10px;
-    /* box-sizing: border-box; */
 }
 
 @keyframes fadeIn {

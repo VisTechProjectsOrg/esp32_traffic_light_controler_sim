@@ -1,4 +1,5 @@
-# Traffic Light Signal Controller <code>v0.1</code>
+# Traffic Light Signal Controller 🚦<code>v0.1</code> 
+### Current versions:  [![Firmware](https://img.shields.io/badge/Firmware-v0.1-blue)](https://github.com/VisTechProjects/esp32_traffic_light_controler_sim/tree/firmware_prod) [![v0.1](https://img.shields.io/badge/SPIFFS-v0.1-orange)](https://github.com/VisTechProjects/esp32_traffic_light_controler_sim/tree/firmware_prod)
 
 <div style="display: flex; align-items: center; flex-wrap: nowrap;">
     <span style="font-size: 20px; max-width: 500px; text-align: justify;">
@@ -86,12 +87,3 @@ OTA updates are available (if connected to wifi)
       </tr>
     </table>
 </div>
-
-<br>
-
-
-## Current firmware version:
-
-
-**Firmware Version:** `v0.1`
-**SPIFFS Version:** `v0.1`

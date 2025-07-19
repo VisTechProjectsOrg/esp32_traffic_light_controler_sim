@@ -7,6 +7,12 @@ with open("src/version.h", "r") as f:
 fw_match = re.search(r'#define VERSION_FIRMWARE\s+"(.+?)"', config)
 spiffs_match = re.search(r'#define VERSION_SPIFFS\s+"(.+?)"', config)
 
+# Raise errors if any version is missing
+if not fw_match:
+    raise ValueError("Firmware version (VERSION_FIRMWARE) not found in src/version.h")
+if not spiffs_match:
+    raise ValueError("SPIFFS version (VERSION_SPIFFS) not found in src/version.h")
+
 # Fallbacks if not found
 firmware_version = fw_match.group(1) if fw_match else "unknown"
 spiffs_version = spiffs_match.group(1) if spiffs_match else "unknown"
