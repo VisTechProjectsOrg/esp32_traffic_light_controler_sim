@@ -2,9 +2,10 @@
 
 This branch contains OTA firmware updates for the ESP32.
 
-**Firmware Version:** {{FIRMWARE_VERSION}}  
-**SPIFFS Version:** {{SPIFFS_VERSION}}
 
+![Firmware](https://img.shields.io/badge/Firmware-v{{FIRMWARE_VERSION}}-blue)<br>
+ ![v{{FIRMWARE_VERSION}}](https://img.shields.io/badge/SPIFFS-v{{SPIFFS_VERSION}}-orange)
 ## Files
 - `firmware.bin` - main firmware binary
-- `spiffs.bin` - SPIFFS filesystem image
+- `spiffs.bin` - SPIFFS filesystem image 
+

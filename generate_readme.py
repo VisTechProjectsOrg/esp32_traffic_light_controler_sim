@@ -1,4 +1,3 @@
-import re
 import json
 
 # Read versions from version.json
