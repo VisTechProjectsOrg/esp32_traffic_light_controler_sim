@@ -51,7 +51,7 @@ const unsigned long dangerHoldTime = 3000; // How long you must stay in the dang
 
 As well as wifi/AP info
 ```cpp
-// for connecting to a network, use_wifi must be true
+// for connecting to a network
 const char *ssid = "SSID";
 const char *password = "PW";
 
