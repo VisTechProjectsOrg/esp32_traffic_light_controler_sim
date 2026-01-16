@@ -709,6 +709,8 @@ void loop()
   static bool cycling = true;
   static bool hasFlashedInDanger = false;
   static bool inDangerCycleMode = false;
+  static int sensorFailCount = 0;
+  const int MAX_SENSOR_FAILURES = 10;
 
   // ⬇ New non-blocking flash state
   static bool dangerFlashing = false;
@@ -754,9 +756,25 @@ void loop()
       lastDistanceCheck = millis();
 
       int16_t distance_cm, strength, temp;
-      float distance_ft;
 
-      getOptimalMeasurement(distance_cm, distance, strength, temp);
+      bool sensorOk = getOptimalMeasurement(distance_cm, distance, strength, temp);
+
+      if (!sensorOk)
+      {
+        sensorFailCount++;
+        Serial.printf("Sensor read failed (%d/%d)\n", sensorFailCount, MAX_SENSOR_FAILURES);
+
+        if (sensorFailCount >= MAX_SENSOR_FAILURES)
+        {
+          Serial.println("Sensor disconnected - disabling for this session");
+          distance_sensor_enabled = false;
+          ws.textAll("{\"sensor_disconnected\":true}");
+        }
+        cycleLights();
+        return;
+      }
+
+      sensorFailCount = 0; // reset on successful read
 
       Serial.printf("Distance: %d cm, %.2f ft, Strength: %d, Temp: %d C\n", distance_cm, distance, strength, temp);
 

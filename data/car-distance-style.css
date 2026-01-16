@@ -91,7 +91,6 @@
 }
 
 .car_warning {
-  margin-top: 10px;
   color: red;
   font-weight: bold;
   visibility: hidden;

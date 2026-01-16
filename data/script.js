@@ -199,20 +199,25 @@ document.addEventListener("DOMContentLoaded", function () {
             updateTrafficLight(data.state);
 
         } else if (data.distance === null) {
-            console.warn("Distance is null (sensor may be offline):", data);
+            // Out of range - show car at max distance
+            const distanceInput = document.getElementById("distance_to_wall");
+            const distanceDisplay = document.getElementById("distance_to_wall_display");
+            if (distanceInput && window.visualMax) {
+                distanceInput.value = window.visualMax;
+                if (distanceDisplay) distanceDisplay.textContent = "--";
+                updateCarPosition();
+            }
 
         } else if (data.distance !== undefined) {
             const distanceInput = document.getElementById("distance_to_wall");
+            const distanceDisplay = document.getElementById("distance_to_wall_display");
 
             if (!isNaN(data.distance)) {
                 const distanceValue = Number.parseFloat(data.distance);
-                // console.log("Distance data received:", data.distance);
-                // console.log("Distance data parsed:", distanceValue);
 
-                if (distanceInput && distanceInput.tagName === "INPUT") {
+                if (distanceInput) {
                     distanceInput.value = distanceValue;
-                    distanceInput.dispatchEvent(new Event('input', { bubbles: true }));
-                    console.log('Setting "distance_to_wall" to', distanceValue, 'ft');
+                    if (distanceDisplay) distanceDisplay.textContent = distanceValue.toFixed(1);
                     updateCarPosition();
                 }
             } else {
