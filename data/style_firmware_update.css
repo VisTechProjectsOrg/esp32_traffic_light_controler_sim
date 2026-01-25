@@ -110,6 +110,11 @@
      background-color: #1e5f23;
  }
 
+ button.waiting {
+     background-color: #f57c00;
+     color: #fff;
+ }
+
  button:hover:not(:disabled):not(.update-available) {
      background-color: #005fa3;
  }

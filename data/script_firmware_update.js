@@ -187,27 +187,36 @@ document.addEventListener("DOMContentLoaded", () => {
                     const githubFirmware = github.firmware || "0.0";
                     const githubSPIFFS = github.spiffs || "0.0";
 
-                    if (currentFirmware !== githubFirmware) {
+                    const firmwareNeedsUpdate = currentFirmware !== githubFirmware;
+                    const spiffsNeedsUpdate = currentSPIFFS !== githubSPIFFS;
+
+                    if (firmwareNeedsUpdate) {
                         btn_firmware.classList.add("update-available");
                         btn_firmware.disabled = false;
-                        btn_firmware.textContent = `⬇️ Update Firmware to v${githubFirmware}`;
-                        console.info('⬇️%cGitHub Firmware update available: ' + githubFirmware, 'color: green;');
+                        btn_firmware.textContent = `Update Firmware to v${githubFirmware}`;
+                        console.info('%cGitHub Firmware update available: ' + githubFirmware, 'color: green;');
                     } else {
                         btn_firmware.disabled = true;
-                        btn_firmware.textContent = `✅ Firmware is Up-to-Date`;
-                        console.info('%c✅GitHub Firmware is up-to-date: ' + githubFirmware, 'color: green;');
+                        btn_firmware.textContent = `Firmware is Up-to-Date`;
+                        console.info('%cGitHub Firmware is up-to-date: ' + githubFirmware, 'color: green;');
                     }
 
-                    if (currentSPIFFS !== githubSPIFFS) {
-                        btn_spiffs.classList.add("update-available");
-                        btn_spiffs.disabled = false;
-                        btn_spiffs.textContent = `⬇️ Update SPIFFS to v${githubSPIFFS}`;
-                        console.info('⬇️%cGitHub SPIFFS update available: ' + githubSPIFFS, 'color: green;');
-
+                    if (spiffsNeedsUpdate) {
+                        if (firmwareNeedsUpdate) {
+                            btn_spiffs.disabled = true;
+                            btn_spiffs.textContent = `Update Firmware first`;
+                            btn_spiffs.classList.add("waiting");
+                            console.info('%cSPIFFS update available but waiting for firmware', 'color: orange;');
+                        } else {
+                            btn_spiffs.classList.add("update-available");
+                            btn_spiffs.disabled = false;
+                            btn_spiffs.textContent = `Update SPIFFS to v${githubSPIFFS}`;
+                            console.info('%cGitHub SPIFFS update available: ' + githubSPIFFS, 'color: green;');
+                        }
                     } else {
                         btn_spiffs.disabled = true;
-                        btn_spiffs.textContent = `✅ SPIFFS is Up-to-Date`;
-                        console.info("%c✅GitHub SPIFFS is up-to-date: " + githubSPIFFS, 'color: green;');
+                        btn_spiffs.textContent = `SPIFFS is Up-to-Date`;
+                        console.info("%cGitHub SPIFFS is up-to-date: " + githubSPIFFS, 'color: green;');
                     }
                 })
                 .catch(err => {
@@ -233,13 +242,5 @@ document.addEventListener("DOMContentLoaded", () => {
 
             btn_firmware.disabled = true;
             btn_spiffs.disabled = true;
-        });;
-
-    btn_firmware.addEventListener("click", () => {
-        fetchAndUploadFromGitHub("https://raw.githubusercontent.com/VisTechProjectsOrg/esp32_traffic_light_controler_sim/firmware_prod/build/firmware.bin", "firmware.bin");
-    });
-
-    btn_spiffs.addEventListener("click", () => {
-        fetchAndUploadFromGitHub("https://raw.githubusercontent.com/VisTechProjectsOrg/esp32_traffic_light_controler_sim/firmware_prod/build/spiffs.bin", "spiffs.bin");
-    });
+        });
 });
