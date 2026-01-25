@@ -18,14 +18,14 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        shell: pwsh
+        shell: powershell
         run: |
           $VERSION = "${{ github.ref_name }}".TrimStart('v')
           echo "version=$VERSION" >> $env:GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
       - name: Update version.h
-        shell: pwsh
+        shell: powershell
         run: |
           $content = @"
           #define VERSION_FIRMWARE "${{ steps.version.outputs.version }}"
@@ -35,15 +35,15 @@ jobs:
           Get-Content "src/version.h"
 
       - name: Build Firmware
-        shell: pwsh
+        shell: powershell
         run: pio run -e esp32dev
 
       - name: Build SPIFFS
-        shell: pwsh
+        shell: powershell
         run: pio run -t buildfs -e esp32dev
 
       - name: Create combined binary
-        shell: pwsh
+        shell: powershell
         run: |
           esptool.py --chip esp32 merge_bin `
             -o "combined_v${{ steps.version.outputs.version }}.bin" `
@@ -56,7 +56,7 @@ jobs:
             0x290000 .pio/build/esp32dev/spiffs.bin
 
       - name: Rename binaries
-        shell: pwsh
+        shell: powershell
         run: |
           Copy-Item ".pio/build/esp32dev/firmware.bin" "firmware_v${{ steps.version.outputs.version }}.bin"
           Copy-Item ".pio/build/esp32dev/spiffs.bin" "spiffs_v${{ steps.version.outputs.version }}.bin"
