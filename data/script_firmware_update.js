@@ -165,7 +165,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         modal.querySelector("button").addEventListener("click", () => {
             backdrop.remove();
-            if (type === "success") window.location.href = "/";
+            if (type === "success") window.location.reload();
         });
     }
 

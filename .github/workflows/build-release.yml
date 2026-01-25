@@ -24,17 +24,22 @@ jobs:
           echo "version=$VERSION" >> $env:GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
-      - name: Update version.h
+      - name: Update version.h (firmware version)
         shell: powershell
         run: |
-          $content = "#define VERSION_FIRMWARE `"${{ steps.version.outputs.version }}`"`n#define VERSION_SPIFFS `"${{ steps.version.outputs.version }}`""
-          Set-Content -Path "src/version.h" -Value $content
+          Set-Content -Path "src/version.h" -Value "#define VERSION_FIRMWARE `"${{ steps.version.outputs.version }}`""
           Get-Content "src/version.h"
 
       - name: Build Firmware
         shell: powershell
         run: |
           & "C:/Python314/Scripts/pio.exe" run -e esp32dev
+
+      - name: Update data/version.txt (SPIFFS version)
+        shell: powershell
+        run: |
+          Set-Content -Path "data/version.txt" -Value "${{ steps.version.outputs.version }}" -NoNewline
+          Get-Content "data/version.txt"
 
       - name: Build SPIFFS
         shell: powershell

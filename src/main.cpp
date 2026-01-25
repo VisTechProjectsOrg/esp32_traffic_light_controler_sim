@@ -311,6 +311,15 @@ void handleRoot(AsyncWebServerRequest *request)
   }
 }
 
+String getSpiffsVersion() {
+  File file = SPIFFS.open("/version.txt", "r");
+  if (!file) return "0.0";
+  String version = file.readStringUntil('\n');
+  file.close();
+  version.trim();
+  return version;
+}
+
 void handleGetConfig(AsyncWebServerRequest *request)
 {
   Serial.println("Sending get config");
@@ -323,7 +332,7 @@ void handleGetConfig(AsyncWebServerRequest *request)
                         ",\"distance_danger\":" + String(distance_danger) +
                         ",\"distance_sensor_enabled\":" + String(distance_sensor_enabled ? "true" : "false") +
                         ",\"version_firmware\":\"" + String(VERSION_FIRMWARE) + "\"" +
-                        ",\"version_spiffs\":\"" + String(VERSION_SPIFFS) + "\"}";
+                        ",\"version_spiffs\":\"" + getSpiffsVersion() + "\"}";
 
   request->send(200, "application/json", jsonResponse);
 }
