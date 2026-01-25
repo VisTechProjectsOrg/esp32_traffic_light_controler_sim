@@ -3,8 +3,8 @@
 #include <TFMPlus.h>
 
 #define LIDAR_SERIAL Serial2
-#define LIDAR_RX 16
-#define LIDAR_TX 17
+#define LIDAR_RX 25
+#define LIDAR_TX 26
 
 enum DistanceMode
 {

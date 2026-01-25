@@ -18,10 +18,16 @@ h1 {
     gap: 20px;
 }
 
+.container > div {
+    display: flex;
+    flex-direction: column;
+}
+
 .traffic-light {
     width: 80%;
     max-width: 200px;
     height: auto;
+    object-fit: contain;
 }
 
 form {
@@ -477,11 +483,13 @@ input[type="checkbox"] {
   overflow: hidden;
 }
 
-/* hide-but-keep-space */
+/* hide distance settings and its container when not active */
 #distanceSettings:not(.active-box) {
-  opacity: 0;
-  height: 0;
-  padding: 0;    /* if you want to collapse the inner padding too */
+  display: none;
+}
+
+#popup-second:has(#distanceSettings:not(.active-box)) {
+  display: none;
 }
 
 .timing-box {
@@ -496,13 +504,14 @@ input[type="checkbox"] {
 
 #carDistanceBlock {
     border: 3px solid #ff820d;
-    /* Neutral gray border */
     border-radius: 15px;
     padding: 10px 15px;
-    margin-top: 0px;
+    margin: 20px 0 0 0;
     box-shadow: 0 0 6px rgba(3, 3, 3, 0.2);
     transition: all 0.3s ease;
     background: #ffffff;
+    max-width: 600px;
+    box-sizing: border-box;
 }
 
 
@@ -538,7 +547,117 @@ input[type="checkbox"] {
   display: none !important;
 }
 
-@media (max-width: 600px) {
+/* Portrait mobile */
+@media (max-width: 500px) {
+    body {
+        padding: 10px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        overflow-x: hidden;
+    }
+
+    .header-container {
+        width: 100%;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 15px;
+    }
+
+    .page-title {
+        font-size: 16px;
+    }
+
+    .settings-svg {
+        width: 26px;
+        height: 26px;
+    }
+
+    .container {
+        flex-direction: row;
+        flex-wrap: nowrap;
+        justify-content: center;
+        align-items: flex-start;
+        gap: 10px;
+        width: 100%;
+        position: relative;
+        padding-bottom: 200px;
+    }
+
+    .container > div {
+        display: flex;
+        flex-direction: column;
+        flex-shrink: 1;
+        min-width: 0;
+    }
+
+    .traffic-light {
+        max-width: 90px;
+        flex-shrink: 0;
+        object-fit: contain;
+    }
+
+    .blink-switch-wrapper {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+    }
+
+    #blinkModeForm {
+        width: 100%;
+        max-width: 150px;
+        padding: 8px;
+        margin: 0;
+        box-sizing: border-box;
+    }
+
+    .mode-switches {
+        width: 100%;
+        max-width: 150px;
+        padding: 8px;
+        box-sizing: border-box;
+    }
+
+    .switch {
+        width: 50px;
+        height: 28px;
+    }
+
+    .slider:before {
+        height: 22px;
+        width: 22px;
+        left: 3px;
+        bottom: 3px;
+        background-color: white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(22px);
+    }
+
+    .toggle-container span {
+        font-size: 12px;
+    }
+
+    #carDistanceBlock {
+        position: absolute;
+        bottom: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: calc(100vw - 20px);
+        max-width: none;
+        box-sizing: border-box;
+        padding: 8px;
+        margin: 0;
+        min-height: 175px;
+    }
+
+    #carDistanceBlock h2 {
+        font-size: 14px;
+        margin: 3px 0;
+    }
+
     #popup-container.settings-wrapper {
         flex-direction: column;
         justify-content: center !important;
@@ -550,12 +669,270 @@ input[type="checkbox"] {
         width: 100% !important;
         max-width: 90vw !important;
         float: none !important;
-        margin: 10px 0 !important;
+        margin: 0 !important;
+    }
+
+    #popup-first .timing-box {
+        margin-bottom: 0;
+    }
+
+    #popup-container.settings-wrapper {
+        margin-bottom: 0;
     }
 
     .button-row {
-        margin-top: 12px !important;
+        margin-top: 8px !important;
         justify-content: center !important;
+    }
+
+    .popup {
+        width: 95vw;
+        left: 50%;
+        top: 2%;
+        transform: translateX(-50%);
+        max-height: 96vh;
+        overflow-y: auto;
+    }
+
+    .popup-title {
+        font-size: 24px;
+    }
+
+    #popup #setConfigForm {
+        padding: 10px;
+        padding-top: 5px;
+    }
+
+    .version-row {
+        margin-top: 5px;
+        margin-bottom: 5px;
+    }
+
+    .toggle-container {
+        margin: 5px 0;
+    }
+}
+
+/* Landscape mobile - short height */
+@media (max-height: 500px) {
+    body {
+        padding: 5px;
+        overflow-x: hidden;
+    }
+
+    .header-container {
+        margin-bottom: 5px;
+        gap: 10px;
+    }
+
+    .page-title {
+        font-size: 14px;
+    }
+
+    .settings-svg {
+        width: 22px;
+        height: 22px;
+    }
+
+    .container {
+        gap: 10px;
+    }
+
+    .traffic-light {
+        max-width: 100px;
+        max-height: 60vh;
+        object-fit: contain;
+    }
+
+    .blink-switch-wrapper {
+        flex-direction: row;
+        align-items: stretch;
+        gap: 5px;
+    }
+
+    #blinkModeForm {
+        padding: 5px;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    #blinkModeForm label {
+        font-size: 11px;
+    }
+
+    .mode-switches {
+        padding: 5px;
+        font-size: 11px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+    }
+
+    .toggle-container span {
+        font-size: 11px;
+    }
+
+    .switch {
+        width: 45px;
+        height: 26px;
+    }
+
+    .slider:before {
+        height: 20px;
+        width: 20px;
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(19px);
+    }
+
+    #carDistanceBlock {
+        max-width: 350px;
+        padding: 4px 6px;
+        margin: 5px 0 0 0;
+    }
+
+    #carDistanceBlock h2 {
+        font-size: 11px;
+        margin: 2px 0;
+    }
+
+    #carDistanceBlock h2 {
+        font-size: 12px;
+        margin: 2px 0;
+    }
+
+    .popup {
+        width: auto;
+        min-width: 180px;
+        max-width: 90vw;
+        max-height: 90vh;
+        left: 50%;
+        top: 5%;
+        transform: translateX(-50%);
+        overflow-y: auto;
+    }
+
+    .popup-title {
+        font-size: 14px;
+    }
+
+    #popup #setConfigForm {
+        padding: 6px;
+        width: auto;
+    }
+
+    .popup-header-bar {
+        padding-top: 4px;
+        gap: 20px;
+    }
+
+    .firmware-update-btn img {
+        width: 28px;
+        height: 28px;
+    }
+
+    .firmware-update-btn {
+        margin-left: 15px;
+    }
+
+    #popup-header {
+        height: 24px;
+        margin-bottom: 8px;
+    }
+
+    #setConfigForm br {
+        display: none;
+    }
+
+    #popup-container.settings-wrapper {
+        margin-top: 6px;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        gap: 8px;
+        align-items: stretch;
+    }
+
+    #popup-first,
+    #popup-second {
+        width: 140px;
+        min-width: 0;
+        flex-shrink: 1;
+        margin: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    .timing-box,
+    #distanceSettings.active-box {
+        padding: 5px;
+        margin-bottom: 6px;
+        flex: 1;
+    }
+
+    .timing-box br {
+        display: none;
+    }
+
+    .timing-box h3 {
+        font-size: 11px;
+        margin-bottom: 3px;
+    }
+
+    .timing-box label {
+        font-size: 10px;
+    }
+
+    .timing-box input {
+        padding: 3px;
+        margin: 2px 0;
+        font-size: 11px;
+    }
+
+    .button-row {
+        margin-top: 6px;
+        gap: 6px;
+    }
+
+    .button-row button {
+        padding: 4px 10px;
+        font-size: 11px;
+    }
+
+    .version-row {
+        margin-top: 4px;
+        gap: 10px;
+    }
+
+    .version-label {
+        font-size: 9px;
+    }
+
+    .toggle-container {
+        gap: 5px;
+        margin: 4px 0;
+    }
+
+    #toggleDistanceSensorLabel {
+        font-size: 10px;
+    }
+
+    .switch {
+        width: 40px;
+        height: 22px;
+    }
+
+    .slider:before {
+        height: 16px;
+        width: 16px;
+        left: 3px;
+        bottom: 3px;
+    }
+
+    input:checked+.slider:before {
+        transform: translateX(17px);
     }
 }
 

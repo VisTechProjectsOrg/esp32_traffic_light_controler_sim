@@ -16,6 +16,11 @@
 #include <LidarHelper.h>
 #endif
 
+#ifdef RGB_LED_ENABLED
+#include <FastLED.h>
+CRGB rgbLed[1];
+#endif
+
 AsyncWebServer server(80);
 AsyncWebSocket ws("/ws");
 Preferences preferences;
@@ -29,12 +34,6 @@ enum LightState
   GREEN,
   YELLOW,
   OFF
-};
-
-struct DefaultSetting
-{
-  const char *key;
-  uint32_t defaultValue;
 };
 
 // default settings for the traffic light
@@ -65,18 +64,31 @@ int blinkPin = -1;
 
 unsigned long lastBlinkMillis = 0;
 
+#ifdef RGB_LED_ENABLED
+void setRgbLedColor(bool red, bool yellow, bool green)
+{
+  if (red)
+    rgbLed[0] = CRGB(255, 0, 0);
+  else if (yellow)
+    rgbLed[0] = CRGB(255, 180, 0);
+  else if (green)
+    rgbLed[0] = CRGB(0, 255, 0);
+  else
+    rgbLed[0] = CRGB(0, 0, 0);
+  FastLED.show();
+}
+#endif
+
 void set_traffic_light(boolean LED_red_state, boolean LED_yellow_state, boolean LED_green_state)
 {
-  // Serial.println("Changing traffic light color: "
-  //  "Red: " +
-  //  String(LED_red_state ? "ON" : "OFF") +
-  //  " Yellow: " + String(LED_yellow_state ? "ON" : "OFF") +
-  //  " Green: " + String(LED_green_state ? "ON" : "OFF"));
-
   // output and invert the logic here for relays
   digitalWrite(LED_red_pin, !LED_red_state);
   digitalWrite(LED_yellow_pin, !LED_yellow_state);
   digitalWrite(LED_green_pin, !LED_green_state);
+
+#ifdef RGB_LED_ENABLED
+  setRgbLedColor(LED_red_state, LED_yellow_state, LED_green_state);
+#endif
 
   String state = "all_off";
   if (LED_red_state)
@@ -140,14 +152,15 @@ void cycleLights()
         digitalWrite(LED_red_pin, !blinkState); // Invert all the output state
         digitalWrite(LED_yellow_pin, !blinkState);
         digitalWrite(LED_green_pin, !blinkState);
+#ifdef RGB_LED_ENABLED
+        setRgbLedColor(blinkState, blinkState, blinkState);
+#endif
       }
       else
       {
         if (randomBlinkMode)
         {
-          // Serial.println("Random Blink Mode function");
-          // Randomly select a pin to blink
-          int randomColor = random(3); // Generates a random number from 0 to 2 (3 colors)
+          int randomColor = random(3);
 
           if (randomColor == 0)
           {
@@ -162,14 +175,23 @@ void cycleLights()
             blinkPin = LED_green_pin;
           }
 
-          blinkAllColors = false; // Disable blinking all colors, since we're doing a single color
-          blinkState = true;      // Reset blink state
+          blinkAllColors = false;
+          blinkState = true;
 
-          digitalWrite(blinkPin, !blinkState); // Invert the output state
+          digitalWrite(blinkPin, !blinkState);
+#ifdef RGB_LED_ENABLED
+          setRgbLedColor(blinkPin == LED_red_pin, blinkPin == LED_yellow_pin, blinkPin == LED_green_pin);
+#endif
         }
         else
         {
-          digitalWrite(blinkPin, !blinkState); // Invert the output state
+          digitalWrite(blinkPin, !blinkState);
+#ifdef RGB_LED_ENABLED
+          if (blinkState)
+            setRgbLedColor(blinkPin == LED_red_pin, blinkPin == LED_yellow_pin, blinkPin == LED_green_pin);
+          else
+            setRgbLedColor(false, false, false);
+#endif
         }
       }
 
@@ -574,6 +596,11 @@ void setup()
   setupLidar();
 #endif
 
+#ifdef RGB_LED_ENABLED
+  FastLED.addLeds<WS2812, RGB_LED_PIN, GRB>(rgbLed, 1);
+  FastLED.setBrightness(50);
+#endif
+
 // 1) Prevent ambiguous dual‑modes:
 #if defined(WIFI_SSID) && defined(WIFI_PASS) && defined(AP_SSID)
 #error "You cannot define both WIFI_SSID/PASS and AP_SSID (with or without AP_PASS)."
@@ -609,39 +636,39 @@ void setup()
 
   preferences.begin("traffic-light", false);
 
-  DefaultSetting defaultSettings[] = {
-      {"delay_red", 5000},
-      {"delay_yellow", 3000},
-      {"delay_green", 6000},
-      {"dist_max", 150},
-      {"dist_warn", 40},
-      {"dist_dang", 10}};
+  // Set defaults for timing delays
+  if (!preferences.isKey("delay_red"))
+    preferences.putULong("delay_red", 5000);
+  if (!preferences.isKey("delay_yellow"))
+    preferences.putULong("delay_yellow", 3000);
+  if (!preferences.isKey("delay_green"))
+    preferences.putULong("delay_green", 6000);
 
-  for (const auto &setting : defaultSettings)
-  {
-    if (!preferences.isKey(setting.key))
-    {
-      preferences.putULong(setting.key, setting.defaultValue);
-    }
-  }
+  // Set defaults for distance zones (stored as float)
+  if (!preferences.isKey("dist_max"))
+    preferences.putFloat("dist_max", 15.0);
+  if (!preferences.isKey("dist_warn"))
+    preferences.putFloat("dist_warn", 5.0);
+  if (!preferences.isKey("dist_dang"))
+    preferences.putFloat("dist_dang", 2.0);
 
   // Load timing delays
-  LED_delay_red = preferences.getULong("delay_red", -1);
-  LED_delay_yellow = preferences.getULong("delay_yellow", -1);
-  LED_delay_green = preferences.getULong("delay_green", -1);
+  LED_delay_red = preferences.getULong("delay_red", 5000);
+  LED_delay_yellow = preferences.getULong("delay_yellow", 3000);
+  LED_delay_green = preferences.getULong("delay_green", 6000);
 
 // Distance sensor: if programaticly enabled, load status from preferences
 #ifdef DISTANCE_SENSOR_ENABLED
   distance_sensor_enabled = preferences.getBool("dist_sens_en", false);
 #else
-  distance_sensor_enabled = false; // Default to false if not defined
+  distance_sensor_enabled = false;
 #endif
 
   Serial.println("Distance sensor enabled: " + String(distance_sensor_enabled ? "true" : "false"));
 
-  distance_max = preferences.getFloat("dist_max", -1);
-  distance_warning = preferences.getFloat("dist_warn", -1);
-  distance_danger = preferences.getFloat("dist_dang", -1);
+  distance_max = preferences.getFloat("dist_max", 15.0);
+  distance_warning = preferences.getFloat("dist_warn", 5.0);
+  distance_danger = preferences.getFloat("dist_dang", 2.0);
 
   // listSPIFFSFiles();
 
@@ -744,7 +771,7 @@ void loop()
         }
       }
     }
-    return; // skip the rest of loop() while flashing
+    // continue to read sensor below, but don't change lights
   }
 
   // —— 2) Distance-sensor logic ——
@@ -797,36 +824,39 @@ void loop()
         cycling = false;
       }
 
-      // — Out of sensor range or beyond max → normal cycle
-      if (distance == -1 || distance >= distance_max)
+      // Skip light control if currently flashing
+      if (!dangerFlashing)
       {
-        cycling = true;
-        inDangerCycleMode = false;
-        cycleLights();
-      }
-      // — Just-entered danger held long enough? start flashing red light
-      else if (dangerStartTime > 0 && millis() - dangerStartTime >= dangerHoldTime && !hasFlashedInDanger)
-      {
-        hasFlashedInDanger = true;
-        dangerFlashing = true;
-        flashCycles = 0;
-        flashOn = false;
-        lastFlashToggle = millis();
-        return; // hand off to flashing block above
-      }
-      else if (inDangerCycleMode) // — If already in danger cycle-mode, keep cycling lights
-      {
-        cycleLights();
-      }
-      else // — Otherwise show static color based on distance
-      {
-        cycling = false;
-        if (distance <= distance_danger)
-          set_traffic_light(1, 0, 0); // Danger zone → red
-        else if (distance <= distance_warning)
-          set_traffic_light(0, 1, 0); // Warning zone → yellow
-        else
-          set_traffic_light(0, 0, 1); // Safe zone → green
+        // — Out of sensor range or beyond max → normal cycle
+        if (distance == -1 || distance >= distance_max)
+        {
+          cycling = true;
+          inDangerCycleMode = false;
+          cycleLights();
+        }
+        // — Just-entered danger held long enough? start flashing red light
+        else if (dangerStartTime > 0 && millis() - dangerStartTime >= dangerHoldTime && !hasFlashedInDanger)
+        {
+          hasFlashedInDanger = true;
+          dangerFlashing = true;
+          flashCycles = 0;
+          flashOn = false;
+          lastFlashToggle = millis();
+        }
+        else if (inDangerCycleMode) // — If already in danger cycle-mode, keep cycling lights
+        {
+          cycleLights();
+        }
+        else // — Otherwise show static color based on distance
+        {
+          cycling = false;
+          if (distance <= distance_danger)
+            set_traffic_light(1, 0, 0); // Danger zone → red
+          else if (distance <= distance_warning)
+            set_traffic_light(0, 1, 0); // Warning zone → yellow
+          else
+            set_traffic_light(0, 0, 1); // Safe zone → green
+        }
       }
     }
   }

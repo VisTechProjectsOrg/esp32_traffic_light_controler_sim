@@ -21,8 +21,11 @@ function updateCarPosition() {
   const left = cwidth * (visualMax - dist) / visualMax - cw;
 
   car.style.left = `${left}px`;
-  wf.style.left = `${left + 203}px`;
-  wr.style.left = `${left + 41}px`;
+  // Scale wheel offsets based on car height (90px is desktop reference)
+  const carHeight = car.getBoundingClientRect().height;
+  const scale = carHeight / 90;
+  wf.style.left = `${left + 203 * scale}px`;
+  wr.style.left = `${left + 41 * scale}px`;
 
   if (lastPosition !== null && lastPosition !== left) {
     const delta = left - lastPosition;

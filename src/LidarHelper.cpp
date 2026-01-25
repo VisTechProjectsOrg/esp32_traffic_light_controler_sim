@@ -76,14 +76,27 @@ void autoSwitchMode(int16_t dist_cm, int16_t str)
     }
 }
 
+static float lastFilteredValue = 0;
+const float JUMP_THRESHOLD_FT = 1.0f;  // if change > 1ft, reset filter
+
 static void clearFilter()
 {
     bufferIndex = 0;
     bufferCount = 0;
+    lastFilteredValue = 0;
 }
 
 static float addToFilter(float value)
 {
+    // detect large jump - reset filter for immediate response
+    float diff = value - lastFilteredValue;
+    if (diff < 0) diff = -diff;
+    if (bufferCount > 0 && diff > JUMP_THRESHOLD_FT)
+    {
+        Serial.printf("[FILTER] Jump detected: %.2f -> %.2f, resetting\n", lastFilteredValue, value);
+        clearFilter();
+    }
+
     distanceBuffer[bufferIndex] = value;
     bufferIndex = (bufferIndex + 1) % FILTER_SIZE;
     if (bufferCount < FILTER_SIZE)
@@ -92,7 +105,9 @@ static float addToFilter(float value)
     float sum = 0;
     for (int i = 0; i < bufferCount; i++)
         sum += distanceBuffer[i];
-    return sum / bufferCount;
+
+    lastFilteredValue = sum / bufferCount;
+    return lastFilteredValue;
 }
 
 bool getOptimalMeasurement(int16_t &outDist,

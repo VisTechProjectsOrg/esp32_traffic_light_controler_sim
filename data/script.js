@@ -214,6 +214,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (!isNaN(data.distance)) {
                 const distanceValue = Number.parseFloat(data.distance);
+                console.log("Distance: " + distanceValue.toFixed(2) + " ft, Temp: " + (data.sensor_temp || "--") + " C");
 
                 if (distanceInput) {
                     distanceInput.value = distanceValue;
