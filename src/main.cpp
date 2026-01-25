@@ -7,7 +7,7 @@
 #include <ESPmDNS.h>
 #include <config.h>
 #include <ArduinoJson.h>
-#include "WifiManager.h"
+#include "WiFiManager.h"
 #include <WebSocketsServer.h>
 #include <ota_updater.h>
 #include <version.h>

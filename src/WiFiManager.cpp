@@ -1,5 +1,5 @@
 // WifiManager.cpp
-#include "WifiManager.h"
+#include "WiFiManager.h"
 #include <ESPmDNS.h>
 
 using namespace WifiManager;
