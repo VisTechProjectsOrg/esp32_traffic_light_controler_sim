@@ -5,31 +5,27 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install PlatformIO
-        run: |
-          pip install platformio
-
       - name: Extract version from tag
         id: version
+        shell: bash
         run: |
           VERSION=${GITHUB_REF#refs/tags/v}
           echo "version=$VERSION" >> $GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
       - name: Update version.h
+        shell: bash
         run: |
           cat > src/version.h << EOF
           #define VERSION_FIRMWARE "${{ steps.version.outputs.version }}"
@@ -38,18 +34,16 @@ jobs:
           cat src/version.h
 
       - name: Build Firmware
-        run: |
-          pio run -e esp32dev
+        shell: bash
+        run: pio run -e esp32dev
 
       - name: Build SPIFFS
-        run: |
-          pio run -t buildfs -e esp32dev
+        shell: bash
+        run: pio run -t buildfs -e esp32dev
 
       - name: Create combined binary
+        shell: bash
         run: |
-          pip install esptool
-          # Get partition info - adjust addresses based on your partition scheme
-          # Default ESP32 with SPIFFS: firmware at 0x10000, spiffs at 0x290000
           esptool.py --chip esp32 merge_bin \
             -o combined_v${{ steps.version.outputs.version }}.bin \
             --flash_mode dio \
@@ -61,6 +55,7 @@ jobs:
             0x290000 .pio/build/esp32dev/spiffs.bin
 
       - name: Rename binaries
+        shell: bash
         run: |
           cp .pio/build/esp32dev/firmware.bin firmware_v${{ steps.version.outputs.version }}.bin
           cp .pio/build/esp32dev/spiffs.bin spiffs_v${{ steps.version.outputs.version }}.bin
