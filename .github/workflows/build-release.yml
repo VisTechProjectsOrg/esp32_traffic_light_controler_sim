@@ -79,8 +79,14 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin firmware_prod:firmware_prod 2>$null || git checkout --orphan firmware_prod
-          git checkout firmware_prod
+          $branchExists = git ls-remote --heads origin firmware_prod
+          if ($branchExists) {
+            git fetch origin firmware_prod
+            git checkout firmware_prod
+          } else {
+            git checkout --orphan firmware_prod
+            git rm -rf . 2>$null
+          }
           New-Item -ItemType Directory -Force -Path "build"
           Copy-Item ".pio/build/esp32dev/firmware.bin" "build/firmware.bin"
           Copy-Item ".pio/build/esp32dev/spiffs.bin" "build/spiffs.bin"
