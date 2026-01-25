@@ -33,7 +33,7 @@ jobs:
       - name: Build Firmware
         shell: powershell
         run: |
-          pio run -e esp32dev
+          python -m platformio run -e esp32dev
 
       - name: Update data/version.txt (SPIFFS version)
         shell: powershell
@@ -44,7 +44,7 @@ jobs:
       - name: Build SPIFFS
         shell: powershell
         run: |
-          pio run -t buildfs -e esp32dev
+          python -m platformio run -t buildfs -e esp32dev
 
       - name: Rename binaries
         shell: powershell
