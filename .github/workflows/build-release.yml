@@ -27,10 +27,7 @@ jobs:
       - name: Update version.h
         shell: powershell
         run: |
-          $content = @"
-          #define VERSION_FIRMWARE "${{ steps.version.outputs.version }}"
-          #define VERSION_SPIFFS "${{ steps.version.outputs.version }}"
-          "@
+          $content = "#define VERSION_FIRMWARE `"${{ steps.version.outputs.version }}`"`n#define VERSION_SPIFFS `"${{ steps.version.outputs.version }}`""
           Set-Content -Path "src/version.h" -Value $content
           Get-Content "src/version.h"
 
