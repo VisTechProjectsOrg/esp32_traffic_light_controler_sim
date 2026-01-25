@@ -36,16 +36,18 @@ jobs:
 
       - name: Build Firmware
         shell: powershell
-        run: pio run -e esp32dev
+        run: |
+          & "C:/Program Files/Python314/Scripts/pio.exe" run -e esp32dev
 
       - name: Build SPIFFS
         shell: powershell
-        run: pio run -t buildfs -e esp32dev
+        run: |
+          & "C:/Program Files/Python314/Scripts/pio.exe" run -t buildfs -e esp32dev
 
       - name: Create combined binary
         shell: powershell
         run: |
-          esptool.py --chip esp32 merge_bin `
+          & "C:/Program Files/Python314/Scripts/esptool.exe" --chip esp32 merge_bin `
             -o "combined_v${{ steps.version.outputs.version }}.bin" `
             --flash_mode dio `
             --flash_freq 40m `
