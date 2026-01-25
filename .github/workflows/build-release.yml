@@ -1,0 +1,77 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install PlatformIO
+        run: |
+          pip install platformio
+
+      - name: Extract version from tag
+        id: version
+        run: |
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Building version: $VERSION"
+
+      - name: Update version.h
+        run: |
+          cat > src/version.h << EOF
+          #define VERSION_FIRMWARE "${{ steps.version.outputs.version }}"
+          #define VERSION_SPIFFS "${{ steps.version.outputs.version }}"
+          EOF
+          cat src/version.h
+
+      - name: Build Firmware
+        run: |
+          pio run -e esp32dev
+
+      - name: Build SPIFFS
+        run: |
+          pio run -t buildfs -e esp32dev
+
+      - name: Create combined binary
+        run: |
+          pip install esptool
+          # Get partition info - adjust addresses based on your partition scheme
+          # Default ESP32 with SPIFFS: firmware at 0x10000, spiffs at 0x290000
+          esptool.py --chip esp32 merge_bin \
+            -o combined_v${{ steps.version.outputs.version }}.bin \
+            --flash_mode dio \
+            --flash_freq 40m \
+            --flash_size 4MB \
+            0x1000 .pio/build/esp32dev/bootloader.bin \
+            0x8000 .pio/build/esp32dev/partitions.bin \
+            0x10000 .pio/build/esp32dev/firmware.bin \
+            0x290000 .pio/build/esp32dev/spiffs.bin
+
+      - name: Rename binaries
+        run: |
+          cp .pio/build/esp32dev/firmware.bin firmware_v${{ steps.version.outputs.version }}.bin
+          cp .pio/build/esp32dev/spiffs.bin spiffs_v${{ steps.version.outputs.version }}.bin
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            firmware_v${{ steps.version.outputs.version }}.bin
+            spiffs_v${{ steps.version.outputs.version }}.bin
+            combined_v${{ steps.version.outputs.version }}.bin
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
