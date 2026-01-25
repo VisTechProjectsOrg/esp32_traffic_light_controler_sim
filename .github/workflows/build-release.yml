@@ -105,6 +105,14 @@ jobs:
           $json = @{ firmware = "${{ steps.version.outputs.version }}"; spiffs = "${{ steps.version.outputs.version }}" } | ConvertTo-Json
           Set-Content -Path "version.json" -Value $json
 
-          git add build/firmware.bin build/spiffs.bin version.json
+          # Update README badges if it exists
+          if (Test-Path "README.md") {
+            $readme = Get-Content "README.md" -Raw
+            $readme = $readme -replace 'Firmware-v[\d.]+', "Firmware-v${{ steps.version.outputs.version }}"
+            $readme = $readme -replace 'SPIFFS-v[\d.]+', "SPIFFS-v${{ steps.version.outputs.version }}"
+            Set-Content -Path "README.md" -Value $readme
+          }
+
+          git add build/firmware.bin build/spiffs.bin version.json README.md
           git commit -m "Update firmware to v${{ steps.version.outputs.version }}"
           git push origin firmware_prod
