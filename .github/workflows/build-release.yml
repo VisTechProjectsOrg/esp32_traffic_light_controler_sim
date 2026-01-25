@@ -18,47 +18,48 @@ jobs:
 
       - name: Extract version from tag
         id: version
-        shell: bash
+        shell: pwsh
         run: |
-          VERSION=${GITHUB_REF#refs/tags/v}
-          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          $VERSION = "${{ github.ref_name }}".TrimStart('v')
+          echo "version=$VERSION" >> $env:GITHUB_OUTPUT
           echo "Building version: $VERSION"
 
       - name: Update version.h
-        shell: bash
+        shell: pwsh
         run: |
-          cat > src/version.h << EOF
+          $content = @"
           #define VERSION_FIRMWARE "${{ steps.version.outputs.version }}"
           #define VERSION_SPIFFS "${{ steps.version.outputs.version }}"
-          EOF
-          cat src/version.h
+          "@
+          Set-Content -Path "src/version.h" -Value $content
+          Get-Content "src/version.h"
 
       - name: Build Firmware
-        shell: bash
+        shell: pwsh
         run: pio run -e esp32dev
 
       - name: Build SPIFFS
-        shell: bash
+        shell: pwsh
         run: pio run -t buildfs -e esp32dev
 
       - name: Create combined binary
-        shell: bash
+        shell: pwsh
         run: |
-          esptool.py --chip esp32 merge_bin \
-            -o combined_v${{ steps.version.outputs.version }}.bin \
-            --flash_mode dio \
-            --flash_freq 40m \
-            --flash_size 4MB \
-            0x1000 .pio/build/esp32dev/bootloader.bin \
-            0x8000 .pio/build/esp32dev/partitions.bin \
-            0x10000 .pio/build/esp32dev/firmware.bin \
+          esptool.py --chip esp32 merge_bin `
+            -o "combined_v${{ steps.version.outputs.version }}.bin" `
+            --flash_mode dio `
+            --flash_freq 40m `
+            --flash_size 4MB `
+            0x1000 .pio/build/esp32dev/bootloader.bin `
+            0x8000 .pio/build/esp32dev/partitions.bin `
+            0x10000 .pio/build/esp32dev/firmware.bin `
             0x290000 .pio/build/esp32dev/spiffs.bin
 
       - name: Rename binaries
-        shell: bash
+        shell: pwsh
         run: |
-          cp .pio/build/esp32dev/firmware.bin firmware_v${{ steps.version.outputs.version }}.bin
-          cp .pio/build/esp32dev/spiffs.bin spiffs_v${{ steps.version.outputs.version }}.bin
+          Copy-Item ".pio/build/esp32dev/firmware.bin" "firmware_v${{ steps.version.outputs.version }}.bin"
+          Copy-Item ".pio/build/esp32dev/spiffs.bin" "spiffs_v${{ steps.version.outputs.version }}.bin"
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
