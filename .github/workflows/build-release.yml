@@ -73,3 +73,19 @@ jobs:
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Update firmware_prod branch
+        shell: powershell
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin firmware_prod:firmware_prod 2>$null || git checkout --orphan firmware_prod
+          git checkout firmware_prod
+          New-Item -ItemType Directory -Force -Path "build"
+          Copy-Item ".pio/build/esp32dev/firmware.bin" "build/firmware.bin"
+          Copy-Item ".pio/build/esp32dev/spiffs.bin" "build/spiffs.bin"
+          $json = @{ firmware = "${{ steps.version.outputs.version }}"; spiffs = "${{ steps.version.outputs.version }}" } | ConvertTo-Json
+          Set-Content -Path "version.json" -Value $json
+          git add build/firmware.bin build/spiffs.bin version.json
+          git commit -m "Update firmware to v${{ steps.version.outputs.version }}"
+          git push origin firmware_prod

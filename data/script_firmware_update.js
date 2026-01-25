@@ -47,14 +47,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
     btn_firmware.addEventListener("click", () => {
         fetchAndUploadFromGitHub(
-            "https://raw.githubusercontent.com/VisTechProjects/esp32_traffic_light_controler_sim/firmware_prod/build/firmware.bin",
+            "https://raw.githubusercontent.com/VisTechProjectsOrg/esp32_traffic_light_controler_sim/firmware_prod/build/firmware.bin",
             "firmware.bin"
         );
     });
 
     btn_spiffs.addEventListener("click", () => {
         fetchAndUploadFromGitHub(
-            "https://raw.githubusercontent.com/VisTechProjects/esp32_traffic_light_controler_sim/firmware_prod/build/spiffs.bin",
+            "https://raw.githubusercontent.com/VisTechProjectsOrg/esp32_traffic_light_controler_sim/firmware_prod/build/spiffs.bin",
             "spiffs.bin"
         );
     });
@@ -181,7 +181,7 @@ document.addEventListener("DOMContentLoaded", () => {
             console.info("Fetching version info from GitHub...");
 
 
-            fetch("https://raw.githubusercontent.com/VisTechProjects/esp32_traffic_light_controler_sim/firmware_prod/version.json")
+            fetch("https://raw.githubusercontent.com/VisTechProjectsOrg/esp32_traffic_light_controler_sim/firmware_prod/version.json")
                 .then(res => res.json())
                 .then(github => {
                     const githubFirmware = github.firmware || "0.0";
@@ -236,10 +236,10 @@ document.addEventListener("DOMContentLoaded", () => {
         });;
 
     btn_firmware.addEventListener("click", () => {
-        fetchAndUploadFromGitHub("https://raw.githubusercontent.com/VisTechProjects/esp32_traffic_light_controler_sim/firmware_prod/build/firmware.bin", "firmware.bin");
+        fetchAndUploadFromGitHub("https://raw.githubusercontent.com/VisTechProjectsOrg/esp32_traffic_light_controler_sim/firmware_prod/build/firmware.bin", "firmware.bin");
     });
 
     btn_spiffs.addEventListener("click", () => {
-        fetchAndUploadFromGitHub("https://raw.githubusercontent.com/VisTechProjects/esp32_traffic_light_controler_sim/firmware_prod/build/spiffs.bin", "spiffs.bin");
+        fetchAndUploadFromGitHub("https://raw.githubusercontent.com/VisTechProjectsOrg/esp32_traffic_light_controler_sim/firmware_prod/build/spiffs.bin", "spiffs.bin");
     });
 });
