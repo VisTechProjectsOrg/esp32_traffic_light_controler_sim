@@ -44,19 +44,6 @@ jobs:
         run: |
           & "C:/Python314/Scripts/pio.exe" run -t buildfs -e esp32dev
 
-      - name: Create combined binary
-        shell: powershell
-        run: |
-          & "C:/Python314/Scripts/esptool.exe" --chip esp32 merge_bin `
-            -o "combined_v${{ steps.version.outputs.version }}.bin" `
-            --flash_mode dio `
-            --flash_freq 40m `
-            --flash_size 4MB `
-            0x1000 .pio/build/esp32dev/bootloader.bin `
-            0x8000 .pio/build/esp32dev/partitions.bin `
-            0x10000 .pio/build/esp32dev/firmware.bin `
-            0x290000 .pio/build/esp32dev/spiffs.bin
-
       - name: Rename binaries
         shell: powershell
         run: |
@@ -69,7 +56,6 @@ jobs:
           files: |
             firmware_v${{ steps.version.outputs.version }}.bin
             spiffs_v${{ steps.version.outputs.version }}.bin
-            combined_v${{ steps.version.outputs.version }}.bin
           generate_release_notes: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
