@@ -754,6 +754,11 @@ void loop()
   static bool flashOn = false;
   static unsigned long lastFlashToggle = 0;
 
+  // Zone persistence to filter spurious readings
+  static int consecutiveReadings = 0;
+  static int lastZone = -1;  // -1=out of range, 0=green, 1=yellow, 2=danger
+  const int REQUIRED_READINGS = 3;
+
   float distance = -1;
 
   // —— 1) Handle non-blocking red-flash mode ——
@@ -815,6 +820,33 @@ void loop()
       Serial.printf("Distance: %d cm, %.2f ft, Strength: %d, Temp: %d C\n", distance_cm, distance, strength, temp);
 
       notifyAllClientsDistance(distance, temp);
+
+      // Determine current zone
+      int currentZone;
+      if (distance == -1 || distance >= distance_max) {
+        currentZone = -1;  // out of range
+      } else if (distance > distance_warning) {
+        currentZone = 0;   // green zone
+      } else if (distance > distance_danger) {
+        currentZone = 1;   // yellow zone
+      } else {
+        currentZone = 2;   // danger zone
+      }
+
+      // Zone persistence check
+      if (currentZone != lastZone) {
+        consecutiveReadings = 1;
+        lastZone = currentZone;
+        Serial.printf("[PERSIST] Zone changed to %d, need %d readings\n", currentZone, REQUIRED_READINGS);
+      } else {
+        consecutiveReadings++;
+      }
+
+      // Skip light changes until we have enough consecutive readings
+      if (consecutiveReadings < REQUIRED_READINGS) {
+        Serial.printf("[PERSIST] Zone %d: %d/%d readings\n", currentZone, consecutiveReadings, REQUIRED_READINGS);
+        return;
+      }
 
       // start timing how long we've been in the danger zone
       if (distance != -1 && distance <= distance_danger)
