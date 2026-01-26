@@ -78,12 +78,14 @@ To configure the light cycle delays, distance warnings or [update firmware](#ota
 
 OTA updates are available if connected to wifi. You can also drap and drop valid <code>FIRMWARE.BIN</code> and <code>SPIFFS.BIN</code> files as well.
 
-<div style="display: flex; align-items: center;">
-    <table>
-      <tr>
-        <td>
-        <img src="images/ota_page_update_installing.png" alt="OTA Updates installing" width="500" height="431"> <img src="images/ota_page.png" alt="OTA Updates" width="500" height="431"> <img src="images/ota_page_update_avail.png" alt="OTA Updates available" width="500" height="431"> <img src="images/ota_page_update_fail.png" alt="OTA Updates failed" width="500" height="431"></td>
-      </tr>
-    </table>
-</div>
+<table>
+  <tr>
+    <td><img src="images/ota_page.png" alt="OTA Updates" width="400"></td>
+    <td><img src="images/ota_page_update_avail.png" alt="OTA Updates available" width="400"></td>
+  </tr>
+  <tr>
+    <td><img src="images/ota_page_update_installing.png" alt="OTA Updates installing" width="400"></td>
+    <td><img src="images/ota_page_update_fail.png" alt="OTA Updates failed" width="400"></td>
+  </tr>
+</table>
 
