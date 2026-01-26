@@ -8,8 +8,8 @@
     </span>
 </div><br>
 <div>
-    <img src="data/img/traffic_lt/all_on.png" alt="Traffic Light" width="100" height="200" style="margin-right: 10px;">
-    <img src="images/traffic_light.gif" alt="Traffic Light" width="100" height="200" style="margin-right: 10px;">
+    <img src="data/img/traffic_lt/all_on.png" alt="Traffic Light" width="75" style="margin-right: 10px;">
+    <img src="images/traffic_light.gif" alt="Traffic Light" width="130" style="margin-right: 10px;">
 </div>
 
 ## Features
