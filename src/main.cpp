@@ -51,6 +51,7 @@ unsigned long LED_delay_green = 0;
 float distance_max = 0;
 float distance_warning = 0;
 float distance_danger = 0;
+int zone_persistence = 3;  // consecutive readings required before changing zone
 
 bool distance_sensor_enabled = false; // Default value false
 
@@ -330,6 +331,7 @@ void handleGetConfig(AsyncWebServerRequest *request)
                         ",\"distance_max\":" + String(distance_max) +
                         ",\"distance_warning\":" + String(distance_warning) +
                         ",\"distance_danger\":" + String(distance_danger) +
+                        ",\"zone_persistence\":" + String(zone_persistence) +
                         ",\"distance_sensor_enabled\":" + String(distance_sensor_enabled ? "true" : "false") +
                         ",\"version_firmware\":\"" + String(VERSION_FIRMWARE) + "\"" +
                         ",\"version_spiffs\":\"" + getSpiffsVersion() + "\"}";
@@ -362,6 +364,7 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     distance_max = doc["distance_max"].as<float>();
     distance_warning = doc["distance_warning"].as<float>();
     distance_danger = doc["distance_danger"].as<float>();
+    zone_persistence = doc["zone_persistence"].as<int>();
     distance_sensor_enabled = doc["distance_sensor_enabled"].as<bool>();
 
     Serial.println("Action: " + action);
@@ -371,6 +374,7 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     Serial.println("distance_max: " + String(distance_max));
     Serial.println("distance_warning: " + String(distance_warning));
     Serial.println("distance_danger: " + String(distance_danger));
+    Serial.println("zone_persistence: " + String(zone_persistence));
     Serial.println("distance_sensor_enabled: " + String(distance_sensor_enabled));
 
     // Convert float to unsigned long for storage in Preferences
@@ -382,6 +386,7 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     preferences.putFloat("dist_max", distance_max);
     preferences.putFloat("dist_warn", distance_warning);
     preferences.putFloat("dist_dang", distance_danger);
+    preferences.putInt("zone_persist", zone_persistence);
     preferences.putBool("dist_sens_en", distance_sensor_enabled);
 
     JsonDocument responseDoc;
@@ -392,6 +397,7 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     responseDoc["distance_max"] = preferences.getFloat("dist_max", -1);
     responseDoc["distance_warning"] = preferences.getFloat("dist_warn", -1);
     responseDoc["distance_danger"] = preferences.getFloat("dist_dang", -1);
+    responseDoc["zone_persistence"] = preferences.getInt("zone_persist", 3);
     responseDoc["distance_sensor_enabled"] = preferences.getBool("dist_sens_en", false);
 
     String message;
@@ -660,6 +666,8 @@ void setup()
     preferences.putFloat("dist_warn", 5.0);
   if (!preferences.isKey("dist_dang"))
     preferences.putFloat("dist_dang", 2.0);
+  if (!preferences.isKey("zone_persist"))
+    preferences.putInt("zone_persist", 3);
 
   // Load timing delays
   LED_delay_red = preferences.getULong("delay_red", 5000);
@@ -678,6 +686,7 @@ void setup()
   distance_max = preferences.getFloat("dist_max", 15.0);
   distance_warning = preferences.getFloat("dist_warn", 5.0);
   distance_danger = preferences.getFloat("dist_dang", 2.0);
+  zone_persistence = preferences.getInt("zone_persist", 3);
 
   // listSPIFFSFiles();
 
@@ -757,7 +766,6 @@ void loop()
   // Zone persistence to filter spurious readings
   static int consecutiveReadings = 0;
   static int lastZone = -1;  // -1=out of range, 0=green, 1=yellow, 2=danger
-  const int REQUIRED_READINGS = 3;
 
   float distance = -1;
 
@@ -837,14 +845,14 @@ void loop()
       if (currentZone != lastZone) {
         consecutiveReadings = 1;
         lastZone = currentZone;
-        Serial.printf("[PERSIST] Zone changed to %d, need %d readings\n", currentZone, REQUIRED_READINGS);
+        Serial.printf("[PERSIST] Zone changed to %d, need %d readings\n", currentZone, zone_persistence);
       } else {
         consecutiveReadings++;
       }
 
       // Skip light changes until we have enough consecutive readings
-      if (consecutiveReadings < REQUIRED_READINGS) {
-        Serial.printf("[PERSIST] Zone %d: %d/%d readings\n", currentZone, consecutiveReadings, REQUIRED_READINGS);
+      if (consecutiveReadings < zone_persistence) {
+        Serial.printf("[PERSIST] Zone %d: %d/%d readings\n", currentZone, consecutiveReadings, zone_persistence);
         return;
       }
 

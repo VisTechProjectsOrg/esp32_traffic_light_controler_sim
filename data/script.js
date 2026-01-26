@@ -4,6 +4,7 @@ let originalDistanceSensorEnabled = false;
 let originalDistanceMax = '';
 let originalDistanceWarning = '';
 let originalDistanceDanger = '';
+let originalZonePersistence = '';
 
 function updateTrafficLight(state) {
     document.getElementById('traffic-light').src = '/img/traffic_lt/' + state + '.png';
@@ -18,6 +19,7 @@ function closePopup(event) {
         document.getElementById("distance_max").value = originalDistanceMax;
         document.getElementById("distance_warning").value = originalDistanceWarning;
         document.getElementById("distance_danger").value = originalDistanceDanger;
+        document.getElementById("zone_persistence").value = originalZonePersistence;
         toggleDistanceSensorInputs();
     }
 
@@ -44,6 +46,7 @@ function openPopup_settings() {
             document.getElementById("distance_max").value = data.distance_max;
             document.getElementById("distance_warning").value = data.distance_warning;
             document.getElementById("distance_danger").value = data.distance_danger;
+            document.getElementById("zone_persistence").value = data.zone_persistence;
             document.getElementById("version_number_firmware_label").textContent = "FW: v" + (data.version_firmware || "0.0");
             document.getElementById("version_number_spiffs_label").textContent = "SPIFFS: v" + (data.version_spiffs || "0.0");
 
@@ -52,6 +55,7 @@ function openPopup_settings() {
             originalDistanceMax = data.distance_max;
             originalDistanceWarning = data.distance_warning;
             originalDistanceDanger = data.distance_danger;
+            originalZonePersistence = data.zone_persistence;
 
             const enabled = !!data.distance_sensor_enabled;
             document.getElementById('toggle_distance_sensor_switch').checked = enabled;
@@ -297,6 +301,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     document.getElementById("distance_max").value = data.distance_max;
                     document.getElementById("distance_warning").value = data.distance_warning;
                     document.getElementById("distance_danger").value = data.distance_danger;
+                    document.getElementById("zone_persistence").value = data.zone_persistence;
 
                     toggleDistanceSensorInputs();
                 });
@@ -317,7 +322,8 @@ document.addEventListener("DOMContentLoaded", function () {
             distance_sensor_enabled: document.getElementById("toggle_distance_sensor_switch").checked,
             distance_max: document.getElementById("distance_max").value,
             distance_warning: document.getElementById("distance_warning").value,
-            distance_danger: document.getElementById("distance_danger").value
+            distance_danger: document.getElementById("distance_danger").value,
+            zone_persistence: parseInt(document.getElementById("zone_persistence").value)
         };
 
         return fetch("/set_config", {
