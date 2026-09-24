@@ -115,6 +115,7 @@ void setup()
   ped_chained = preferences.getBool("ped_chained", true);
   ped_chain_phase = (LightState)preferences.getInt("ped_chain_ph", RED);
 #endif
+  prox_use_ped = preferences.getBool("prox_use_ped", true);
 
 
   setupWebServer();

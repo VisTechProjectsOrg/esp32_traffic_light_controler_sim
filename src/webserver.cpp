@@ -35,7 +35,10 @@ void handleRoot(AsyncWebServerRequest *request)
   if (SPIFFS.exists("/index.html"))
   {
     cycleLights();
-    request->send(SPIFFS, "/index.html", "text/html; charset=utf-8");
+    // Never cache the shell: it carries the versioned asset URLs.
+    AsyncWebServerResponse *res = request->beginResponse(SPIFFS, "/index.html", "text/html; charset=utf-8");
+    res->addHeader("Cache-Control", "no-cache");
+    request->send(res);
   }
   else
   {
@@ -455,6 +458,43 @@ void handlePedControl(AsyncWebServerRequest *request, uint8_t *data, size_t len,
 }
 #endif
 
+void handleProximityControl(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  JsonDocument doc;
+  if (deserializeJson(doc, (const char *)data))
+  {
+    request->send(400, "application/json", "{\"error\": \"Invalid JSON\"}");
+    return;
+  }
+
+  String action = doc["action"].as<String>();
+
+  if (action == "relearn")
+  {
+    proximityRelearnBaseline();
+  }
+  else if (action == "set_config")
+  {
+    prox_use_ped = doc["use_ped"].as<bool>();
+    preferences.putBool("prox_use_ped", prox_use_ped);
+    Serial.println("Proximity indicator: " + String(prox_use_ped ? "ped head" : "vehicle head"));
+  }
+
+  JsonDocument out;
+  out["state"] = proximityStateName(proximityState());
+  out["zone"] = proximityZoneName(proximityZone());
+  out["raw"] = proximityRaw();
+  out["filtered"] = proximityFiltered();
+  out["strength"] = proximityStrength();
+  out["baseline"] = proximityBaseline();
+  out["baseline_valid"] = proximityBaselineValid();
+  out["use_ped"] = prox_use_ped;
+
+  String body;
+  serializeJson(out, body);
+  request->send(200, "application/json", body);
+}
+
 void listSPIFFSFiles()
 {
   Serial.println("Listing SPIFFS files:");
@@ -481,14 +521,20 @@ void setupWebServer()
   server.on("/set_output", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleSetOutput);
   server.on("/ped_control", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handlePedControl);
 #endif
+  server.on("/proximity_control", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleProximityControl);
   server.on("/get_config", HTTP_GET, handleGetConfig);
   server.on("/set_config", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleFormConfig);
   server.on("/blink_mode", HTTP_GET, handlelightMode);
   server.on("/toggle_light_mode", HTTP_GET, handleToggleLightMode);
   server.on("/toggle_theme_mode", HTTP_GET, handleToggleThemeMode);
 
-  server.serveStatic("/", SPIFFS, "/");
-  server.serveStatic("/images", SPIFFS, "/images");
+  // Assets are cached hard - they are most of the 800K and re-fetching them over
+  // WiFi is what actually makes a reload slow. That is only safe because
+  // tools/bump_spiffs_version.py stamps ?v=<version> onto every CSS and JS
+  // reference, so a new SPIFFS build changes the URL. The HTML shell carrying
+  // those URLs is sent no-cache (see handleRoot) so the change is picked up at once.
+  server.serveStatic("/", SPIFFS, "/").setCacheControl("max-age=604800");
+  server.serveStatic("/images", SPIFFS, "/images").setCacheControl("max-age=604800");
   server.onNotFound([](AsyncWebServerRequest *request)
                     {
     if (request->header("Accept").indexOf("application/json") != -1) {

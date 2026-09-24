@@ -66,6 +66,8 @@ function openPopup_settings() {
 
             // Show/hide car distance block on page load
             document.getElementById("carDistanceBlock").style.display = data.distance_sensor_enabled ? "" : "none";
+            const diagBlock = document.getElementById("sensorDiagBlock");
+            if (diagBlock) diagBlock.style.display = data.distance_sensor_enabled ? "" : "none";
 
 
             // Update car distance config values
@@ -199,6 +201,12 @@ document.addEventListener("DOMContentLoaded", function () {
             const blinkColorSelect = document.getElementById("blinkColorSelect");
             blinkColorSelect.value = data.blink_color;
 
+        } else if (data.proximity) {
+            updateSensorDiagnostics(data.proximity);
+
+        } else if (data.ped_state) {
+            console.log("Ped state:", data.ped_state);
+
         } else if (data.state) {
             updateTrafficLight(data.state);
 
@@ -286,8 +294,12 @@ document.addEventListener("DOMContentLoaded", function () {
         })
         .catch(err => console.error("Error loading initial distance sensor config:", err));
 
+    loadPedConfig();
+
     document.getElementById("setConfig").addEventListener("click", function (event) {
         const distanceSensorWasEnabled = document.getElementById("toggle_distance_sensor_switch").checked;
+
+        savePedConfig();
 
         sendRequest("set_config").then(() => {
             // After saving, re-fetch latest config and update the form values
@@ -395,3 +407,161 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }).catch(err => console.log('Failed to reset OTA state:', err));
 });
+
+// ---- sensor diagnostics ----
+
+function fmtFt(value) {
+    const n = Number.parseFloat(value);
+    return (Number.isNaN(n) || n < 0) ? "--" : n.toFixed(2) + " ft";
+}
+
+function updateSensorDiagnostics(p) {
+    const stateEl = document.getElementById("diag_state");
+    if (!stateEl) return;
+
+    stateEl.textContent = p.state || "--";
+    stateEl.setAttribute("data-state", p.state || "");
+
+    document.getElementById("diag_filtered").textContent = fmtFt(p.filtered);
+    document.getElementById("diag_raw").textContent = fmtFt(p.raw);
+    document.getElementById("diag_strength").textContent =
+        (p.strength === undefined || p.strength === null) ? "--" : p.strength;
+    document.getElementById("diag_baseline").textContent =
+        p.baseline_valid ? fmtFt(p.baseline) : "learning...";
+    document.getElementById("diag_zone").textContent = "zone: " + (p.zone || "--");
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    const relearn = document.getElementById("relearnBaseline");
+    if (!relearn) return;
+
+    relearn.addEventListener("click", function () {
+        relearn.disabled = true;
+        relearn.textContent = "Relearning...";
+        fetch("/proximity_control", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ action: "relearn" })
+        })
+            .then(function (r) { return r.json(); })
+            .then(function (p) { updateSensorDiagnostics(p); })
+            .catch(function (e) { console.error("Relearn failed:", e); })
+            .finally(function () {
+                relearn.disabled = false;
+                relearn.textContent = "Relearn baseline";
+            });
+    });
+});
+
+
+// ---- pedestrian settings ----
+
+function applyPedConfig(cfg) {
+    if (!cfg) return;
+    const set = function (id, value) {
+        const el = document.getElementById(id);
+        if (el && value !== undefined && value !== null) el.value = value;
+    };
+    set("ped_walk", cfg.walk);
+    set("ped_fdw", cfg.fdw);
+    set("ped_chain_phase", cfg.chain_phase);
+
+    const chained = document.getElementById("ped_chained");
+    if (chained && cfg.chained !== undefined) chained.checked = !!cfg.chained;
+}
+
+function loadPedConfig() {
+    // no-op body: the board answers a bare set_state with its current config
+    fetch("/ped_control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "query" })
+    })
+        .then(function (r) { return r.json(); })
+        .then(applyPedConfig)
+        .catch(function (e) { console.error("Error loading ped config:", e); });
+
+    fetch("/proximity_control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "query" })
+    })
+        .then(function (r) { return r.json(); })
+        .then(function (p) {
+            const usePed = document.getElementById("prox_use_ped");
+            if (usePed && p.use_ped !== undefined) usePed.checked = !!p.use_ped;
+            updateSensorDiagnostics(p);
+        })
+        .catch(function (e) { console.error("Error loading proximity config:", e); });
+}
+
+function savePedConfig() {
+    const num = function (id, fallback) {
+        const el = document.getElementById(id);
+        const v = el ? Number.parseInt(el.value, 10) : NaN;
+        return Number.isNaN(v) ? fallback : v;
+    };
+
+    fetch("/ped_control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            action: "set_config",
+            walk: num("ped_walk", 7),
+            fdw: num("ped_fdw", 15),
+            chained: document.getElementById("ped_chained").checked,
+            chain_phase: document.getElementById("ped_chain_phase").value
+        })
+    }).catch(function (e) { console.error("Error saving ped config:", e); });
+
+    fetch("/proximity_control", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            action: "set_config",
+            use_ped: document.getElementById("prox_use_ped").checked
+        })
+    }).catch(function (e) { console.error("Error saving proximity config:", e); });
+}
+
+
+// ---- boot splash ----
+// The page used to render with empty fields that /get_config then overwrote in
+// front of the user. Hold the splash until the first config and state have landed,
+// with a timeout so a failing endpoint can never strand you on the splash.
+
+(function () {
+    var BOOT_TIMEOUT_MS = 8000;
+    var pending = { config: false, state: false };
+    var finished = false;
+
+    function dismiss(message) {
+        if (finished) return;
+        finished = true;
+        var splash = document.getElementById("bootSplash");
+        if (!splash) return;
+        if (message) {
+            var text = document.getElementById("bootText");
+            if (text) text.textContent = message;
+        }
+        splash.classList.add("boot-done");
+        setTimeout(function () { splash.style.display = "none"; }, 400);
+    }
+
+    function mark(key) {
+        pending[key] = true;
+        if (pending.config && pending.state) dismiss();
+    }
+
+    window.bootReady = mark;
+
+    // Never strand the user, even if the controller is unreachable.
+    setTimeout(function () {
+        if (!finished) dismiss("Controller slow to respond - loading anyway");
+    }, BOOT_TIMEOUT_MS);
+
+    document.addEventListener("DOMContentLoaded", function () {
+        fetch("/get_config").then(function () { mark("config"); }).catch(function () { mark("config"); });
+        fetch("/get_current_state").then(function () { mark("state"); }).catch(function () { mark("state"); });
+    });
+})();

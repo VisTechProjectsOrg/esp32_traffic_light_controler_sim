@@ -6,14 +6,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8" />
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="style.css">
-    <link rel="stylesheet" href="car-distance-style.css" />
-    <script src="effect.js"></script>
-    <script src="script.js"></script>
-    <script src="car-distance.js"></script>
+    <link rel="stylesheet" href="style.css?v=0.1.9">
+    <link rel="stylesheet" href="car-distance-style.css?v=0.1.9" />
+    <script src="effect.js?v=0.1.9"></script>
+    <script src="script.js?v=0.1.9"></script>
+    <script src="car-distance.js?v=0.1.9"></script>
 </head>
 
 <body>
+
+    <div id="bootSplash" class="boot-splash">
+        <div class="boot-inner">
+            <div class="boot-lights" aria-hidden="true">
+                <span class="boot-lamp boot-red"></span>
+                <span class="boot-lamp boot-yellow"></span>
+                <span class="boot-lamp boot-green"></span>
+            </div>
+            <p class="boot-text" id="bootText">Connecting to controller...</p>
+        </div>
+    </div>
 
     <div id="reconnectPopup" style="display: none;">
         <div class="popup-content">
@@ -80,6 +91,29 @@
                                 <input type="number" id="distance_max" name="distance_max" min="0.25" step="0.25"><br>
                                 <label>Sensor Readings:</label>
                                 <input type="number" id="zone_persistence" name="zone_persistence" min="1" max="10" step="1"><br>
+                            </div>
+                        </div>
+
+                        <div id="popup-third">
+                            <div class="timing-box" id="pedSettings">
+                                <h3>Pedestrian</h3>
+                                <label>Walk (s):</label>
+                                <input type="number" id="ped_walk" name="ped_walk" min="1" max="120" step="1"><br>
+                                <label title="This is the number the countdown module displays">Flashing hand (s):</label>
+                                <input type="number" id="ped_fdw" name="ped_fdw" min="3" max="99" step="1"><br>
+                                <label>Walk during:</label>
+                                <select id="ped_chain_phase" name="ped_chain_phase">
+                                    <option value="red">Red</option>
+                                    <option value="green">Green</option>
+                                </select><br>
+                                <label class="inline-check">
+                                    <input type="checkbox" id="ped_chained" name="ped_chained">
+                                    Follow the vehicle cycle
+                                </label>
+                                <label class="inline-check">
+                                    <input type="checkbox" id="prox_use_ped" name="prox_use_ped">
+                                    Show distance on ped head
+                                </label>
                             </div>
                         </div>
 
@@ -171,6 +205,35 @@
                     <input type="hidden" id="distance_to_wall" value="0" />
                     <div class="car_status-indicator" id="status"></div>
                     <span class="car_warning" id="warning">Car is out of range!</span>
+                </div>
+            </div>
+
+            <div id="sensorDiagBlock" class="diag-card">
+                <div class="diag-head">
+                    <h2>Sensor</h2>
+                    <span class="diag-state" id="diag_state">--</span>
+                </div>
+                <div class="diag-grid">
+                    <div class="diag-item">
+                        <span class="diag-label">Filtered</span>
+                        <span class="diag-value" id="diag_filtered">--</span>
+                    </div>
+                    <div class="diag-item">
+                        <span class="diag-label">Raw</span>
+                        <span class="diag-value" id="diag_raw">--</span>
+                    </div>
+                    <div class="diag-item">
+                        <span class="diag-label">Strength</span>
+                        <span class="diag-value" id="diag_strength">--</span>
+                    </div>
+                    <div class="diag-item">
+                        <span class="diag-label">Baseline</span>
+                        <span class="diag-value" id="diag_baseline">--</span>
+                    </div>
+                </div>
+                <div class="diag-foot">
+                    <span class="diag-zone" id="diag_zone">zone: --</span>
+                    <button type="button" id="relearnBaseline" class="diag-btn">Relearn baseline</button>
                 </div>
             </div>
 
