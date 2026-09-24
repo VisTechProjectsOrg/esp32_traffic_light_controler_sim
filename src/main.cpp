@@ -65,6 +65,35 @@ int blinkPin = -1;
 
 unsigned long lastBlinkMillis = 0;
 
+// Bench test mode: suspends the automatic cycle so the test GUI can assert
+// individual relay channels without the cycle overwriting them.
+bool testMode = false;
+
+#ifdef PED_SIGNAL_ENABLED
+// Pedestrian phase. WALK length is a traffic-flow number and may vary; FDW is the
+// clearance interval and must stay constant, because its length is literally the
+// number the countdown module learns and displays.
+enum PedState
+{
+  PED_WALK,
+  PED_FDW,
+  PED_DONT_WALK,
+  PED_OFF
+};
+
+PedState currentPedState = PED_OFF;
+
+unsigned long ped_walk_duration = 7000;  // variable, safe to change at any time
+unsigned long ped_walk_effective = 7000; // walk length after trimming to fit the phase
+unsigned long ped_fdw_duration = 15000;  // fixed, this is the countdown value
+bool ped_chained = true;                 // follow the vehicle cycle vs manual control
+LightState ped_chain_phase = RED;        // vehicle phase the WALK runs under
+
+unsigned long pedPhaseStart = 0;
+unsigned long pedBlinkPrevious = 0;
+bool pedBlinkState = false;
+#endif
+
 #ifdef RGB_LED_ENABLED
 void setRgbLedColor(bool red, bool yellow, bool green)
 {
@@ -116,6 +145,118 @@ void set_traffic_light(boolean LED_red_state, boolean LED_yellow_state, boolean 
   }
 }
 
+#ifdef PED_SIGNAL_ENABLED
+const char *pedStateName(PedState state)
+{
+  switch (state)
+  {
+  case PED_WALK:
+    return "walk";
+  case PED_FDW:
+    return "fdw";
+  case PED_DONT_WALK:
+    return "dont_walk";
+  default:
+    return "off";
+  }
+}
+
+void set_ped_signal(boolean walk_state, boolean dont_walk_state)
+{
+  // The combo module drives one symbol at a time. Energizing both hots lights both
+  // symbols and draws 15W, so refuse it rather than pass it to the relays.
+  if (walk_state && dont_walk_state)
+    dont_walk_state = false;
+
+  // output and invert the logic here for relays
+  digitalWrite(PED_walk_pin, !walk_state);
+  digitalWrite(PED_dont_walk_pin, !dont_walk_state);
+}
+
+void setPedState(PedState state)
+{
+  currentPedState = state;
+  pedPhaseStart = millis();
+
+  switch (state)
+  {
+  case PED_WALK:
+    set_ped_signal(true, false);
+    break;
+
+  case PED_FDW:
+    // FDW starts lit, then chops at 1Hz. The flashing is what tells the
+    // countdown module to start counting.
+    pedBlinkState = true;
+    pedBlinkPrevious = pedPhaseStart;
+    set_ped_signal(false, true);
+    break;
+
+  case PED_DONT_WALK:
+    set_ped_signal(false, true);
+    break;
+
+  case PED_OFF:
+    set_ped_signal(false, false);
+    break;
+  }
+
+  String jsonResponse = "{\"ped_state\":\"" + String(pedStateName(state)) + "\"}";
+  ws.textAll(jsonResponse);
+}
+
+// Start a ped phase, trimming WALK so the whole thing fits inside the given vehicle
+// phase. FDW is never trimmed - a short clearance interval would teach the countdown
+// module the wrong number - so if even FDW alone does not fit, the phase is skipped.
+void startPedPhase(unsigned long availableTime)
+{
+  if (availableTime < ped_fdw_duration)
+  {
+    Serial.println("Ped phase skipped: vehicle phase (" + String(availableTime) +
+                   "ms) shorter than FDW (" + String(ped_fdw_duration) + "ms)");
+    setPedState(PED_DONT_WALK);
+    return;
+  }
+
+  unsigned long room = availableTime - ped_fdw_duration;
+  ped_walk_effective = ped_walk_duration;
+  if (ped_walk_effective > room)
+  {
+    ped_walk_effective = room;
+    Serial.println("Ped WALK trimmed to " + String(room) + "ms to fit the vehicle phase");
+  }
+
+  setPedState(PED_WALK);
+}
+
+void updatePedSignal(unsigned long currentMillis)
+{
+  unsigned long elapsed = currentMillis - pedPhaseStart;
+
+  switch (currentPedState)
+  {
+  case PED_WALK:
+    if (elapsed >= ped_walk_effective)
+      setPedState(PED_FDW);
+    break;
+
+  case PED_FDW:
+    if (currentMillis - pedBlinkPrevious >= pedFdwFlashInterval)
+    {
+      pedBlinkPrevious = currentMillis;
+      pedBlinkState = !pedBlinkState;
+      set_ped_signal(false, pedBlinkState);
+    }
+    if (elapsed >= ped_fdw_duration)
+      setPedState(PED_DONT_WALK);
+    break;
+
+  default:
+    break;
+  }
+}
+#endif
+
 void randomBlink()
 {
   // Randomly select a pin to blink
@@ -141,6 +282,9 @@ void randomBlink()
 
 void cycleLights()
 {
+  if (testMode)
+    return;
+
   unsigned long currentMillis = millis();
   if (lightMode)
   {
@@ -274,6 +418,16 @@ void cycleLights()
       break;
     }
     previousLightState = currentLightState;
+
+#ifdef PED_SIGNAL_ENABLED
+    if (ped_chained)
+    {
+      if (currentLightState == ped_chain_phase)
+        startPedPhase(currentDelay);
+      else if (currentPedState != PED_DONT_WALK)
+        setPedState(PED_DONT_WALK);
+    }
+#endif
   }
 }
 
@@ -527,9 +681,7 @@ void handleToggleLightMode(AsyncWebServerRequest *request)
 
   if (!lightMode)
   {
-    digitalWrite(LED_red_pin, LOW); // Turn off the blinking LEDs
-    digitalWrite(LED_yellow_pin, LOW);
-    digitalWrite(LED_green_pin, LOW);
+    set_traffic_light(0, 0, 0); // relays are active low, write through the helper
     blinkPin = -1;
   }
   else
@@ -581,6 +733,150 @@ void notifyAllClientsDistance(float distance, int16_t &outTemp)
   // Serial.println("Distance: " + String(distance) + " FT, Temp: " + String(outTemp) + " C | notify all
 }
 
+#ifdef PED_SIGNAL_ENABLED
+// Bench test endpoints used by tools/signal_test_gui.py.
+// /test_mode suspends the cycle, /set_output asserts one relay channel so you can
+// confirm which physical wire each channel actually lights.
+void handleTestMode(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  JsonDocument doc;
+  if (deserializeJson(doc, (const char *)data))
+  {
+    request->send(400, "application/json", "{\"error\": \"Invalid JSON\"}");
+    return;
+  }
+
+  testMode = doc["enabled"].as<bool>();
+  Serial.println("Test mode: " + String(testMode ? "on" : "off"));
+
+  if (testMode)
+  {
+    // everything dark so the operator starts from a known state
+    set_traffic_light(0, 0, 0);
+    set_ped_signal(0, 0);
+  }
+  else
+  {
+    previousLightState = OFF;
+    currentLightState = OFF;
+    setPedState(PED_DONT_WALK);
+  }
+
+  request->send(200, "application/json", "{\"test_mode\":" + String(testMode ? "true" : "false") + "}");
+}
+
+void handleSetOutput(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  JsonDocument doc;
+  if (deserializeJson(doc, (const char *)data))
+  {
+    request->send(400, "application/json", "{\"error\": \"Invalid JSON\"}");
+    return;
+  }
+
+  if (!testMode)
+  {
+    request->send(409, "application/json", "{\"error\": \"Enable test mode first\"}");
+    return;
+  }
+
+  String output = doc["output"].as<String>();
+  bool state = doc["state"].as<bool>();
+
+  // Held outputs, so the GUI can light several channels at once while ringing out wires.
+  static bool red = false, yellow = false, green = false, walk = false, dontWalk = false;
+
+  if (output == "red")
+    red = state;
+  else if (output == "yellow")
+    yellow = state;
+  else if (output == "green")
+    green = state;
+  else if (output == "walk")
+    walk = state;
+  else if (output == "dont_walk")
+    dontWalk = state;
+  else if (output == "all_off")
+    red = yellow = green = walk = dontWalk = false;
+  else
+  {
+    request->send(400, "application/json", "{\"error\": \"Unknown output\"}");
+    return;
+  }
+
+  set_traffic_light(red, yellow, green);
+  set_ped_signal(walk, dontWalk);
+
+  JsonDocument out;
+  out["red"] = red;
+  out["yellow"] = yellow;
+  out["green"] = green;
+  out["walk"] = walk;
+  out["dont_walk"] = dontWalk;
+  String body;
+  serializeJson(out, body);
+  request->send(200, "application/json", body);
+}
+
+void handlePedControl(AsyncWebServerRequest *request, uint8_t *data, size_t len, size_t index, size_t total)
+{
+  JsonDocument doc;
+  if (deserializeJson(doc, (const char *)data))
+  {
+    request->send(400, "application/json", "{\"error\": \"Invalid JSON\"}");
+    return;
+  }
+
+  String action = doc["action"].as<String>();
+
+  if (action == "set_state")
+  {
+    String state = doc["state"].as<String>();
+    if (state == "walk")
+      setPedState(PED_WALK);
+    else if (state == "fdw")
+      setPedState(PED_FDW);
+    else if (state == "dont_walk")
+      setPedState(PED_DONT_WALK);
+    else if (state == "off")
+      setPedState(PED_OFF);
+    else
+    {
+      request->send(400, "application/json", "{\"error\": \"Unknown ped state\"}");
+      return;
+    }
+  }
+  else if (action == "set_config")
+  {
+    ped_walk_duration = doc["walk"].as<unsigned long>() * 1000;
+    ped_fdw_duration = doc["fdw"].as<unsigned long>() * 1000;
+    ped_chained = doc["chained"].as<bool>();
+    ped_chain_phase = doc["chain_phase"].as<String>() == "green" ? GREEN : RED;
+    ped_walk_effective = ped_walk_duration;
+
+    preferences.putULong("ped_walk", ped_walk_duration);
+    preferences.putULong("ped_fdw", ped_fdw_duration);
+    preferences.putBool("ped_chained", ped_chained);
+    preferences.putInt("ped_chain_ph", ped_chain_phase);
+
+    Serial.println("Ped config: walk=" + String(ped_walk_duration) +
+                   "ms fdw=" + String(ped_fdw_duration) +
+                   "ms chained=" + String(ped_chained));
+  }
+
+  JsonDocument out;
+  out["ped_state"] = pedStateName(currentPedState);
+  out["walk"] = ped_walk_duration / 1000;
+  out["fdw"] = ped_fdw_duration / 1000;
+  out["chained"] = ped_chained;
+  out["chain_phase"] = ped_chain_phase == GREEN ? "green" : "red";
+  out["test_mode"] = testMode;
+  String body;
+  serializeJson(out, body);
+  request->send(200, "application/json", body);
+}
+#endif
+
 void listSPIFFSFiles()
 {
   Serial.println("Listing SPIFFS files:");
@@ -606,6 +902,12 @@ void setup()
   pinMode(LED_green_pin, OUTPUT);
 
   set_traffic_light(0, 0, 0);
+
+#ifdef PED_SIGNAL_ENABLED
+  pinMode(PED_walk_pin, OUTPUT);
+  pinMode(PED_dont_walk_pin, OUTPUT);
+  set_ped_signal(0, 0);
+#endif
 
 #ifdef DISTANCE_SENSOR_ENABLED
   setupLidar();
@@ -669,6 +971,17 @@ void setup()
   if (!preferences.isKey("zone_persist"))
     preferences.putInt("zone_persist", 3);
 
+#ifdef PED_SIGNAL_ENABLED
+  if (!preferences.isKey("ped_walk"))
+    preferences.putULong("ped_walk", 7000);
+  if (!preferences.isKey("ped_fdw"))
+    preferences.putULong("ped_fdw", 15000);
+  if (!preferences.isKey("ped_chained"))
+    preferences.putBool("ped_chained", true);
+  if (!preferences.isKey("ped_chain_ph"))
+    preferences.putInt("ped_chain_ph", RED);
+#endif
+
   // Load timing delays
   LED_delay_red = preferences.getULong("delay_red", 5000);
   LED_delay_yellow = preferences.getULong("delay_yellow", 3000);
@@ -688,12 +1001,25 @@ void setup()
   distance_danger = preferences.getFloat("dist_dang", 2.0);
   zone_persistence = preferences.getInt("zone_persist", 3);
 
+#ifdef PED_SIGNAL_ENABLED
+  ped_walk_duration = preferences.getULong("ped_walk", 7000);
+  ped_walk_effective = ped_walk_duration;
+  ped_fdw_duration = preferences.getULong("ped_fdw", 15000);
+  ped_chained = preferences.getBool("ped_chained", true);
+  ped_chain_phase = (LightState)preferences.getInt("ped_chain_ph", RED);
+#endif
+
   // listSPIFFSFiles();
 
   server.on("/", HTTP_GET, handleRoot);
   server.on("/update_firmware", HTTP_GET, handleFirmwareUpdate);
   server.on("/reset_ota_state", HTTP_POST, handleFirmwareUpdateStateReset);
   server.on("/get_current_state", HTTP_GET, handleGetCurrentState);
+#ifdef PED_SIGNAL_ENABLED
+  server.on("/test_mode", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleTestMode);
+  server.on("/set_output", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleSetOutput);
+  server.on("/ped_control", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handlePedControl);
+#endif
   server.on("/get_config", HTTP_GET, handleGetConfig);
   server.on("/set_config", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleFormConfig);
   server.on("/blink_mode", HTTP_GET, handlelightMode);
@@ -913,6 +1239,11 @@ void loop()
   {
     cycleLights(); // sensor disabled → just cycle lights
   }
+
+#ifdef PED_SIGNAL_ENABLED
+  if (!testMode)
+    updatePedSignal(millis());
+#endif
 
   // Handle scheduled reboot
   if (shouldReboot && millis() >= rebootTime)
