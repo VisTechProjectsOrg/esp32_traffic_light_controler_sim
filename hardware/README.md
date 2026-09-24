@@ -53,13 +53,14 @@ prevent it.
 
 ## Countdown module behaviour
 
-The countdown taps the **same** WALK and DON'T WALK hots, wired in parallel with the combo module.
-It needs no relay channel of its own.
+The countdown reads the WALK and DON'T WALK hots. It can be spliced in parallel with the combo module
+and needs no channel of its own - but **this build gives it its own pair of channels** instead. See
+*Why it gets its own channels* below.
 
-### How the two modules share two wires
+### How the countdown reads the phase
 
-Both modules have the identical three pigtails (white / blue / orange). They splice together colour to
-colour, so the whole ped head - symbols and countdown - runs on **two switched channels total**:
+Both modules have the identical three pigtails (white / blue / orange). Spliced colour to colour, the
+whole ped head - symbols and countdown - would run on two switched channels total:
 
 ```
                         ┌─────────────────────┐
@@ -89,6 +90,20 @@ matters - it is not cosmetic, it is the signal that puts the countdown into coun
 
 The wire nuts visible in `photos/20260923_223046.jpg` are this parallel splice as it came from the
 factory.
+
+### Why it gets its own channels
+
+Proximity mode uses the hand/man head as its indicator so the vehicle light can keep cycling
+undisturbed - flashing hand for the warning zone, solid hand for danger. On a parallel splice the
+countdown would read that warning flash as a clearance interval, count nonsense, and **relearn from
+it**, corrupting the real pedestrian cycle's number too. It cannot tell the two apart; they are
+electrically identical.
+
+So the countdown gets its own pair of channels (GPIO 18 / 19) and is driven only by the real ped
+phase. `set_ped_signal()` and `set_countdown_signal()` in `src/signals.cpp` are separate for exactly
+this reason: `ped.cpp` drives both together, `proximity.cpp` only ever touches the combo head.
+
+Total is then 7 channels, not 5.
 
 ### Self-timing
 
@@ -181,8 +196,8 @@ Everything on these heads is LED and tiny compared to the 2 A channel rating:
 
 ## Channel plan
 
-Three vehicle heads use 3 of 4 channels; the ped phase needs 2 (orange + blue), so the second board
-from the 2-pack is required. Five outputs, four channels.
+Three vehicle heads use 3 of 4 channels; the ped phase needs 2 and the countdown another 2, so the
+second board from the 2-pack is required. Seven outputs, four channels on one board.
 
 ### Why it can't be squeezed onto the one board
 
@@ -202,13 +217,16 @@ total is 5 and not 6.
 
 Power both boards from the 5 V rail, not the ESP32's regulator: 160 mA each, 320 mA total.
 
-| Channel | Signal | Board |
-|---|---|---|
-| 1-3 | Vehicle red / yellow / green | existing |
-| 4 | spare | existing |
-| 5 | Ped DON'T WALK (orange) | second board |
-| 6 | Ped WALK (blue) | second board |
-| 7-8 | spare | second board |
+| Channel | Signal | GPIO | Board |
+|---|---|---|---|
+| 1 | Vehicle red | 12 | existing |
+| 2 | Vehicle yellow | 14 | existing |
+| 3 | Vehicle green | 27 | existing |
+| 4 | spare | - | existing |
+| 5 | Ped DON'T WALK (orange) | 33 | second board |
+| 6 | Ped WALK (blue) | 32 | second board |
+| 7 | Countdown DON'T WALK | 19 | second board |
+| 8 | Countdown WALK | 18 | second board |
 
 ## Suggested GPIO assignment
 
@@ -229,9 +247,12 @@ boot-time conflict.
 - [x] Fix `handleToggleLightMode()` active-low bug - it wrote `LOW` to the three light pins to "turn
       off", which on an active-low board turned all three heads on. Now calls `set_traffic_light(0,0,0)`.
 - [x] Ped outputs on GPIO 32 / 33 with the WALK -> FDW -> DW state machine and mutual exclusion.
-- [ ] Add the ped controls (WALK length, FDW length, chained on/off, chain phase) to the web settings
-      menu. They are settable over `/ped_control` today but have no UI yet.
+- [ ] Add the ped controls (WALK length, FDW length, chained on/off, chain phase, and the
+      proximity-on-ped-head toggle) to the web settings menu. Settable over `/ped_control` today but
+      no UI yet.
 - [ ] Bench test with the second relay board before connecting mains.
+- [ ] `src/config.h` is listed in `.gitignore` but is actually tracked, so the WiFi credentials are in
+      git history. Untrack it, add a `config.example.h`, and rotate the password.
 
 ## Mains safety
 
