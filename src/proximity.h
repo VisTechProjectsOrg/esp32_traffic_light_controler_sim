@@ -2,17 +2,24 @@
 
 #include "state.h"
 
-// Distance sensing, as an explicit state machine rather than a pile of booleans.
+// Distance sensing.
 //
-// The old version encoded this in four overlapping flags (cycling, hasFlashedInDanger,
-// inDangerCycleMode, dangerFlashing) and bailed out of loop() with a bare return while
-// waiting for zone persistence, which froze the traffic cycle for a second and a half
-// on every zone change. Nothing here returns early; proximityUpdate() runs every pass
-// and reports back whether the traffic cycle is allowed to run.
+// The core idea is that the sensor sees a *background* - the back wall, a closed
+// door, or the void of an open one - and a target only exists when something is
+// meaningfully nearer than that. Without a learned baseline every valid distance
+// looks like a car, which is why an empty garage used to show a zone forever.
+//
+// A target also has to earn its way in. Something that appears, sits at a fixed
+// distance and leaves is not a car parking; a car closes distance over several
+// seconds and then stops. Requiring that approach is what rejects a person walking
+// through the beam.
+//
+// Sampling runs fast and decisions run slow: raw frames at SAMPLE_INTERVAL into a
+// median window, so a spike never reaches the state machine in the first place.
 
 enum ProximityZone
 {
-  ZONE_LOST = -1, // out of range or beyond distance_max
+  ZONE_LOST = -1, // no usable reading
   ZONE_CLEAR = 0,
   ZONE_WARNING = 1,
   ZONE_DANGER = 2
@@ -20,10 +27,11 @@ enum ProximityZone
 
 enum ProximityState
 {
-  PROX_DISABLED,     // sensor off or failed out
-  PROX_TRACKING,     // following the zone
-  PROX_ALERT,        // flashing the alert, three cycles
-  PROX_DANGER_CYCLE  // alert done, normal cycle resumes while still in danger
+  PROX_DISABLED,  // sensor off or failed out
+  PROX_EMPTY,     // nothing nearer than the baseline
+  PROX_TRACKING,  // candidate target, approach not yet confirmed
+  PROX_GUIDING,   // confirmed approach, zones are live
+  PROX_PARKED     // settled, display frozen
 };
 
 void setupProximity();
@@ -34,3 +42,14 @@ bool proximityUpdate(unsigned long now);
 ProximityZone proximityZone();
 ProximityState proximityState();
 const char *proximityZoneName(ProximityZone zone);
+const char *proximityStateName(ProximityState state);
+
+// Diagnostics for the web UI.
+float proximityRaw();
+float proximityFiltered();
+int16_t proximityStrength();
+float proximityBaseline();
+bool proximityBaselineValid();
+
+// Forget the learned background, e.g. after the garage layout changes.
+void proximityRelearnBaseline();
