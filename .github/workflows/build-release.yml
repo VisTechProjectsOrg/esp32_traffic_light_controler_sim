@@ -33,6 +33,13 @@ jobs:
           Set-Content -Path "src/version.h" -Value "#define VERSION_FIRMWARE `"${{ steps.version.outputs.version }}`""
           Get-Content "src/version.h"
 
+      # config.h holds WiFi credentials and is not in the repo. A release is built from
+      # the example, so the published binary comes up as its own access point.
+      - name: Create config.h from the example
+        shell: powershell
+        run: |
+          Copy-Item "src/config.example.h" "src/config.h" -Force
+
       - name: Build Firmware
         shell: powershell
         run: |
@@ -43,6 +50,14 @@ jobs:
         run: |
           Set-Content -Path "data/version.txt" -Value "${{ steps.version.outputs.version }}" -NoNewline
           Get-Content "data/version.txt"
+
+      # platformio.ini uploads data_build/, which only exists once the text assets have
+      # been stamped with the version, inlined and gzipped.
+      - name: Stage SPIFFS assets
+        shell: powershell
+        run: |
+          python tools/bump_spiffs_version.py "${{ steps.version.outputs.version }}"
+          python tools/build_spiffs.py
 
       - name: Build SPIFFS
         shell: powershell

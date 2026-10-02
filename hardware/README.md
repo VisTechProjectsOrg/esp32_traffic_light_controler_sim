@@ -262,8 +262,8 @@ boot-time conflict.
       cold load over WiFi far quicker. Cat mode still needs its own images.
 - [ ] Green glare: try neutral density film behind the lens. Firmware burst-fire dimming was
       considered and dropped - see *Dimming the green*.
-- [ ] `src/config.h` is listed in `.gitignore` but is actually tracked, so the WiFi credentials are in
-      git history. Untrack it, add a `config.example.h`, and rotate the password.
+- [x] `src/config.h` untracked, `config.example.h` added.
+- [ ] Rotate the WiFi password - it is still in git history and in the v0.1.15 release binaries.
 
 ## Bench wiring
 
