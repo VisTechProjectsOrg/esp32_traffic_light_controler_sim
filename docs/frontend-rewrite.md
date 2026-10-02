@@ -54,7 +54,23 @@ Read it like this:
 - **The small file takes nearly as long as the big one** - per-request bound. Fewer *files* wins, so
   merging matters more than compressing, and the 11 requests a cold load makes are the target.
 
-### Measured, 2026-10-02, station mode on home WiFi
+### mDNS dwarfs everything else
+
+Measured before anything else is worth reading:
+
+```
+by IP    10.0.0.102          0.00004 s DNS   0.02-0.05 s total
+by name  trafficlights.local 1.02    s DNS   1.19      s total
+```
+
+A flat second of name lookup per request, repeatable across five runs each. On an 11-request cold
+load that is up to 11 seconds, against the ~1.8 s the payload itself costs. Every byte-shaving
+optimisation below is rounding error next to it, and it fails outright often enough to leave
+`/get_config` unresolved and the UI empty.
+
+Fix mDNS, or use a static lease and the IP, before optimising anything else.
+
+### Measured, 2026-10-02, station mode on home WiFi, by IP
 
 | Asset | Served bytes | Time | B/s |
 |---|---|---|---|
@@ -188,6 +204,7 @@ needs, so a slow SPIFFS read cannot show a half-painted page. Check `img.complet
 
 Each step is independently shippable and independently revertable.
 
+0. **Fix mDNS.** ~1 s per request, far larger than everything below combined.
 1. ~~**Gzip at upload.**~~ Done. 141 KB to 74 KB, measured 2.7 s to 1.8 s.
 2. **Merge the text files.** 11 requests to about 6 saves roughly 0.4 s of pure overhead, which is
    now the largest remaining lever. Each request costs 0.08 s regardless of size.
