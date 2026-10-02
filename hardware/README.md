@@ -281,32 +281,63 @@ Seven switched hots in total, across the two 4-channel boards.
 Module pigtails are 18 AWG, so stranded ends terminate in **red** forks (22-16 AWG). Use a ratcheting
 crimper - a pliers-crimped fork on mains is a real failure point.
 
+### Diagrams
+
+![AC path](wiring-ac-path.svg)
+
+One circuit end to end: fused hot into the combed hot bus, out through an SSR channel, across its own
+island on TB4, to the lamp, and back on the commoned neutral.
+
+![Bus strips and DC side](wiring-buses-dc.svg)
+
+Combs are fork-ended and cut cleanly between positions. A full comb makes one bus; a comb cut 4+4 turns
+a single strip into two rails, which is how TB5 carries both +5 V and ground.
+
+`wiring.html` in this folder is the same material as a single self-contained page - open it on a phone
+at the bench. Any bus that does not need all eight positions can share a strip, with two rules: keep
+mains and DC on **separate** strips so a slipped fork cannot put 120 V on the logic rail, and give each
+rail its own comb colour so a half-strip is never ambiguous.
+
 ### Bus strips
 
-Three Glarks barrier strips, each combed into a single node. A dual-row strip ties each position's
-left and right screw internally, so combing one row makes every screw on that strip one node.
+Five Glarks barrier strips. A dual-row strip ties each position's left and right screw internally, so
+combing one row makes every screw on that strip a single node.
 
-| Strip | Node | Lands |
-|---|---|---|
-| A | Mains hot | incoming hot + the 7 SSR channel inputs |
-| B | Neutral | incoming neutral + 5 module neutrals (3 vehicle, combo, countdown) |
-| C | Ground | incoming ground + both signal housings |
+| Strip | Combed | Node | Lands |
+|---|---|---|---|
+| TB1 | yes | Mains hot | fused hot in + 7 SSR channel inputs + 5 V block |
+| TB2 | yes | Neutral | mains neutral + 5 module whites + 5 V block |
+| TB3 | yes | Ground | mains ground + both housing bonds |
+| TB4 | **no** | Switched hots | 7 relay outputs, one island each, out to the lamps |
+| TB5 | cut 4+4 | 5 V DC | +5 V rail on 1-4, GND rail on 5-8 |
+
+**TB4 is the strip you do not comb.** Combing it would tie all seven switched hots together and light
+every lamp at once. Eight independent islands - relay output on one row, field wire on the other. It
+also gives one place to disconnect any lamp without opening the relay board.
 
 SSR channel *outputs* run point to point to their module hot - they do not bus.
 
 ### Order of work
 
-Mains disconnected for steps 1-5.
+Mains disconnected for steps 1-7.
 
-1. Mount the three strips near the SSR boards, keeping the hot strip away from the 5 V logic wiring.
-2. **Ring out every pigtail with the heads unpowered.** The ITE colours below match these modules, but
+1. Mount the five strips near the SSR boards, keeping TB1/TB4 away from the 5 V logic wiring.
+2. Comb TB1, TB2 and TB3 full width. Cut a comb 4+4 for TB5. **Leave TB4 uncombed.**
+3. **Ring out every pigtail with the heads unpowered.** The ITE colours below match these modules, but
    installer conventions vary and this is the one step firmware cannot undo. Record what you find.
-3. Land neutrals and grounds: five whites to strip B, both housing bonds to strip C.
-4. Land hots: incoming hot to strip A, then a jumper from strip A to each of the 7 channel inputs.
-5. Land channel outputs to their module hots per the channel plan.
-6. **Confirm LOW = ON** on a bare channel with a meter before mains. The board is low-level trigger and
+4. Land neutrals and grounds: five module whites to TB2, both housing bonds to TB3.
+5. Fit the **main fuse** in the incoming hot, then land the fused hot on TB1 and jumper TB1 to each of
+   the 7 SSR channel inputs. 2 A time-delay: worst case is about 0.8 A with every lamp lit and the 5 V
+   block loaded, so that rides out SMPS inrush while still protecting 18 AWG comfortably.
+6. Land the 7 channel outputs on their own TB4 islands, then field wires out to the module hots.
+7. **Charging block**: line and neutral from TB1 and TB2, 5 V output to the TB5 rails, then feed the
+   ESP32 and both relay boards from there. Both boards draw 160 mA each - 320 mA together will brown
+   out the ESP32's regulator, so they must come off the block, not the board. The ESP32 ground and both
+   relay board grounds have to be the same node or the low-level triggers have nothing to pull against.
+8. **Confirm LOW = ON** on a bare channel with a meter before mains. The board is low-level trigger and
    the product listing contradicts itself on this.
-7. Fuse the incoming hot and strain-relieve every conductor entering the housing.
+9. Strain-relieve every conductor entering the housing and fit the clear covers on the strips -
+   they are open-frame at 120 V without them.
 
 ### Then test before trusting it
 
