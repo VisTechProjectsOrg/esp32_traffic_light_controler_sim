@@ -251,6 +251,11 @@ boot-time conflict.
       proximity-on-ped-head toggle) to the web settings menu. Settable over `/ped_control` today but
       no UI yet.
 - [ ] Bench test with the second relay board before connecting mains.
+- [ ] Decouple the subsystems from the websocket: `signals.cpp`, `ped.cpp`, `traffic.cpp` and
+      `proximity.cpp` each reach for `ws` directly and hand-build JSON, so the relay layer depends on
+      the web stack and the message shapes are scattered across four files. Move them behind a notify
+      API that only `webserver.cpp` implements. Also drop the `cycleLights()` call from `handleRoot()`
+      - serving the index page should not advance the light cycle.
 - [ ] Green glare: try neutral density film behind the lens. Firmware burst-fire dimming was
       considered and dropped - see *Dimming the green*.
 - [ ] `src/config.h` is listed in `.gitignore` but is actually tracked, so the WiFi credentials are in

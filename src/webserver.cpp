@@ -34,7 +34,7 @@ void handleRoot(AsyncWebServerRequest *request)
 
   if (SPIFFS.exists("/index.html"))
   {
-    cycleLights();
+    cycleLights(); // TODO: leftover - serving a page should not advance the cycle
     // Never cache the shell: it carries the versioned asset URLs.
     AsyncWebServerResponse *res = request->beginResponse(SPIFFS, "/index.html", "text/html; charset=utf-8");
     res->addHeader("Cache-Control", "no-cache");
