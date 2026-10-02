@@ -196,8 +196,8 @@ Everything on these heads is LED and tiny compared to the 2 A channel rating:
 
 ## Channel plan
 
-Three vehicle heads use 3 of 4 channels; the ped phase needs 2 and the countdown another 2, so the
-second board from the 2-pack is required. Seven outputs, four channels on one board.
+The vehicle head uses 3 of the 4 channels on the first board; the ped phase needs 2 and the countdown
+another 2, so the second board from the 2-pack is required. Seven outputs, eight channels.
 
 ### Why it can't be squeezed onto the one board
 
@@ -212,21 +212,21 @@ its blue input as a string of new WALK phases and never count.
 Orange has to be independently controllable for the countdown to work at all, so the two hots need two
 real channels. The second board is already in hand from the 2-pack, so this costs nothing.
 
-Note the countdown module itself still needs **zero** channels - it is spliced in parallel, so the
-total is 5 and not 6.
+The countdown could have needed zero channels by being spliced in parallel, but this build gives it
+its own pair - see *Why it gets its own channels* above. Total is 7.
 
 Power both boards from the 5 V rail, not the ESP32's regulator: 160 mA each, 320 mA total.
 
 | Channel | Signal | GPIO | Board |
 |---|---|---|---|
-| 1 | Vehicle red | 12 | existing |
-| 2 | Vehicle yellow | 14 | existing |
-| 3 | Vehicle green | 27 | existing |
+| 1 | Vehicle red | 21 | existing |
+| 2 | Vehicle yellow | 22 | existing |
+| 3 | Vehicle green | 23 | existing |
 | 4 | spare | - | existing |
-| 5 | Ped DON'T WALK (orange) | 33 | second board |
-| 6 | Ped WALK (blue) | 32 | second board |
-| 7 | Countdown DON'T WALK | 19 | second board |
-| 8 | Countdown WALK | 18 | second board |
+| 5 | Ped DON'T WALK (orange) | 32 | second |
+| 6 | Ped WALK (blue) | 33 | second |
+| 7 | Countdown DON'T WALK (orange) | 18 | second |
+| 8 | Countdown WALK (blue) | 19 | second |
 
 ## Suggested GPIO assignment
 
@@ -235,15 +235,15 @@ Currently used: 12 (red), 14 (yellow), 27 (green), 16 (onboard RGB), 25/26 (TF-L
 Free and safe for the ped outputs: **GPIO 32 and GPIO 33** - plain outputs, not strapping pins, no
 boot-time conflict.
 
-> **GPIO 12 is a strapping pin (MTDI).** Held high at boot it selects 1.8 V flash and the ESP32 will
-> not start. A low-level-trigger SSR input is weakly pulled up toward 5 V through its opto, which can
-> hold GPIO 12 high during reset. It boots fine today, so this is not urgent.
+> **The whole pin map was reassigned** during the rewire. Vehicle lamps moved to GPIO 21/22/23 so the
+> ribbon to board 1 runs in channel order, and vehicle red specifically had to leave GPIO 12: that is a
+> strapping pin (MTDI), and held high at reset the ESP32 selects 1.8 V flash and will not boot. A
+> low-level-trigger SSR input is weakly pulled toward 5 V through its opto, so it had been booting on
+> luck rather than design. 16 (onboard RGB) and 25/26 (TF-Luna UART) stay clear.
 
 ## TODO
 
-- [ ] Move the vehicle **red** output off GPIO 12 to a non-strapping pin (18, 19, 21, 22 or 23 are
-      free). Currently boots fine, but GPIO 12 held high at reset is a latent brick-the-boot risk -
-      worth doing on the next wiring pass rather than chasing it later.
+- [x] Move the vehicle **red** output off GPIO 12 - now on GPIO 21.
 - [x] Fix `handleToggleLightMode()` active-low bug - it wrote `LOW` to the three light pins to "turn
       off", which on an active-low board turned all three heads on. Now calls `set_traffic_light(0,0,0)`.
 - [x] Ped outputs on GPIO 32 / 33 with the WALK -> FDW -> DW state machine and mutual exclusion.
@@ -253,6 +253,112 @@ boot-time conflict.
 - [ ] Bench test with the second relay board before connecting mains.
 - [ ] `src/config.h` is listed in `.gitignore` but is actually tracked, so the WiFi credentials are in
       git history. Untrack it, add a `config.example.h`, and rotate the password.
+
+## Bench wiring
+
+### Conductor count
+
+Neutral and ground are commoned across everything, so each head carries one hot per lamp plus a
+shared return. **Both** ped modules are 3-wire, which is the ITE PTCSI standard for pedestrian
+modules: orange (hand), blue (walking person), white (common). Confirmed against the spec and against
+`photos/20260923_223046.jpg`, where the factory wire nut parallels the two modules' blues.
+
+| Head | Hots | Conductors (+ ground) |
+|---|---|---|
+| Vehicle R/Y/G | 3 | 4 |
+| Ped combo (hand/man) | 2 | 3 |
+| Countdown | 2 | 3 |
+
+Seven switched hots in total, across the two 4-channel boards.
+
+Module pigtails are 18 AWG, so stranded ends terminate in **red** forks (22-16 AWG). Use a ratcheting
+crimper - a pliers-crimped fork on mains is a real failure point.
+
+### Bus strips
+
+Three Glarks barrier strips, each combed into a single node. A dual-row strip ties each position's
+left and right screw internally, so combing one row makes every screw on that strip one node.
+
+| Strip | Node | Lands |
+|---|---|---|
+| A | Mains hot | incoming hot + the 7 SSR channel inputs |
+| B | Neutral | incoming neutral + 5 module neutrals (3 vehicle, combo, countdown) |
+| C | Ground | incoming ground + both signal housings |
+
+SSR channel *outputs* run point to point to their module hot - they do not bus.
+
+### Order of work
+
+Mains disconnected for steps 1-5.
+
+1. Mount the three strips near the SSR boards, keeping the hot strip away from the 5 V logic wiring.
+2. **Ring out every pigtail with the heads unpowered.** The ITE colours below match these modules, but
+   installer conventions vary and this is the one step firmware cannot undo. Record what you find.
+3. Land neutrals and grounds: five whites to strip B, both housing bonds to strip C.
+4. Land hots: incoming hot to strip A, then a jumper from strip A to each of the 7 channel inputs.
+5. Land channel outputs to their module hots per the channel plan.
+6. **Confirm LOW = ON** on a bare channel with a meter before mains. The board is low-level trigger and
+   the product listing contradicts itself on this.
+7. Fuse the incoming hot and strain-relieve every conductor entering the housing.
+
+### Then test before trusting it
+
+`python tools/signal_test_gui.py`, host set to the ESP32's IP.
+
+- Tick **Test mode** first - it suspends the cycle so it cannot stomp a manual assertion.
+- Assert each channel one at a time and confirm which lamp lights. This is what catches a swapped
+  orange/blue before the ped phase ever runs.
+- Untick test mode, then use the cycle panel to run WALK -> FDW -> DW.
+
+The countdown stays **blank for its first cycle** - that is the self-learning pass, not a fault.
+
+## Dimming the green
+
+The green module sits at eye level and is glaring. An SCR phase dimmer (Gebildet 2000W type) is on
+hand, but it is very unlikely to work here:
+
+- **Minimum load.** SCR phase dimmers need 60-100 W to latch reliably. The green module is 7.5 W.
+  Below holding current the SCR conducts erratically - flicker and buzz, not dimming.
+- **The module is regulated.** The 80-135 VAC nameplate means a wide-input switch-mode constant-current
+  driver, which holds LED current flat across that entire range. Reducing RMS voltage changes nothing
+  until the driver drops out.
+- **Phase-chopped AC into an SMPS input** stresses the rectifier and bulk cap, on a 2016 ETL-listed
+  module that is not easily replaced.
+
+Bench test before committing: fused cord -> dimmer -> one green module, nothing else. Sweep the knob
+and record whether output changes at all, and whether there is flicker or audible buzz. **Stop on buzz
+or stutter** - that is the SCR failing to latch and it is hard on the driver.
+
+### Burst-fire fallback
+
+If the dimmer fails, the no-hardware option is burst firing: a zero-cross SSR can only switch at mains
+crossings, so the one available modulation is skipping whole half-cycles (8.33 ms at 60 Hz).
+
+**Scope: green only.** Red is a safety indication and is never modulated. The ped and countdown hots
+are never modulated either - the countdown learns its clearance interval by watching the hand flash,
+and chopping that hot at 60 Hz would teach it a bogus number.
+
+Implementation notes worth having before starting:
+
+- **Use `esp_timer`, not a FreeRTOS task.** A task with `vTaskDelayUntil` quantizes to the 1 ms tick,
+  turning an 8.33 ms slot into 8 or 9 ms - a 4-12% period error that manufactures the very beat
+  flicker burst firing is prone to. Core pinning does not help: core 0 shares with the WiFi stack,
+  core 1 with `loop()` and AsyncTCP, and a few hundred microseconds of jitter on an 8333 us slot is
+  tolerable either way.
+- **Suspend dimming during OTA.** Flash writes disable the instruction cache *for both cores*, so a
+  timer callback living in flash will stall or fault mid-update, and pinning it to the other core does
+  not save it. Either mark the callback `IRAM_ATTR` or simply force 100% while `otaPageActive`.
+- **It belongs under `src/signals.cpp`**, the single inversion point. Note that `src/traffic.cpp`
+  blink mode currently bypasses the helper and writes pins directly, so that path needs fixing first
+  or green will blink at full glare while the steady cycle is dimmed.
+- **Expect at best a 2-3 position brightness switch, not continuous dimming.** Envelope frequency is
+  `120/den` Hz, so only 1/2 (60 Hz envelope, 8.33 ms dark gap) is a serious candidate. Anything below
+  50% is an unmistakable strobe.
+- **The likeliest outcome is no dimming at all.** These drivers are specced to ride out brownouts, so
+  the bulk cap may hold LED current flat through a skipped half-cycle - all the driver stress, none of
+  the benefit. Prove it with a throwaway test endpoint before building any settings UI.
+
+If neither looks acceptable, neutral density film behind the lens always works.
 
 ## Mains safety
 

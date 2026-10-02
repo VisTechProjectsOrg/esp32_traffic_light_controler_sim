@@ -22,6 +22,7 @@ void set_ped_signal(boolean walk_state, boolean dont_walk_state);
 // The countdown module, on its own pair of channels. Kept separate from the combo
 // head on purpose: proximity mode may flash the hand symbol for reasons that have
 // nothing to do with a pedestrian phase, and the countdown must not see that or it
-// will relearn a bogus clearance interval.
+// will relearn a bogus clearance interval. Separate channels also leave the door
+// open to timing it independently of the combo head.
 void set_countdown_signal(boolean walk_state, boolean dont_walk_state);
 #endif
