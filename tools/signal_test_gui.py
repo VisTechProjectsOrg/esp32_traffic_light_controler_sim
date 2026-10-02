@@ -27,6 +27,8 @@ OUTPUTS = [
     ("green", "GREEN", "#388e3c"),
     ("walk", "WALK (blue)", "#1976d2"),
     ("dont_walk", "DON'T WALK (orange)", "#e65100"),
+    ("cd_walk", "COUNTDOWN walk (blue)", "#1976d2"),
+    ("cd_dont_walk", "COUNTDOWN hand (orange)", "#e65100"),
 ]
 
 PED_STATES = [("walk", "WALK"), ("fdw", "FDW"), ("dont_walk", "DON'T WALK"), ("off", "OFF")]

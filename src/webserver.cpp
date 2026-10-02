@@ -335,6 +335,7 @@ void handleTestMode(AsyncWebServerRequest *request, uint8_t *data, size_t len, s
     // everything dark so the operator starts from a known state
     set_traffic_light(0, 0, 0);
     set_ped_signal(0, 0);
+    set_countdown_signal(0, 0);
   }
   else
   {
@@ -366,6 +367,7 @@ void handleSetOutput(AsyncWebServerRequest *request, uint8_t *data, size_t len, 
 
   // Held outputs, so the GUI can light several channels at once while ringing out wires.
   static bool red = false, yellow = false, green = false, walk = false, dontWalk = false;
+  static bool cdWalk = false, cdDontWalk = false;
 
   if (output == "red")
     red = state;
@@ -377,8 +379,12 @@ void handleSetOutput(AsyncWebServerRequest *request, uint8_t *data, size_t len, 
     walk = state;
   else if (output == "dont_walk")
     dontWalk = state;
+  else if (output == "cd_walk")
+    cdWalk = state;
+  else if (output == "cd_dont_walk")
+    cdDontWalk = state;
   else if (output == "all_off")
-    red = yellow = green = walk = dontWalk = false;
+    red = yellow = green = walk = dontWalk = cdWalk = cdDontWalk = false;
   else
   {
     request->send(400, "application/json", "{\"error\": \"Unknown output\"}");
@@ -387,6 +393,7 @@ void handleSetOutput(AsyncWebServerRequest *request, uint8_t *data, size_t len, 
 
   set_traffic_light(red, yellow, green);
   set_ped_signal(walk, dontWalk);
+  set_countdown_signal(cdWalk, cdDontWalk);
 
   JsonDocument out;
   out["red"] = red;
@@ -394,6 +401,8 @@ void handleSetOutput(AsyncWebServerRequest *request, uint8_t *data, size_t len, 
   out["green"] = green;
   out["walk"] = walk;
   out["dont_walk"] = dontWalk;
+  out["cd_walk"] = cdWalk;
+  out["cd_dont_walk"] = cdDontWalk;
   String body;
   serializeJson(out, body);
   request->send(200, "application/json", body);
