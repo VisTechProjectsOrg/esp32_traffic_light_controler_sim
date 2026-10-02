@@ -26,6 +26,7 @@ unsigned long ped_walk_effective = 7000; // walk length after trimming to fit th
 unsigned long ped_fdw_duration = 15000;  // fixed, this is the countdown value
 unsigned long ped_dw_duration = 3000;    // steady rest / minimum before the phase ends
 bool ped_chained = true;                 // follow the vehicle cycle vs manual control
+bool ped_fit_lights = false;             // chained only: fit the crossing into the light timings rather than hold the light
 LightState ped_chain_phase = RED;        // vehicle phase the WALK runs under
 unsigned long pedPhaseStart = 0;
 unsigned long pedBlinkPrevious = 0;

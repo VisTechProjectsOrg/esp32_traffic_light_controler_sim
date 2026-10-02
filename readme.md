@@ -8,7 +8,7 @@
     </span>
 </div><br>
 <div>
-    <img src="data/img/traffic_lt/all_on.png" alt="Traffic Light" width="75" style="margin-right: 10px;">
+    <img src="images/traffic_light.png" alt="Traffic Light" width="75" style="margin-right: 10px;">
     <img src="images/traffic_light.gif" alt="Traffic Light" width="130" style="margin-right: 10px;">
 </div>
 
@@ -31,7 +31,7 @@ Because why tf not, I had nothing better to do and I acquired a broken traffic l
 
 Use [VSCode](https://code.visualstudio.com/) **with** [PlatformIO](https://platformio.org/install/ide?install=vscode) to compile the and upload the code to your ESP.
 
-You can configure the pinouts light by modifying the `config.h` file:
+Copy `src/config.example.h` to `src/config.h` (it is ignored by git, since it holds your WiFi credentials), then configure the pinouts and WiFi there:
 ```cpp
 #define LED_red_pin 12
 #define LED_yellow_pin 14

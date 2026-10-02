@@ -1,712 +1,747 @@
-var ws = new WebSocket('ws://' + window.location.hostname + '/ws');
-let distanceSensorEnabled = false;
-let originalDistanceSensorEnabled = false;
-let originalDistanceMax = '';
-let originalDistanceWarning = '';
-let originalDistanceDanger = '';
-let originalZonePersistence = '';
+// One file, no build step beyond gzip. Sections, in order: helpers, signal heads,
+// distance sensor, controls, settings dialog, websocket, boot.
 
-// Built at runtime, so tools/bump_spiffs_version.py cannot stamp it - the version has to
-// come from the config and be appended here instead, or a week-long max-age serves the old
-// artwork after a SPIFFS update.
-window.assetVersion = window.assetVersion || "";
+const $ = (id) => document.getElementById(id);
+// SVG elements have no .hidden property, so everything goes through the attribute.
+const show = (el, on) => el.toggleAttribute('hidden', !on);
 
-function updateTrafficLight(state) {
-    var v = window.assetVersion ? "?v=" + window.assetVersion : "";
-    document.getElementById('traffic-light').src = '/img/traffic_lt/' + state + '.png' + v;
-}
+let cfg = null;          // last /get_config answer
+let ped = null;          // last /ped_control answer; stays null on firmware built without the ped signal
+let lamp = 'all_off';
+let catMode = false;
+let lightMode = 'cycle_mode';
+let blinkColor = 'none';
 
-function closePopup(event) {
-    if (event) event.preventDefault();
+// ---- helpers ----
 
-    // Only restore if NOT saving (i.e., if Cancel or overlay)
-    if (!event || event.target.id !== 'setConfig') {
-        document.getElementById("toggle_distance_sensor_switch").checked = originalDistanceSensorEnabled;
-        document.getElementById("distance_max").value = originalDistanceMax;
-        document.getElementById("distance_warning").value = originalDistanceWarning;
-        document.getElementById("distance_danger").value = originalDistanceDanger;
-        document.getElementById("zone_persistence").value = originalZonePersistence;
-        toggleDistanceSensorInputs();
+function api(path, body) {
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 6000);
+    const opt = { signal: ctl.signal };
+    if (body) {
+        opt.method = 'POST';
+        opt.headers = { 'Content-Type': 'application/json' };
+        opt.body = JSON.stringify(body);
     }
-
-    document.getElementById("popup").style.display = "none";
-    document.getElementById("overlay").style.display = "none";
-}
-
-function openPopup_settings() {
-    console.log("Opening settings popup");
-
-    const popup = document.getElementById("popup");
-    popup.classList.add("show");
-
-    fetch('/get_config?' + new Date().getTime())
-        .then(response => response.json())
-        .then(data => {
-
-            console.log("Fetched config values:", data);
-
-            document.getElementById("delay_red").value = data.delay_red;
-            document.getElementById("delay_yellow").value = data.delay_yellow;
-            document.getElementById("delay_green").value = data.delay_green;
-            document.getElementById("toggle_distance_sensor_switch").checked = !!data.distance_sensor_enabled;
-            document.getElementById("distance_max").value = data.distance_max;
-            document.getElementById("distance_warning").value = data.distance_warning;
-            document.getElementById("distance_danger").value = data.distance_danger;
-            document.getElementById("zone_persistence").value = data.zone_persistence;
-            document.getElementById("version_number_firmware_label").textContent = "FW: v" + (data.version_firmware || "0.0");
-            document.getElementById("version_number_spiffs_label").textContent = "SPIFFS: v" + (data.version_spiffs || "0.0");
-            window.assetVersion = data.version_spiffs || "";
-
-            // Store original values for cancel
-            originalDistanceSensorEnabled = !!data.distance_sensor_enabled;
-            originalDistanceMax = data.distance_max;
-            originalDistanceWarning = data.distance_warning;
-            originalDistanceDanger = data.distance_danger;
-            originalZonePersistence = data.zone_persistence;
-
-            const enabled = !!data.distance_sensor_enabled;
-            document.getElementById('toggle_distance_sensor_switch').checked = enabled;
-            toggleDistanceSensorInputs();
-
-            document.getElementById("popup").style.display = "block";
-            document.getElementById("overlay").style.display = "block";
-
-            // Show/hide car distance block on page load
-            document.getElementById("carDistanceBlock").style.display = data.distance_sensor_enabled ? "" : "none";
-            const diagBlock = document.getElementById("sensorDiagBlock");
-            if (diagBlock) diagBlock.style.display = data.distance_sensor_enabled ? "" : "none";
-
-
-            // Update car distance config values
-            window.visualMax = parseInt(data.distance_max);
-            window.warningThreshold = parseInt(data.distance_warning);
-            window.dangerThreshold = parseInt(data.distance_danger);
-
-            // Update input max
-            const distanceInput = document.getElementById("distance_to_wall");
-            distanceInput.max = window.visualMax;
-
-            // Update car immediately
-            updateCarPosition();
-
+    return fetch(path, opt)
+        .then((r) => {
+            if (!r.ok) {
+                const err = new Error(path + ' answered ' + r.status);
+                err.status = r.status;
+                throw err;
+            }
+            return r;
         })
-        .catch(error => {
-            console.error("Error fetching config values:", error);
-            originalDistanceSensorEnabled = false;
-            document.getElementById("toggle_distance_sensor_switch").checked = false;
-            toggleDistanceSensorInputs();
-            // now show the popup anyway
-            document.getElementById("popup").style.display = "block";
-            document.getElementById("overlay").style.display = "block";
-
-        });
+        .finally(() => clearTimeout(timer));
 }
 
-function openPopup_time_waisted() {
-    console.log("%cWhy did I waste my time making this", css_rainbow);
+const apiJson = (path, body) => api(path, body).then((r) => r.json());
+
+// Image URLs built here cannot be stamped by tools/bump_spiffs_version.py, so the
+// version comes from the config instead. Without it the week-long max-age would keep
+// serving old artwork after a SPIFFS update.
+const versioned = (url) => url + (cfg && cfg.version_spiffs ? '?v=' + cfg.version_spiffs : '');
+
+// Resolves once the image has settled either way. img.complete is checked first: off a
+// fast serve the load event can fire before a listener is attached.
+function imageSettled(img) {
+    if (img.complete && img.src) return Promise.resolve();
+    return new Promise((resolve) => {
+        img.addEventListener('load', resolve, { once: true });
+        img.addEventListener('error', resolve, { once: true });
+    });
+}
+
+let toastTimer = null;
+
+function toast(message, isError) {
+    const el = $('toast');
+    el.textContent = message;
+    el.classList.toggle('error', !!isError);
+    show(el, true);
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => show(el, false), 3500);
+}
+
+// ---- console easter egg ----
+
+function rainbow() {
+    const shadows = ['-1px -1px hsl(0,100%,50%)'];
+    for (let i = 1; i < 400; i++) {
+        shadows.push(Math.trunc(60 * Math.sin(i * Math.PI / 100)) + 'px ' + i + 'px hsl(' +
+            +(i * 5.4).toFixed(1) + ',100%,50%)');
+    }
+    return 'text-shadow: ' + shadows.join(', ') + '; font-size: 40px;';
+}
+
+console.log('%cWhy did I bother making this', rainbow());
+
+function timeWasted() {
+    console.log('%cWhy did I waste my time making this', rainbow());
     alert('Why did I waste my time making this');
 }
 
-function toggleLightMode() {
-    console.log("Toggling light mode");
+// ---- traffic light ----
 
-    fetch('/toggle_light_mode')
-        .then(response => response.text())
-        .then(data => {
-            console.log("Server Response (toggle light mode):", data);
+const LAMPS = ['red', 'yellow', 'green', 'all_on', 'all_off'];
+const catUrl = (name) => versioned('img/traffic_lt/' + name + '_cat.webp');
+let catFailed = false;
+let catPreloaded = false;
 
-            fetch('/get_current_state')
-                .then(response => response.json())
-                .then(data => {
-                    const toggleLightModeSwitch = document.getElementById("toggleLightModeSwitch");
-                    const toggleLightModeLabel = document.getElementById("toggleLightModeLabel");
-                    toggleLightModeSwitch.checked = (data.light_mode === "blink_mode");
-                    toggleLightModeLabel.textContent = data.light_mode === "blink_mode" ? "Blink Mode" : "Cycle Mode";
-                })
-                .catch(error => console.error("Error fetching current state:", error, "color: red; font-weight: bold;"));
-        })
-        .catch(error => console.error("Error toggling light mode:", error, "color: red; font-weight: bold;"));
+// The firmware reports cat mode by suffixing the state: "red_cat".
+function updateTrafficLight(state) {
+    lamp = state.replace(/_cat$/, '');
+    renderLight();
 }
 
-function toggleThemeMode() {
-    console.log("Toggling theme mode");
+function renderLight() {
+    const svg = $('light');
+    const img = $('lightCat');
+    const useCat = catMode && !catFailed;
 
-    fetch('/toggle_theme_mode')
-        .then(response => response.text())
-        .then(data => {
-            console.log("Server Response (toggle theme mode):", data);
+    svg.dataset.lamp = lamp;
+    svg.setAttribute('aria-label', 'Traffic light: ' + lamp.replace('_', ' '));
 
-            fetch('/get_current_state')
-                .then(response => response.json())
-                .then(data => {
-                    const toggleThemeModeSwitch = document.getElementById("toggleThemeModeSwitch");
-                    const toggleThemeModeLabel = document.getElementById("toggleThemeModeLabel");
-                    toggleThemeModeSwitch.checked = (data.theme_mode === "cat_mode");
-                    toggleThemeModeLabel.textContent = data.theme_mode === "cat_mode" ? "Cat Mode" : "Normal Mode";
-                })
-                .catch(error => console.error("Error fetching current state:", error, "color: red; font-weight: bold;"));
-        })
-        .catch(error => console.error("Error toggling theme mode:", error, "color: red; font-weight: bold;"));
-}
-
-function toggleDistanceSensorInputs() {
-    const on = document.getElementById('toggle_distance_sensor_switch').checked;
-    const distanceBox = document.getElementById('distanceSettings');
-    const wrapper = document.querySelector('.settings-wrapper');
-    const secondPanel = document.getElementById('popup-second');
-
-    // Panel show/hide
-    distanceBox.style.display = on ? 'block' : 'none';
-    distanceBox.classList.toggle('active-box', on);
-
-    // Layout: two‑column vs single
-    wrapper.classList.toggle('single-column', !on);
-    wrapper.style.justifyContent = on ? 'space-between' : 'center';
-
-    // Entire second column
-    secondPanel.style.display = on ? '' : 'none';
-}
-
-
-document.addEventListener("DOMContentLoaded", function () {
-
-    ws.onmessage = function (event) {
-        let data = JSON.parse(event.data);
-
-        if (data.light_mode) {
-            console.log("Light mode:", data);
-            const toggleSwitch = document.getElementById("toggleLightModeSwitch");
-            const toggleSwitchLabel = document.getElementById("toggleLightModeLabel");
-
-            if (data.light_mode === "cycle_mode") {
-                toggleSwitch.checked = false;
-                toggleSwitchLabel.textContent = "Cycle Mode";
-            } else if (data.light_mode === "blink_mode") {
-                toggleSwitch.checked = true;
-                toggleSwitchLabel.textContent = "Blink Mode";
-            } else {
-                console.error("%cUnknown light mode received:", data.light_Mode, "color: orange; font-weight: bold;");
-            }
-
-        } else if (data.theme_mode) {
-            console.log("Theme mode:", data);
-            const toggleSwitch = document.getElementById("toggleThemeModeSwitch");
-            const toggleSwitchLabel = document.getElementById("toggleThemeModeLabel");
-
-            if (data.theme_mode === "normal_mode") {
-                toggleSwitch.checked = false;
-                toggleSwitchLabel.textContent = "Normal Mode";
-            } else if (data.theme_mode === "cat_mode") {
-                toggleSwitch.checked = true;
-                toggleSwitchLabel.textContent = "Cat Mode";
-            } else {
-                console.error("Unknown theme mode received:", data.theme_mode);
-            }
-
-        } else if (data.blink_color) {
-            console.log("Blink color:", data);
-            const blinkColorSelect = document.getElementById("blinkColorSelect");
-            blinkColorSelect.value = data.blink_color;
-
-        } else if (data.proximity) {
-            updateSensorDiagnostics(data.proximity);
-
-        } else if (data.ped_state) {
-            setPedVisual(data.ped_state);
-
-        } else if (data.state) {
-            updateTrafficLight(data.state);
-
-        } else if (data.distance === null) {
-            // Out of range - show car at max distance
-            const distanceInput = document.getElementById("distance_to_wall");
-            const distanceDisplay = document.getElementById("distance_to_wall_display");
-            if (distanceInput && window.visualMax) {
-                distanceInput.value = window.visualMax;
-                if (distanceDisplay) distanceDisplay.textContent = "--";
-                updateCarPosition();
-            }
-
-        } else if (data.distance !== undefined) {
-            const distanceInput = document.getElementById("distance_to_wall");
-            const distanceDisplay = document.getElementById("distance_to_wall_display");
-
-            if (!isNaN(data.distance)) {
-                const distanceValue = Number.parseFloat(data.distance);
-                console.log("Distance: " + distanceValue.toFixed(2) + " ft, Temp: " + (data.sensor_temp || "--") + " C");
-
-                if (distanceInput) {
-                    distanceInput.value = distanceValue;
-                    if (distanceDisplay) distanceDisplay.textContent = distanceValue.toFixed(1);
-                    updateCarPosition();
-                }
-            } else {
-                console.warn("Distance value is NaN (possibly null):", data);
-            }
+    // Before the config lands there is no version to stamp the URL with; boot renders again.
+    if (useCat && cfg) {
+        img.src = catUrl(lamp);
+        if (!catPreloaded) {
+            // Fetch the other four now, or blink mode stutters on each first swap.
+            catPreloaded = true;
+            LAMPS.forEach((name) => { new Image().src = catUrl(name); });
         }
-        else {
-            console.error("Unknown data received:", data);
-        }
-
-        if (data?.state !== undefined && data?.state !== null && data?.state !== "") {
-            updateTrafficLight(data.state);
-        }
-    };
-
-    ws.onclose = function () {
-        console.log("WebSocket disconnected, attempting to reconnect...", "color: red; font-weight: bold;");
-    };
-
-    ws.onopen = function () {
-        console.log("%cConnected to WebSocket server", "color: green; font-weight: bold;");
-    };
-
-    ws.onerror = function (error) {
-        console.error("WebSocket Error:", error);
-    };
-
-    fetch('/get_current_state')
-        .then(response => response.json())
-        .then(data => {
-            console.log("Fetched Current State:", data);
-
-            const toggleLightModeSwitch = document.getElementById("toggleLightModeSwitch");
-            const toggleLightModeLabel = document.getElementById("toggleLightModeLabel");
-            toggleLightModeSwitch.checked = (data.light_mode === "blink_mode");
-            toggleLightModeLabel.textContent = data.light_mode === "blink_mode" ? "Blink Mode" : "Cycle Mode";
-
-            const toggleThemeModeSwitch = document.getElementById("toggleThemeModeSwitch");
-            const toggleThemeModeLabel = document.getElementById("toggleThemeModeLabel");
-            toggleThemeModeSwitch.checked = (data.theme_mode === "cat_mode");
-            toggleThemeModeLabel.textContent = data.theme_mode === "cat_mode" ? "Cat Mode" : "Normal Mode";
-
-            if (data.state) {
-                updateTrafficLight(data.state);
-            }
-
-            const blinkColorSelect = document.getElementById("blinkColorSelect");
-            if (data.blink_color) {
-                blinkColorSelect.value = data.blink_color;
-            }
-        })
-        .catch(error => console.error("Error fetching current state:", error));
-
-    // Set initial visibility of car distance block on first load
-    fetch('/get_config')
-        .then(res => res.json())
-        .then(cfg => {
-            const enabled = cfg.distance_sensor_enabled;
-            const block = document.getElementById("carDistanceBlock");
-            block.style.display = enabled ? "" : "none";
-        })
-        .catch(err => console.error("Error loading initial distance sensor config:", err));
-
-    loadPedConfig();
-
-    document.getElementById("setConfig").addEventListener("click", function (event) {
-        const distanceSensorWasEnabled = document.getElementById("toggle_distance_sensor_switch").checked;
-
-        savePedConfig();
-
-        sendRequest("set_config").then(() => {
-            // After saving, re-fetch latest config and update the form values
-            fetch('/get_config')
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById("delay_red").value = data.delay_red;
-                    document.getElementById("delay_yellow").value = data.delay_yellow;
-                    document.getElementById("delay_green").value = data.delay_green;
-                    document.getElementById("toggle_distance_sensor_switch").checked = !!data.distance_sensor_enabled;
-                    document.getElementById("distance_max").value = data.distance_max;
-                    document.getElementById("distance_warning").value = data.distance_warning;
-                    document.getElementById("distance_danger").value = data.distance_danger;
-                    document.getElementById("zone_persistence").value = data.zone_persistence;
-
-                    toggleDistanceSensorInputs();
-                });
-        });
-
-        // Update car block visibility immediately
-        document.getElementById("carDistanceBlock").style.display = distanceSensorWasEnabled ? "" : "none";
-
-        closePopup(event); // Close after saving
-    });
-
-    function sendRequest(action) {
-        const data = {
-            action: action,
-            delay_red: parseFloat(document.getElementById("delay_red").value),
-            delay_yellow: parseFloat(document.getElementById("delay_yellow").value),
-            delay_green: parseFloat(document.getElementById("delay_green").value),
-            distance_sensor_enabled: document.getElementById("toggle_distance_sensor_switch").checked,
-            distance_max: document.getElementById("distance_max").value,
-            distance_warning: document.getElementById("distance_warning").value,
-            distance_danger: document.getElementById("distance_danger").value,
-            zone_persistence: parseInt(document.getElementById("zone_persistence").value)
-        };
-
-        return fetch("/set_config", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify(data)
-        })
-            .then(response => response.json())
-            .then(data => {
-                console.log("Server Response (set config values):", data);
-                console.log("%cSubmitted successfully new config values", "color: green; font-weight: bold;");
-                alert("Settings updated successfully!");
-            })
-            .catch(error => console.error("Error:", error));
     }
-
-    document.getElementById('blinkColorSelect').addEventListener('change', function () {
-        var color = this.value;
-        fetch('/blink_mode?color=' + color)
-            .then(response => response.text())
-            .then(data => {
-                var toggleLightModeSwitch = document.getElementById('toggleLightModeSwitch');
-                var toggleLightModeLabel = document.getElementById('toggleLightModeLabel');
-
-                if (!toggleLightModeSwitch.checked) {
-                    toggleLightModeSwitch.checked = true;
-                    toggleLightModeLabel.textContent = "Blink Mode";
-                }
-            })
-            .catch(error => console.error("Error selecting blink mode:", error, "color: red; font-weight: bold;"));
-    });
-
-    function sendSliderUpdate(type, value) {
-        let message = `${type}:${value}`;
-        console.log("%cSending:", "color: orange; font-weight: bold;", message);
-        ws.send(message);
-    }
-
-
-
-    document.getElementById("toggleLightModeSwitch").addEventListener("input", function () {
-        sendSliderUpdate("light_mode", this.value);
-    });
-
-    document.getElementById("toggleThemeModeSwitch").addEventListener("input", function () {
-        sendSliderUpdate("theme_mode", this.value);
-    });
-
-    // Reset OTA state when main page becomes visible
-    document.addEventListener('visibilitychange', function () {
-        if (!document.hidden) {
-            // Page is now visible, reset OTA state
-            fetch('/reset_ota_state', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            }).catch(err => console.log('Failed to reset OTA state:', err));
-        }
-    });
-
-    // Also reset when page loads
-    fetch('/reset_ota_state', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        }
-    }).catch(err => console.log('Failed to reset OTA state:', err));
-});
-
-// ---- sensor diagnostics ----
-
-function fmtFt(value) {
-    const n = Number.parseFloat(value);
-    return (Number.isNaN(n) || n < 0) ? "--" : n.toFixed(2) + " ft";
+    show(img, useCat);
+    show(svg, !useCat);
 }
-
-function updateSensorDiagnostics(p) {
-    const stateEl = document.getElementById("diag_state");
-    if (!stateEl) return;
-
-    stateEl.textContent = p.state || "--";
-    stateEl.setAttribute("data-state", p.state || "");
-
-    document.getElementById("diag_filtered").textContent = fmtFt(p.filtered);
-    document.getElementById("diag_raw").textContent = fmtFt(p.raw);
-    document.getElementById("diag_strength").textContent =
-        (p.strength === undefined || p.strength === null) ? "--" : p.strength;
-    document.getElementById("diag_baseline").textContent =
-        p.baseline_valid ? fmtFt(p.baseline) : "learning...";
-    document.getElementById("diag_zone").textContent = "zone: " + (p.zone || "--");
-}
-
-document.addEventListener("DOMContentLoaded", function () {
-    const relearn = document.getElementById("relearnBaseline");
-    if (!relearn) return;
-
-    relearn.addEventListener("click", function () {
-        relearn.disabled = true;
-        relearn.textContent = "Relearning...";
-        fetch("/proximity_control", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ action: "relearn" })
-        })
-            .then(function (r) { return r.json(); })
-            .then(function (p) { updateSensorDiagnostics(p); })
-            .catch(function (e) { console.error("Relearn failed:", e); })
-            .finally(function () {
-                relearn.disabled = false;
-                relearn.textContent = "Relearn baseline";
-            });
-    });
-});
-
-
-// ---- pedestrian settings ----
-
-function applyPedConfig(cfg) {
-    if (!cfg) return;
-    const set = function (id, value) {
-        const el = document.getElementById(id);
-        if (el && value !== undefined && value !== null) el.value = value;
-    };
-    set("ped_walk", cfg.walk);
-    set("ped_fdw", cfg.fdw);
-    set("ped_dw", cfg.dw);
-    set("ped_chain_phase", cfg.chain_phase);
-
-    const chained = document.getElementById("ped_chained");
-    if (chained && cfg.chained !== undefined) chained.checked = !!cfg.chained;
-}
-
-function loadPedConfig() {
-    // no-op body: the board answers a bare set_state with its current config
-    fetch("/ped_control", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "query" })
-    })
-        .then(function (r) { return r.json(); })
-        .then(function (cfg) { applyPedConfig(cfg); updatePhaseTotal(); })
-        .catch(function (e) { console.error("Error loading ped config:", e); });
-
-    fetch("/proximity_control", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "query" })
-    })
-        .then(function (r) { return r.json(); })
-        .then(function (p) {
-            updateSensorDiagnostics(p);
-        })
-        .catch(function (e) { console.error("Error loading proximity config:", e); });
-}
-
-function savePedConfig() {
-    const num = function (id, fallback) {
-        const el = document.getElementById(id);
-        const v = el ? Number.parseInt(el.value, 10) : NaN;
-        return Number.isNaN(v) ? fallback : v;
-    };
-
-    fetch("/ped_control", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            action: "set_config",
-            walk: num("ped_walk", 7),
-            fdw: num("ped_fdw", 15),
-            dw: num("ped_dw", 3),
-            chained: document.getElementById("ped_chained").checked,
-            chain_phase: document.getElementById("ped_chain_phase").value
-        })
-    }).catch(function (e) { console.error("Error saving ped config:", e); });
-
-}
-
-
-// ---- boot splash ----
-// The page used to render with empty fields that /get_config then overwrote in
-// front of the user. Hold the splash until the first config and state have landed,
-// with a timeout so a failing endpoint can never strand you on the splash.
-
-(function () {
-    var BOOT_TIMEOUT_MS = 8000;
-    var pending = { config: false, state: false, images: false };
-    var finished = false;
-
-    function dismiss(message) {
-        if (finished) return;
-        finished = true;
-        var splash = document.getElementById("bootSplash");
-        if (!splash) return;
-        if (message) {
-            var text = document.getElementById("bootText");
-            if (text) text.textContent = message;
-        }
-        splash.classList.add("boot-done");
-        setTimeout(function () { splash.style.display = "none"; }, 400);
-    }
-
-    function mark(key) {
-        pending[key] = true;
-        if (pending.config && pending.state) dismiss();
-    }
-
-    window.bootReady = mark;
-
-    // Never strand the user, even if the controller is unreachable.
-    setTimeout(function () {
-        if (!finished) dismiss("Controller slow to respond - loading anyway");
-    }, BOOT_TIMEOUT_MS);
-
-    // Hold for the artwork as well, so a slow SPIFFS read cannot show a half-painted
-    // page. img.complete is checked first: off a fast serve the image can already be
-    // decoded before the listener is attached, and waiting on an event that has been
-    // and gone would hang the splash until the timeout.
-    function waitForImages() {
-        var imgs = Array.prototype.slice.call(document.images);
-        var outstanding = imgs.length;
-        if (!outstanding) { mark("images"); return; }
-
-        var done = function () {
-            outstanding -= 1;
-            if (outstanding <= 0) mark("images");
-        };
-
-        imgs.forEach(function (img) {
-            if (img.complete) { done(); return; }
-            img.addEventListener("load", done, { once: true });
-            img.addEventListener("error", done, { once: true }); // a broken asset must not strand us
-        });
-    }
-
-    document.addEventListener("DOMContentLoaded", function () {
-        fetch("/get_config").then(function () { mark("config"); }).catch(function () { mark("config"); });
-        fetch("/get_current_state").then(function () { mark("state"); }).catch(function () { mark("state"); });
-        waitForImages();
-    });
-})();
-
 
 // ---- pedestrian head ----
 // The board reports phase changes only, so the 1Hz flash and the countdown run
 // locally - which is also what the real module does: it watches the hot and times
 // the digits itself.
 
-var SEGMENTS = {
-    0: "abcdef", 1: "bc", 2: "abdeg", 3: "abcdg", 4: "bcfg",
-    5: "acdfg", 6: "acdefg", 7: "abc", 8: "abcdefg", 9: "abcdfg"
+const SEGMENTS = {
+    0: 'abcdef', 1: 'bc', 2: 'abdeg', 3: 'abcdg', 4: 'bcfg',
+    5: 'acdfg', 6: 'acdefg', 7: 'abc', 8: 'abcdefg', 9: 'abcdfg'
 };
 
-var pedFlashTimer = null;
-var pedCountTimer = null;
-var pedCount = null;
+let pedFlashTimer = null;
+let pedCountTimer = null;
+let pedZeroTimer = null;
+let pedState = 'off';
 
 function setDigits(value) {
-    var text = (value === null || value === undefined) ? "  " : String(value).padStart(2, " ");
-    for (var i = 0; i < 2; i++) {
-        var ch = text.charAt(i);
-        var lit = (ch === " ") ? "" : SEGMENTS[Number(ch)] || "";
-        "abcdefg".split("").forEach(function (seg) {
-            var el = document.getElementById("d" + i + seg);
-            if (el) el.classList.toggle("on", lit.indexOf(seg) !== -1);
-        });
+    const text = (value === null) ? '  ' : String(value).padStart(2, ' ');
+    for (let i = 0; i < 2; i++) {
+        const lit = SEGMENTS[text.charAt(i)] || '';
+        for (const seg of 'abcdefg') {
+            $('d' + i + seg).classList.toggle('on', lit.includes(seg));
+        }
     }
 }
 
 function setSymbols(hand, man) {
-    var h = document.getElementById("pedHand");
-    var m = document.getElementById("pedMan");
-    if (h) h.classList.toggle("lit-hand", !!hand);
-    if (m) m.classList.toggle("lit-man", !!man);
-}
-
-function clearPedTimers() {
-    if (pedFlashTimer) { clearInterval(pedFlashTimer); pedFlashTimer = null; }
-    if (pedCountTimer) { clearInterval(pedCountTimer); pedCountTimer = null; }
+    $('pedHand').classList.toggle('lit-hand', hand);
+    $('pedMan').classList.toggle('lit-man', man);
 }
 
 function setPedVisual(state) {
-    if (!document.getElementById("pedHead")) return;
-    clearPedTimers();
+    clearInterval(pedFlashTimer);
+    clearInterval(pedCountTimer);
+    clearTimeout(pedZeroTimer);
+    const wasCounting = pedState === 'fdw';
+    pedState = state;
 
-    if (state === "walk") {
+    if (state === 'walk') {
         setSymbols(false, true);
         setDigits(null);
 
-    } else if (state === "fdw") {
+    } else if (state === 'fdw') {
+        let on = true;
         setSymbols(true, false);
-        var on = true;
-        pedFlashTimer = setInterval(function () {
+        pedFlashTimer = setInterval(() => {
             on = !on;
             setSymbols(on, false);
         }, 500);
 
-        var fdwEl = document.getElementById("ped_fdw");
-        pedCount = fdwEl ? Number.parseInt(fdwEl.value, 10) : 15;
-        if (Number.isNaN(pedCount)) pedCount = 15;
-        setDigits(pedCount);
-        pedCountTimer = setInterval(function () {
-            pedCount -= 1;
-            if (pedCount <= 0) {
-                setDigits(null);
-                clearInterval(pedCountTimer);
-                pedCountTimer = null;
-            } else {
-                setDigits(pedCount);
-            }
+        let count = ped ? ped.fdw : 15;
+        setDigits(count);
+        pedCountTimer = setInterval(() => {
+            count -= 1;
+            setDigits(Math.max(count, 0));
+            if (count <= 0) clearInterval(pedCountTimer);
         }, 1000);
 
-    } else if (state === "dont_walk") {
-        setSymbols(true, false);
-        setDigits(null);
-
     } else {
-        setSymbols(false, false);
-        setDigits(null);
+        setSymbols(state === 'dont_walk', false);
+        // The countdown and the phase end on the same tick, so without this the last
+        // thing shown would be a 1. Land on 0 for a beat, as the real module does.
+        if (state === 'dont_walk' && wasCounting) {
+            setDigits(0);
+            pedZeroTimer = setTimeout(() => setDigits(null), 1000);
+        } else {
+            setDigits(null);
+        }
     }
 }
 
-// ---- live phase readout in settings ----
+// ---- distance sensor ----
 
-function updatePhaseTotal() {
-    var el = document.getElementById("pedPhaseTotal");
-    if (!el) return;
+let lastDistance = null;
+let lastP = 0;
+let wheelRotation = 0;
 
-    var num = function (id, fallback) {
-        var e = document.getElementById(id);
-        var v = e ? Number.parseInt(e.value, 10) : NaN;
-        return Number.isNaN(v) ? fallback : v;
-    };
+const clamp01 = (n) => Math.min(Math.max(n, 0), 1);
 
-    var total = num("ped_walk", 7) + num("ped_fdw", 15) + num("ped_dw", 3);
-    var chained = document.getElementById("ped_chained");
-    var phase = document.getElementById("ped_chain_phase");
-    el.classList.remove("held");
+function fmtFt(value) {
+    const n = Number.parseFloat(value);
+    return (Number.isNaN(n) || n < 0) ? '--' : n.toFixed(2) + ' ft';
+}
 
-    if (!chained || !chained.checked) {
-        el.textContent = "Movement takes " + total + "s, running on its own clock";
+function loadCarImages() {
+    const imgs = Array.from(document.querySelectorAll('#car img'));
+    imgs.forEach((img) => {
+        if (!img.src) img.src = versioned(img.dataset.src);
+    });
+    return Promise.all(imgs.map(imageSettled));
+}
+
+function drawScale() {
+    const track = $('track');
+    const max = cfg.distance_max;
+    track.style.setProperty('--wz', clamp01(1 - cfg.distance_warning / max));
+    track.style.setProperty('--dz', clamp01(1 - cfg.distance_danger / max));
+
+    const ticks = $('ticks');
+    ticks.textContent = '';
+    for (let i = 0; i <= 5; i++) {
+        const tick = document.createElement('span');
+        tick.textContent = +(max * (1 - i / 5)).toFixed(1);
+        tick.style.left = (i * 20) + '%';
+        ticks.appendChild(tick);
+    }
+}
+
+// null means the sensor sees nothing in range: the car parks at max, off the scale.
+function setDistance(distance) {
+    lastDistance = distance;
+    if (!cfg || !cfg.distance_sensor_enabled) return;
+
+    const max = cfg.distance_max;
+    const dist = (distance === null) ? max : Math.max(distance, 0);
+    let zone = '';
+    if (distance !== null) {
+        zone = dist <= cfg.distance_danger ? 'danger' : dist <= cfg.distance_warning ? 'warning' : 'clear';
+    }
+
+    $('distance_to_wall_display').textContent = (distance === null) ? '--' : dist.toFixed(1);
+    $('distanceReadout').dataset.zone = zone;
+    show($('warning'), dist > max);
+
+    const track = $('track');
+    const p = clamp01(1 - dist / max);
+    track.style.setProperty('--p', p);
+
+    const wheels = document.querySelectorAll('.car-wheel');
+    const diameter = wheels[0].offsetWidth;
+    if (diameter) {
+        wheelRotation += (p - lastP) * track.clientWidth / (Math.PI * diameter) * 360;
+        wheels.forEach((w) => { w.style.transform = 'rotate(' + wheelRotation + 'deg)'; });
+    }
+    lastP = p;
+}
+
+function updateSensorDiagnostics(p) {
+    const state = $('diag_state');
+    state.textContent = p.state || '--';
+    state.dataset.state = p.state || '';
+
+    $('diag_filtered').textContent = fmtFt(p.filtered);
+    $('diag_raw').textContent = fmtFt(p.raw);
+    $('diag_strength').textContent = (p.strength === undefined || p.strength === null) ? '--' : p.strength;
+    $('diag_baseline').textContent = p.baseline_valid ? fmtFt(p.baseline) : 'learning...';
+    $('diag_zone').textContent = p.zone || '--';
+}
+
+const queryProximity = () => apiJson('/proximity_control', { action: 'query' }).then(updateSensorDiagnostics);
+
+$('relearnBaseline').addEventListener('click', () => {
+    const btn = $('relearnBaseline');
+    btn.disabled = true;
+    btn.textContent = 'Relearning...';
+    apiJson('/proximity_control', { action: 'relearn' })
+        .then(updateSensorDiagnostics)
+        .catch(() => toast('Relearn failed - controller did not respond', true))
+        .finally(() => {
+            btn.disabled = false;
+            btn.textContent = 'Relearn baseline';
+        });
+});
+
+// ---- config and state ----
+
+function applyConfig(c) {
+    cfg = c;
+    $('version_number_firmware_label').textContent = 'FW: v' + c.version_firmware;
+    $('version_number_spiffs_label').textContent = 'SPIFFS: v' + c.version_spiffs;
+
+    show($('sensorBlock'), c.distance_sensor_enabled);
+    if (!c.distance_sensor_enabled) return Promise.resolve();
+
+    drawScale();
+    setDistance(lastDistance);
+    queryProximity().catch(() => { });
+    return loadCarImages();
+}
+
+const loadConfig = () => apiJson('/get_config').then(applyConfig);
+
+function applyState(s) {
+    lightMode = s.light_mode;
+    catMode = s.theme_mode === 'cat_mode';
+    blinkColor = s.blink_color;
+    if (s.state) updateTrafficLight(s.state);
+    renderLight();
+    renderControls();
+}
+
+const syncState = () => apiJson('/get_current_state').then(applyState);
+
+// A board built without PED_SIGNAL_ENABLED has no such route; hide the head and its
+// settings there rather than showing a dead signal.
+function loadPed() {
+    return apiJson('/ped_control', { action: 'query' })
+        .catch((err) => {
+            if (err.status === 404) return null;
+            throw err;
+        })
+        .then((p) => {
+            ped = p;
+            show($('pedHead'), !!p);
+            show($('pedSettings'), !!p);
+            $('pedSettings').disabled = !p;
+            if (p) setPedVisual(p.ped_state);
+        });
+}
+
+// ---- controls ----
+
+const modeButtons = Array.from(document.querySelectorAll('[data-mode]'));
+const colorButtons = Array.from(document.querySelectorAll('[data-color]'));
+const themeSwitch = $('toggleThemeModeSwitch');
+const controls = modeButtons.concat(colorButtons, themeSwitch);
+
+function renderControls() {
+    modeButtons.forEach((b) => b.setAttribute('aria-pressed', b.dataset.mode === lightMode));
+    colorButtons.forEach((b) => b.setAttribute('aria-pressed',
+        lightMode === 'blink_mode' && b.dataset.color === blinkColor));
+    themeSwitch.checked = catMode;
+}
+
+// The toggle routes flip state rather than set it, so a double tap would undo itself.
+// Everything is locked until the board has answered and been re-read.
+function command(path) {
+    controls.forEach((c) => { c.disabled = true; });
+    api(path)
+        .then(syncState)
+        .catch(() => {
+            renderControls();
+            toast('Controller did not respond', true);
+        })
+        .finally(() => controls.forEach((c) => { c.disabled = false; }));
+}
+
+modeButtons.forEach((b) => b.addEventListener('click', () => {
+    if (b.dataset.mode !== lightMode) command('/toggle_light_mode');
+}));
+
+colorButtons.forEach((b) => b.addEventListener('click', () => command('/blink_mode?color=' + b.dataset.color)));
+
+themeSwitch.addEventListener('change', () => command('/toggle_theme_mode'));
+
+$('pageTitle').addEventListener('click', timeWasted);
+$('light').addEventListener('click', timeWasted);
+$('lightCat').addEventListener('click', timeWasted);
+$('lightCat').addEventListener('error', () => {
+    // Never leave a broken image where the signal should be.
+    catFailed = true;
+    renderLight();
+});
+
+// ---- settings dialog ----
+
+const dialog = $('settings');
+const form = $('setConfigForm');
+const fieldsets = Array.from(form.querySelectorAll('fieldset'));
+const DISTANCE_IDS = ['distance_danger', 'distance_warning', 'distance_max', 'zone_persistence'];
+let settingsBusy = false;
+
+// While loading or saving, nothing may dismiss the dialog or edit the form.
+function setSettingsBusy(message) {
+    settingsBusy = !!message;
+    $('settingsStatus').textContent = message || '';
+    show($('settingsStatus'), settingsBusy);
+    fieldsets.forEach((f) => { f.disabled = settingsBusy || (f.id === 'pedSettings' && !ped); });
+    ['setConfig', 'cancelSettings', 'closeSettings'].forEach((id) => { $(id).disabled = settingsBusy; });
+}
+
+function settingsError(message) {
+    $('settingsError').textContent = message || '';
+    show($('settingsError'), !!message);
+}
+
+function toggleDistanceSensorInputs() {
+    const on = $('toggle_distance_sensor_switch').checked;
+    show($('distanceSettings'), on);
+    // Disabled inputs are skipped by validation, which a hidden invalid field would block.
+    DISTANCE_IDS.forEach((id) => { $(id).disabled = !on; });
+}
+
+// With the light, the only ped number that can clash with the light is the countdown:
+// the walk symbol simply gets whatever the light has left over. So the countdown is
+// capped at the light's length, and nothing ever has to be stretched or skipped.
+const PED_MODE_HINTS = {
+    own: 'The crossing repeats on its own timer and ignores the traffic light.',
+    light: 'The crossing runs during the light you pick: walk symbol first, then the countdown, ending as the light changes.'
+};
+const FDW_MIN = 3;
+const FDW_MAX = 99;
+
+// A value the form lowered by itself remembers what it was, so it can be put back the
+// moment the cap no longer bites.
+function releaseAuto(input, restore) {
+    if (restore && input.dataset.before !== undefined) input.value = input.dataset.before;
+    delete input.dataset.before;
+    input.classList.remove('auto');
+}
+
+function updatePhaseTotal(event) {
+    const el = $('pedPhaseTotal');
+    const num = (id) => Number.parseInt($(id).value, 10) || 0;
+    const mode = $('ped_mode').value;
+    const countdown = $('ped_fdw');
+
+    // Start from what the user set, then cap again below only if it is still called
+    // for. A field being typed in is the user's own value from here on, so it is
+    // released without being put back - and never rewritten under the cursor.
+    const typed = (event && event.type === 'input') ? event.target : null;
+    releaseAuto(countdown, countdown !== typed);
+
+    show($('pedPhaseField'), mode === 'light');
+    show($('pedWalkField'), mode === 'own');
+    show($('pedDwField'), mode === 'own');
+    // Hidden fields keep the value they loaded with; disabled only so validation skips them.
+    $('ped_walk').disabled = mode !== 'own';
+    $('ped_dw').disabled = mode !== 'own';
+    $('pedModeHint').textContent = PED_MODE_HINTS[mode];
+    el.classList.remove('held');
+    countdown.max = FDW_MAX;
+
+    const fdw = num('ped_fdw');
+
+    if (mode === 'own') {
+        $('pedFdwHint').textContent = 'seconds the hand flashes';
+        el.textContent = 'Repeats every ' + (num('ped_walk') + fdw + num('ped_dw')) + 's: walk ' +
+            num('ped_walk') + 's, countdown ' + fdw + 's, solid hand ' + num('ped_dw') + 's.';
         return;
     }
 
-    var which = phase ? phase.value : "red";
-    var configured = num(which === "green" ? "delay_green" : "delay_red", 0);
-    if (configured < total) {
-        el.textContent = which.charAt(0).toUpperCase() + which.slice(1) +
-            " will be held to " + total + "s for the crossing (set to " + configured + "s)";
-        el.classList.add("held");
-    } else {
-        el.textContent = "Movement takes " + total + "s, fits inside the " + configured + "s " + which;
+    const which = $('ped_chain_phase').value;
+    const light = num(which === 'green' ? 'delay_green' : 'delay_red');
+    $('pedFdwHint').textContent = 'seconds the hand flashes; at most the ' + which + ' (' + light + 's)';
+
+    if (light < FDW_MIN) {
+        el.textContent = 'Crossing skipped: the ' + light + 's ' + which +
+            ' is shorter than the shortest countdown (' + FDW_MIN + 's).';
+        el.classList.add('held');
+        return;
     }
+
+    countdown.max = light;
+    if (fdw > light) {
+        el.classList.add('held');
+        if (typed === countdown) {
+            el.textContent = 'The countdown can be at most ' + light + 's, the length of the ' + which + '.';
+            return;
+        }
+        el.textContent = 'Countdown lowered from ' + fdw + 's to ' + light + 's, the length of the ' + which + '.';
+        countdown.dataset.before = fdw;
+        countdown.value = light;
+        countdown.classList.add('auto');
+        return;
+    }
+
+    el.textContent = 'On ' + which + ': ' +
+        (light > fdw ? 'walk ' + (light - fdw) + 's, countdown ' + fdw + 's.'
+            : 'countdown ' + fdw + 's for the whole light, no walk symbol.') +
+        ' Then solid hand until the next ' + which + '.';
 }
 
-document.addEventListener("DOMContentLoaded", function () {
-    ["ped_walk", "ped_fdw", "ped_dw", "ped_chained", "ped_chain_phase", "delay_red", "delay_green"]
-        .forEach(function (id) {
-            var el = document.getElementById(id);
-            if (el) el.addEventListener("input", updatePhaseTotal);
-            if (el) el.addEventListener("change", updatePhaseTotal);
-        });
-    setPedVisual("off");
+function fillSettings() {
+    releaseAuto($('ped_fdw'));
+    ['delay_red', 'delay_yellow', 'delay_green'].concat(DISTANCE_IDS)
+        .forEach((id) => { $(id).value = cfg[id]; });
+    $('toggle_distance_sensor_switch').checked = cfg.distance_sensor_enabled;
+    toggleDistanceSensorInputs();
+
+    if (ped) {
+        $('ped_walk').value = ped.walk;
+        $('ped_fdw').value = ped.fdw;
+        $('ped_dw').value = ped.dw;
+        $('ped_mode').value = ped.chained ? 'light' : 'own';
+        $('ped_chain_phase').value = ped.chain_phase;
+    }
     updatePhaseTotal();
+}
+
+function openSettings() {
+    settingsError('');
+    $('setConfig').hidden = false;
+    dialog.showModal();
+    document.body.style.overflow = 'hidden';
+    setSettingsBusy('Loading settings...');
+
+    // Always re-read: another phone may have changed things since this page loaded.
+    Promise.all([loadConfig(), loadPed()])
+        .then(() => {
+            setSettingsBusy(null);
+            fillSettings();
+        })
+        .catch(() => {
+            setSettingsBusy(null);
+            fieldsets.forEach((f) => { f.disabled = true; });
+            $('setConfig').hidden = true;
+            settingsError('Could not load the settings - the controller did not respond. Close and try again.');
+        });
+}
+
+function closeSettings() {
+    if (!settingsBusy) dialog.close();
+}
+
+function validateSettings() {
+    const danger = $('distance_danger');
+    const warning = $('distance_warning');
+    warning.setCustomValidity('');
+    danger.setCustomValidity('');
+
+    if ($('toggle_distance_sensor_switch').checked) {
+        if (Number(warning.value) >= Number($('distance_max').value)) {
+            warning.setCustomValidity('The yellow zone must be smaller than the green zone.');
+        }
+        if (Number(danger.value) >= Number(warning.value)) {
+            danger.setCustomValidity('The red zone must be smaller than the yellow zone.');
+        }
+    }
+    return form.reportValidity();
+}
+
+function saveSettings(event) {
+    event.preventDefault();
+    if (settingsBusy || !validateSettings()) return;
+
+    const num = (id) => Number($(id).value);
+    const sensorOn = $('toggle_distance_sensor_switch').checked;
+    // With the sensor off its fields are hidden, so the stored zones are sent back unchanged.
+    const zone = (id) => (sensorOn ? num(id) : cfg[id]);
+
+    const config = {
+        action: 'set_config',
+        delay_red: num('delay_red'),
+        delay_yellow: num('delay_yellow'),
+        delay_green: num('delay_green'),
+        distance_sensor_enabled: sensorOn,
+        distance_max: zone('distance_max'),
+        distance_warning: zone('distance_warning'),
+        distance_danger: zone('distance_danger'),
+        zone_persistence: zone('zone_persistence')
+    };
+    const pedConfig = ped && {
+        action: 'set_config',
+        walk: num('ped_walk'),
+        fdw: num('ped_fdw'),
+        dw: num('ped_dw'),
+        chained: $('ped_mode').value === 'light',
+        // the light's timing always wins; the form keeps the countdown inside it
+        fit: true,
+        chain_phase: $('ped_chain_phase').value
+    };
+
+    settingsError('');
+    setSettingsBusy('Saving...');
+
+    api('/set_config', config)
+        .then(() => (pedConfig ? apiJson('/ped_control', pedConfig) : null))
+        .then((p) => {
+            if (p) ped = p;
+            return loadConfig();
+        })
+        .then(() => {
+            setSettingsBusy(null);
+            dialog.close();
+            toast('Settings saved');
+        })
+        .catch(() => {
+            setSettingsBusy(null);
+            settingsError('Not saved - the controller did not respond. Try again.');
+        });
+}
+
+$('openSettings').addEventListener('click', openSettings);
+$('closeSettings').addEventListener('click', closeSettings);
+$('cancelSettings').addEventListener('click', closeSettings);
+form.addEventListener('submit', saveSettings);
+$('toggle_distance_sensor_switch').addEventListener('change', toggleDistanceSensorInputs);
+
+['ped_walk', 'ped_fdw', 'ped_dw', 'ped_mode', 'ped_chain_phase', 'delay_red', 'delay_green']
+    .forEach((id) => {
+        $(id).addEventListener('input', updatePhaseTotal);
+        $(id).addEventListener('change', updatePhaseTotal);
+    });
+
+// Escape
+dialog.addEventListener('cancel', (event) => {
+    if (settingsBusy) event.preventDefault();
 });
+// A click that lands on the dialog element itself is on the backdrop; the form covers the rest.
+dialog.addEventListener('click', (event) => {
+    if (event.target === dialog) closeSettings();
+});
+dialog.addEventListener('close', () => { document.body.style.overflow = ''; });
+
+// ---- websocket ----
+
+let wasLost = false;
+
+function onMessage(data) {
+    let known = false;
+
+    if (data.light_mode) {
+        lightMode = data.light_mode;
+        renderControls();
+        known = true;
+    }
+    if (data.theme_mode) {
+        catMode = data.theme_mode === 'cat_mode';
+        renderLight();
+        renderControls();
+        known = true;
+    }
+    if (data.blink_color) {
+        blinkColor = data.blink_color;
+        renderControls();
+        known = true;
+    }
+    if (data.state) {
+        updateTrafficLight(data.state);
+        known = true;
+    }
+    if (data.ped_state) {
+        setPedVisual(data.ped_state);
+        known = true;
+    }
+    if (data.proximity) {
+        updateSensorDiagnostics(data.proximity);
+        known = true;
+    }
+    if (data.proximity_zone) {
+        $('diag_zone').textContent = data.proximity_zone;
+        known = true;
+    }
+    if (data.proximity_baseline !== undefined) {
+        $('diag_baseline').textContent = fmtFt(data.proximity_baseline);
+        known = true;
+    }
+    if (data.sensor_disconnected) {
+        updateSensorDiagnostics({ state: 'disconnected' });
+        known = true;
+    }
+    if (data.distance !== undefined) {
+        // null is a real value here: nothing in range
+        setDistance(data.distance === null ? null : Number.parseFloat(data.distance));
+        if (data.sensor_temp !== undefined) $('diag_temp').textContent = data.sensor_temp + ' C';
+        known = true;
+    }
+
+    if (!known) console.error('Unknown data received:', data);
+}
+
+function connect() {
+    const ws = new WebSocket('ws://' + window.location.host + '/ws');
+
+    ws.onopen = () => {
+        show($('reconnectPopup'), false);
+        if (!wasLost) return;
+        wasLost = false;
+
+        // The board has probably rebooted. If that was a SPIFFS update, this page is
+        // stale, so take the new one; otherwise just catch up on what was missed.
+        const before = cfg && cfg.version_spiffs;
+        Promise.all([loadConfig(), syncState(), loadPed()])
+            .then(() => { if (before && cfg.version_spiffs !== before) window.location.reload(); })
+            .catch(() => { });
+    };
+
+    ws.onmessage = (event) => {
+        let data;
+        try {
+            data = JSON.parse(event.data);
+        } catch (e) {
+            console.error('Unknown data received:', event.data);
+            return;
+        }
+        onMessage(data);
+    };
+
+    // A board that reboots never closes the socket, and a browser with nothing to send
+    // never finds out. The firmware ignores incoming text, so this exists only to make
+    // the dead connection fail fast.
+    const heartbeat = setInterval(() => {
+        if (ws.readyState === WebSocket.OPEN) ws.send('ping');
+    }, 5000);
+
+    ws.onclose = () => {
+        clearInterval(heartbeat);
+        wasLost = true;
+        show($('reconnectPopup'), true);
+        setTimeout(connect, 2000);
+    };
+}
+
+$('refreshButton').addEventListener('click', () => window.location.reload());
+
+// Opening the socket already clears the OTA flag on the board; this covers coming back
+// to a tab that was left open while the OTA page was used in another.
+document.addEventListener('visibilitychange', () => {
+    if (!document.hidden) fetch('/reset_ota_state', { method: 'POST' }).catch(() => { });
+});
+
+// ---- boot ----
+// Hold the splash until the first config and state have landed and the artwork they
+// call for has loaded, so nothing fills in or swaps in front of the user. The timeout
+// means an unreachable controller can never strand anyone on the splash.
+
+(function boot() {
+    const splash = $('bootSplash');
+    let finished = false;
+
+    function dismiss(message) {
+        if (finished) return;
+        finished = true;
+        if (message) toast(message, true);
+        splash.classList.add('boot-done');
+        setTimeout(() => show(splash, false), 400);
+    }
+
+    setTimeout(() => dismiss('Controller slow to respond - loading anyway'), 8000);
+
+    setPedVisual('off');
+    renderControls();
+    connect();
+
+    Promise.all([loadConfig(), loadPed()])
+        // state last: a cat-mode image URL needs the version from the config
+        .then(syncState)
+        .then(() => (catMode ? imageSettled($('lightCat')) : null))
+        .then(() => dismiss(), () => dismiss('Could not reach the controller'));
+})();

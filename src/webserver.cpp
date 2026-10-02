@@ -490,6 +490,7 @@ void handlePedControl(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     ped_fdw_duration = doc["fdw"].as<unsigned long>() * 1000;
     ped_dw_duration = doc["dw"].as<unsigned long>() * 1000;
     ped_chained = doc["chained"].as<bool>();
+    ped_fit_lights = doc["fit"].as<bool>();
     ped_chain_phase = doc["chain_phase"].as<String>() == "green" ? GREEN : RED;
     ped_walk_effective = ped_walk_duration;
 
@@ -497,6 +498,7 @@ void handlePedControl(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     preferences.putULong("ped_fdw", ped_fdw_duration);
     preferences.putULong("ped_dw", ped_dw_duration);
     preferences.putBool("ped_chained", ped_chained);
+    preferences.putBool("ped_fit", ped_fit_lights);
     preferences.putInt("ped_chain_ph", ped_chain_phase);
 
     Serial.println("Ped config: walk=" + String(ped_walk_duration) +
@@ -511,6 +513,8 @@ void handlePedControl(AsyncWebServerRequest *request, uint8_t *data, size_t len,
   out["dw"] = ped_dw_duration / 1000;
   out["phase_total"] = pedPhaseDuration() / 1000;
   out["chained"] = ped_chained;
+  out["fit"] = ped_fit_lights;
+  out["min_walk"] = PED_MIN_WALK_MS / 1000;
   out["chain_phase"] = ped_chain_phase == GREEN ? "green" : "red";
   out["test_mode"] = testMode;
   String body;

@@ -12,6 +12,11 @@ Only the compressed copy is staged. Shipping both wastes flash, and some
 ESPAsyncWebServer versions will serve whichever they find first, which silently undoes
 the win and makes a stale asset very confusing to debug.
 
+The main page is also inlined: its stylesheet and script are folded into index.html,
+because each request to the board costs a flat 0.08 s whatever its size and a cold load
+is mostly that overhead. Sources stay as three hand-editable files. The OTA page keeps
+its own separate files - it has to work while the main page's assets are being replaced.
+
 Run before uploading the filesystem:
 
     python tools/bump_spiffs_version.py     # version + cache-bust first
@@ -20,6 +25,7 @@ Run before uploading the filesystem:
 """
 
 import gzip
+import re
 import shutil
 import sys
 from pathlib import Path
@@ -31,8 +37,25 @@ OUT = ROOT / "data_build"
 # Already-compressed formats gain nothing and cost CPU to decode twice.
 COMPRESS = {".html", ".css", ".js", ".svg", ".json", ".txt"}
 
+# Pages whose local stylesheet and script are folded in, and so not staged on their own.
+INLINE_PAGES = {"index.html"}
+LINK_RE = re.compile(r'<link rel="stylesheet" href="(?P<file>[\w./-]+\.css)(?:\?v=[^"]*)?"\s*/?>')
+SCRIPT_RE = re.compile(r'<script src="(?P<file>[\w./-]+\.js)(?:\?v=[^"]*)?"></script>')
+
 # Below this, the gzip header and the extra flash block cost more than they save.
 MIN_BYTES = 512
+
+
+def inline_assets(html, inlined):
+    def embed(tag):
+        def sub(match):
+            asset = SRC / match.group("file")
+            inlined.add(asset)
+            return "<%s>\n%s</%s>" % (tag, asset.read_text(encoding="utf-8"), tag)
+        return sub
+
+    html = LINK_RE.sub(embed("style"), html)
+    return SCRIPT_RE.sub(embed("script"), html)
 
 
 def main():
@@ -47,14 +70,21 @@ def main():
     out_total = 0
     rows = []
 
-    for path in sorted(SRC.rglob("*")):
-        if path.is_dir():
+    files = [p for p in sorted(SRC.rglob("*")) if not p.is_dir()]
+    inlined = set()
+    pages = {}
+    for path in files:
+        if path.name in INLINE_PAGES:
+            pages[path] = inline_assets(path.read_text(encoding="utf-8"), inlined).encode("utf-8")
+
+    for path in files:
+        if path in inlined:
             continue
         rel = path.relative_to(SRC)
         dest = OUT / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
 
-        raw = path.read_bytes()
+        raw = pages.get(path) or path.read_bytes()
         raw_total += len(raw)
 
         if path.suffix.lower() in COMPRESS and len(raw) >= MIN_BYTES:
@@ -66,7 +96,7 @@ def main():
                 rows.append((str(rel), len(raw), len(packed)))
                 continue
 
-        shutil.copy2(path, dest)
+        dest.write_bytes(raw)
         out_total += len(raw)
         rows.append((str(rel), len(raw), len(raw)))
 

@@ -47,9 +47,26 @@ every query with its own address. Any hostname typed into a browser reaches it, 
 remember and no mDNS to wait on. `WifiManager::captivePortalLoop()` is pumped from `loop()` under
 `#ifdef AP_SSID`.
 
-**Untested on hardware.** It compiles in both AP and station builds, but the board has only ever run
-in station mode this session, so nobody has watched a phone resolve a name through it. Verify that
-first: flip `config.h` to `AP_SSID`, join the AP, and type any hostname.
+**Partly verified on hardware, 2026-10-02.** Flashed the AP build and joined it from the PC:
+
+```
+resolve lights.example   -> AP address   45 ms
+resolve garage.test      -> AP address    5 ms
+resolve www.google.com   -> AP address   11 ms
+GET http://lights.example/        200  0.08 s
+GET http://garage.test/get_config 200  0.03 s
+```
+
+So the AP comes up, the captive DNS answers every name in milliseconds, and the web server
+serves by any hostname. **What is still unproven is the DHCP half**: the test PC has a static
+address on its WiFi adapter, so it never took a lease and had to be pointed at the DNS server
+by hand (with the AP temporarily moved onto the PC's subnet). Nobody has yet watched a client
+receive the device as its DNS server from the lease. That needs a phone: flip `config.h` to
+`AP_SSID`, join, type any hostname. Also watch for the phone's "no internet" prompt - the
+wildcard DNS answers its connectivity probe with our 404 page, and some phones respond by
+dropping back to mobile data unless told to stay connected.
+
+The AP is open unless `AP_PASS` is uncommented. For a device that will switch mains, set one.
 
 For station mode on a network you control, a router reservation is still the better answer - but that
 is not available here.
@@ -90,30 +107,43 @@ sampling into a median. `tools/proximity_sim.py` replays scenarios against the r
 
 **main.cpp split** from 1253 lines into state / signals / traffic / ped / proximity / webserver.
 
-**Frontend**: pedestrian head drawn as inline SVG and wired to the live phase, sensor diagnostics
-card, boot splash, cache busting, and gzip staging.
+**Frontend rewritten** (SPIFFS 0.1.15), phone first. See `docs/frontend-rewrite.md` for what
+changed and the measurements. In short: one inlined page instead of five text files, the
+traffic light drawn as SVG, cat and car artwork re-encoded, a settings sheet that is one
+column at every width. Cold load went from 11 requests and about 1.8 s to 4 requests and
+about 0.3 s; the staged image went from about 750 KB to 84 KB.
+
+**Pedestrian timing has two modes in the UI.** On its own timer: the head loops on walk +
+countdown + solid hand. With the light (`chained` + `fit`): the crossing runs under the
+chosen phase, WALK rests until the countdown can end exactly with the phase, and the solid
+hand falls on the phases that follow. The settings form caps the countdown at that light's
+length (lowering it, highlighted, if the light is shortened), so the light is never
+stretched; the firmware skips a crossing only if the light is shorter than the FDW. The old
+hold path (`chained` without `fit`: the vehicle phase is held to walk + FDW) is still in
+`traffic.cpp` but nothing in the UI selects it any more - delete it or keep it for the API.
+Walk may be 0 in own-timer mode; the movement then starts at the flashing hand.
 
 ## Known broken
 
-**Settings dialog layout.** Two boxes on the top row, the Pedestrian box orphaned below-left with a
-large empty area beside it, and the live phase readout sitting mid-form between two fields instead of
-at the end. Needs a proper grid.
-
-**Empty config fields and `v0.0` labels.** A symptom of the mDNS failure above, not a separate bug -
-confirm against the IP before chasing it.
-
-**`src/config.h` is tracked despite being in `.gitignore`**, so the WiFi credentials are in history on
-a **public** repo. Rotating the password is the fix; history scrubbing does not help once public.
+**The WiFi password is in public git history.** `src/config.h` is no longer tracked (copy
+`src/config.example.h` to start), but every commit before that still has it, and the
+v0.1.15 release binaries were built from it. Rotating the password on the router is the only
+fix; history scrubbing does not help once public.
 
 ## Open work, in order
 
-1. **mDNS.** Worth ~1 s per request. Everything else is noise beside it.
-2. **Settings dialog layout.**
-3. **Merge the frontend text files.** Each request costs a flat 0.08 s by IP regardless of size, so
-   11 requests to 6 saves about 0.4 s. See `docs/frontend-rewrite.md` for the measured breakdown and
-   the full feature inventory a rewrite has to preserve.
-4. **Bench-test the wiring** with `tools/signal_test_gui.py` before mains. See `hardware/README.md`.
+1. **Phone test of AP mode** - the DHCP-hands-out-DNS half, above.
+2. **Rotate the WiFi password** that is in git history.
+3. **Bench-test the wiring** with `tools/signal_test_gui.py` before mains. See `hardware/README.md`.
+4. **Validate `/set_config` and `/ped_control` in the firmware.** The UI bounds every field, but
+   the handlers store whatever arrives, so a hand-made request can still save a zero delay.
 5. Decouple the subsystems from the websocket; drop the `cycleLights()` call out of `handleRoot()`.
+6. The sensor card has only been driven with injected messages - the sensor is disabled on the
+   bench board. Exercise it against the real TF-Luna.
+
+7. **`zone_persistence` is a dead setting.** It is saved, loaded and shown in the dialog, but
+   `proximity.cpp` never reads it - the median filter replaced it. Left in place on purpose
+   for now; either remove the field or wire it back in.
 
 ## Gotchas that will bite
 
@@ -124,6 +154,16 @@ a **public** repo. Rotating the password is the fix; history scrubbing does not 
 - **FDW duration is the countdown's learned value.** Never truncate it. Skip the phase instead.
 - **The relay boards are active low** and the inversion lives only in `signals.cpp`, except
   `traffic.cpp` blink mode, which still writes pins directly.
+- **`loop()` takes `now` before `cycleLights()` runs.** Anything started inside it is stamped
+  with a later `millis()`, so `now - start` wraps to a huge number. This ended a new ped
+  interval the instant it began; `updatePedSignal()` takes its own reading now.
+- **Walk may be 0.** The movement then starts at the flashing hand, never passing through
+  WALK, so the relay does not click.
 - **GPIO 12 is a strapping pin** - vehicle red was moved to 21 for that reason.
 - Upload flow is `bump_spiffs_version.py`, then `build_spiffs.py`, then `pio run -t uploadfs`.
   `platformio.ini` points `data_dir` at `data_build/`.
+- **`build_spiffs.py` inlines `style.css` and `script.js` into the staged `index.html`**, so
+  those two URLs 404 on the board. Edit the three source files; never reference the CSS or JS
+  from anywhere else.
+- **The page pings the websocket every 5 s** purely so a rebooted board is noticed. The
+  firmware ignores incoming text; if it ever starts parsing it, `ping` must stay harmless.

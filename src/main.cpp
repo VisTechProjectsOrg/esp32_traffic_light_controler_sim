@@ -87,6 +87,8 @@ void setup()
     preferences.putULong("ped_dw", 3000);
   if (!preferences.isKey("ped_chained"))
     preferences.putBool("ped_chained", true);
+  if (!preferences.isKey("ped_fit"))
+    preferences.putBool("ped_fit", false);
   if (!preferences.isKey("ped_chain_ph"))
     preferences.putInt("ped_chain_ph", RED);
 #endif
@@ -116,6 +118,7 @@ void setup()
   ped_fdw_duration = preferences.getULong("ped_fdw", 15000);
   ped_dw_duration = preferences.getULong("ped_dw", 3000);
   ped_chained = preferences.getBool("ped_chained", true);
+  ped_fit_lights = preferences.getBool("ped_fit", false);
   ped_chain_phase = (LightState)preferences.getInt("ped_chain_ph", RED);
 #endif
 

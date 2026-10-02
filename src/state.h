@@ -56,6 +56,7 @@ extern unsigned long ped_fdw_duration;
 // Disconnected: how long the ped head rests before recycling to WALK.
 extern unsigned long ped_dw_duration;
 extern bool ped_chained;
+extern bool ped_fit_lights;
 extern LightState ped_chain_phase;
 extern unsigned long pedPhaseStart;
 extern unsigned long pedBlinkPrevious;

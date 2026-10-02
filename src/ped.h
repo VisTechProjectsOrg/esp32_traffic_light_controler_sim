@@ -19,4 +19,9 @@ void updatePedSignal(unsigned long currentMillis);
 // When chained, this is the floor the vehicle phase has to clear.
 unsigned long pedPhaseDuration();
 
+// Shortest WALK required when the crossing is fitted into the light timings. Zero: the
+// settings form caps the countdown at the light's length and WALK gets what is left,
+// so the only movement still skipped is one whose light is shorter than the FDW.
+const unsigned long PED_MIN_WALK_MS = 0;
+
 #endif

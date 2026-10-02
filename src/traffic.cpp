@@ -198,9 +198,11 @@ void cycleLights()
         // A pedestrian cannot be hurried across. Real controllers let the clearance
         // interval set a floor under the concurrent vehicle phase, so the configured
         // delay is a minimum here rather than an absolute - otherwise a snappy cycle
-        // means the ped phase never gets served at all.
-        unsigned long needed = pedPhaseDuration();
-        if (currentDelay < needed)
+        // means the ped phase never gets served at all. The steady hand is not part of
+        // the floor: it runs under the next phase. In fit mode the light timings win
+        // instead, and startPedPhase skips a movement that does not fit.
+        unsigned long needed = ped_walk_duration + ped_fdw_duration;
+        if (!ped_fit_lights && currentDelay < needed)
         {
           Serial.println("Vehicle phase held to " + String(needed) +
                          "ms for the pedestrian movement (configured " +

@@ -1,5 +1,35 @@
 # Frontend rewrite
 
+> **Done, 2026-10-02 (SPIFFS 0.1.15).** Everything below the line is the original brief, kept
+> as the record of why. What was built and what it measured:
+>
+> | | Before | After |
+> |---|---|---|
+> | Cold load requests | 11 | 4 (page, `/get_config`, `/ped_control`, `/get_current_state`) |
+> | Static transfer, sensor off | 74 KB | 13.7 KB, one file |
+> | Time to splash dismissed, by IP | about 1.8 s | 0.25-0.4 s |
+> | `data/` footprint | 823 KB | 136 KB (84 KB staged) |
+>
+> - `tools/build_spiffs.py` inlines `style.css` and `script.js` into the staged `index.html`.
+>   Three hand-editable sources, one request. The OTA page still has its own trio.
+> - Traffic light is inline SVG; `updateTrafficLight()` kept its signature. Cat mode swaps in
+>   WebP artwork, fetched only when cat mode is on, falling back to the SVG if it fails.
+> - Car images load only when the sensor is enabled; `is250.webp` is 13 KB, down from 32.
+> - `effect.js` is gone; the rainbow is generated in a loop in `script.js`.
+> - Settings is a `<dialog>`: full-screen sheet on a phone, one column at every width, every
+>   input bounded, zones cross-checked, dismissal locked while loading or saving.
+> - Mode and blink colour are segmented buttons, locked until the board answers, because the
+>   toggle routes flip rather than set and a double tap would undo itself.
+> - Lost connection is a banner that reconnects by itself and reloads the page if the SPIFFS
+>   version changed underneath it.
+> - Checked with an overflow scan at 360x740, 390x844, 740x360, 800x1340, 1340x800 and
+>   1280x800, main page and settings, on the board.
+>
+> Not done: `proximity_zone` and `sensor_disconnected` are parsed but the firmware never sends
+> them; the OTA page was left as it was; the sensor card has only seen injected data.
+
+---
+
 A plan for replacing `data/` with something that loads quickly off the ESP32, keeping every feature
 that exists today. Written to be picked up cold in a later session.
 
