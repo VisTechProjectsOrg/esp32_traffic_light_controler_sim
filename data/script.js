@@ -6,8 +6,14 @@ let originalDistanceWarning = '';
 let originalDistanceDanger = '';
 let originalZonePersistence = '';
 
+// Built at runtime, so tools/bump_spiffs_version.py cannot stamp it - the version has to
+// come from the config and be appended here instead, or a week-long max-age serves the old
+// artwork after a SPIFFS update.
+window.assetVersion = window.assetVersion || "";
+
 function updateTrafficLight(state) {
-    document.getElementById('traffic-light').src = '/img/traffic_lt/' + state + '.png';
+    var v = window.assetVersion ? "?v=" + window.assetVersion : "";
+    document.getElementById('traffic-light').src = '/img/traffic_lt/' + state + '.png' + v;
 }
 
 function closePopup(event) {
@@ -49,6 +55,7 @@ function openPopup_settings() {
             document.getElementById("zone_persistence").value = data.zone_persistence;
             document.getElementById("version_number_firmware_label").textContent = "FW: v" + (data.version_firmware || "0.0");
             document.getElementById("version_number_spiffs_label").textContent = "SPIFFS: v" + (data.version_spiffs || "0.0");
+            window.assetVersion = data.version_spiffs || "";
 
             // Store original values for cancel
             originalDistanceSensorEnabled = !!data.distance_sensor_enabled;

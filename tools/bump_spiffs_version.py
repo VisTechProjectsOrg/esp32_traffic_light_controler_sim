@@ -21,7 +21,8 @@ from pathlib import Path
 
 DATA = Path(__file__).resolve().parent.parent / "data"
 VERSION_FILE = DATA / "version.txt"
-ASSET_RE = re.compile(r'(?P<attr>(?:href|src)=")(?P<file>[\w./-]+\.(?:css|js))(?:\?v=[^"]*)?(?P<end>")')
+ASSET_RE = re.compile(
+    r'(?P<attr>(?:href|src)=")(?P<file>[\w./-]+\.(?:css|js|png|webp|svg))(?:\?v=[^"]*)?(?P<end>")')
 
 
 def read_version():
