@@ -9,6 +9,23 @@
 #include <ota_updater.h>
 #include <version.h>
 
+bool spiffsPageExists(const char *path)
+{
+  return SPIFFS.exists(String(path) + ".gz") || SPIFFS.exists(path);
+}
+
+AsyncWebServerResponse *spiffsPage(AsyncWebServerRequest *request, const char *path)
+{
+  String gz = String(path) + ".gz";
+  if (SPIFFS.exists(gz))
+  {
+    AsyncWebServerResponse *res = request->beginResponse(SPIFFS, gz, "text/html; charset=utf-8");
+    res->addHeader("Content-Encoding", "gzip");
+    return res;
+  }
+  return request->beginResponse(SPIFFS, path, "text/html; charset=utf-8");
+}
+
 void notifyAllClients(String message)
 {
   for (int i = 0; i < ws.count(); i++)
@@ -32,18 +49,18 @@ void handleRoot(AsyncWebServerRequest *request)
 
   otaPageActive = false;
 
-  if (SPIFFS.exists("/index.html"))
+  if (spiffsPageExists("/index.html"))
   {
     cycleLights(); // TODO: leftover - serving a page should not advance the cycle
     // Never cache the shell: it carries the versioned asset URLs.
-    AsyncWebServerResponse *res = request->beginResponse(SPIFFS, "/index.html", "text/html; charset=utf-8");
+    AsyncWebServerResponse *res = spiffsPage(request, "/index.html");
     res->addHeader("Cache-Control", "no-cache");
     request->send(res);
   }
   else
   {
     Serial.println("index.html not found");
-    request->send(SPIFFS, "/index_page_not_found.html", "text/html; charset=utf-8");
+    request->send(spiffsPage(request, "/index_page_not_found.html"));
   }
 }
 
@@ -546,7 +563,7 @@ void setupWebServer()
     if (request->header("Accept").indexOf("application/json") != -1) {
         request->send(404, "application/json", "{\"error\":\"Not found\"}");
     } else {
-        auto res = request->beginResponse(SPIFFS,"/index_page_not_found.html","text/html; charset=utf-8");
+        auto res = spiffsPage(request, "/index_page_not_found.html");
         res->setCode(404);
         request->send(res);
     } });

@@ -38,6 +38,7 @@ void setupSignalPins()
 
 #ifdef RGB_LED_ENABLED
   FastLED.addLeds<WS2812, RGB_LED_PIN, GRB>(rgbLed, 1);
+  FastLED.setBrightness(RGB_LED_BRIGHTNESS);
 #endif
 }
 

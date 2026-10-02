@@ -1,6 +1,7 @@
 // ota_updater.cpp
 
 #include "ota_updater.h"
+#include "webserver.h"
 #include <Update.h>
 #include <ESPAsyncWebServer.h>
 #include <Arduino.h>
@@ -130,14 +131,14 @@ void handleFirmwareUpdate(AsyncWebServerRequest *request)
 {
   Serial.println("[OTA] Serving firmware update page");
   otaPageActive = true;
-  if (SPIFFS.exists("/index_firmware_update.html"))
+  if (spiffsPageExists("/index_firmware_update.html"))
   {
-    request->send(SPIFFS, "/index_firmware_update.html", "text/html; charset=utf-8");
+    request->send(spiffsPage(request, "/index_firmware_update.html"));
   }
   else
   {
     Serial.println("[OTA] Error: OTA page not found");
-    request->send(SPIFFS, "/index_page_not_found.html", "text/html; charset=utf-8");
+    request->send(spiffsPage(request, "/index_page_not_found.html"));
   }
 }
 

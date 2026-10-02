@@ -531,7 +531,7 @@ function savePedConfig() {
 
 (function () {
     var BOOT_TIMEOUT_MS = 8000;
-    var pending = { config: false, state: false };
+    var pending = { config: false, state: false, images: false };
     var finished = false;
 
     function dismiss(message) {
@@ -559,9 +559,31 @@ function savePedConfig() {
         if (!finished) dismiss("Controller slow to respond - loading anyway");
     }, BOOT_TIMEOUT_MS);
 
+    // Hold for the artwork as well, so a slow SPIFFS read cannot show a half-painted
+    // page. img.complete is checked first: off a fast serve the image can already be
+    // decoded before the listener is attached, and waiting on an event that has been
+    // and gone would hang the splash until the timeout.
+    function waitForImages() {
+        var imgs = Array.prototype.slice.call(document.images);
+        var outstanding = imgs.length;
+        if (!outstanding) { mark("images"); return; }
+
+        var done = function () {
+            outstanding -= 1;
+            if (outstanding <= 0) mark("images");
+        };
+
+        imgs.forEach(function (img) {
+            if (img.complete) { done(); return; }
+            img.addEventListener("load", done, { once: true });
+            img.addEventListener("error", done, { once: true }); // a broken asset must not strand us
+        });
+    }
+
     document.addEventListener("DOMContentLoaded", function () {
         fetch("/get_config").then(function () { mark("config"); }).catch(function () { mark("config"); });
         fetch("/get_current_state").then(function () { mark("state"); }).catch(function () { mark("state"); });
+        waitForImages();
     });
 })();
 

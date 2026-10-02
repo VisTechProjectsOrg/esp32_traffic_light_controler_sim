@@ -54,6 +54,29 @@ Read it like this:
 - **The small file takes nearly as long as the big one** - per-request bound. Fewer *files* wins, so
   merging matters more than compressing, and the 11 requests a cold load makes are the target.
 
+### Measured, 2026-10-02, station mode on home WiFi
+
+| Asset | Served bytes | Time | B/s |
+|---|---|---|---|
+| index.html (gz) | 2,940 | 0.096 s | 30,571 |
+| script.js (gz) | 6,326 | 0.123 s | 51,388 |
+| style.css (gz) | 4,979 | 0.418 s | 11,904 |
+| all_off.png | 16,348 | 0.208 s | 78,647 |
+| is250.webp | 32,330 | 0.413 s | 78,339 |
+
+Throughput tops out around **78 KB/s**, and the small files are dominated by a fixed cost of roughly
+**0.08 s per request**. The model that fits is `time = 0.08 + bytes / 80000`.
+
+Two conclusions:
+
+**78 KB/s is nowhere near the radio's capability.** Espressif quote 2-15 Mbit/s, which is 250 KB/s at
+the pessimistic end. The ceiling here is SPIFFS reads, not WiFi, so AP mode will not rescue it.
+
+**Half of a cold load is per-request overhead.** At 74 KB over 11 requests: about 0.9 s of request
+cost and about 0.9 s of transfer, so roughly 1.8 s total, against about 2.7 s before gzip. Merging
+the text files is now worth about as much as compressing them was - each file removed is a flat 0.08 s
+back, no matter how small the file is.
+
 The second is the likelier answer. Espressif put ESP32 TCP throughput at 2-15 Mbit/s in practice and
 around 20 Mbit/s in lab air, which is 250 KB/s at the pessimistic end. 141 KB should cross the radio
 in well under a second, so a load that feels slow is probably SPIFFS reads and per-request overhead
@@ -165,11 +188,12 @@ needs, so a slow SPIFFS read cannot show a half-painted page. Check `img.complet
 
 Each step is independently shippable and independently revertable.
 
-1. **Gzip at upload.** 141 KB cold load to 75 KB. Biggest single win, no firmware change.
-2. **Shrink `is250.webp`.** At 31.6 KB it is the largest thing on a cold load, and it is decorative.
-3. **Traffic light to SVG.** About 15 KB off the cold load, and it gzips where a PNG does not.
-4. Merge the text files, splash waits on assets.
-5. Cat images re-encoded - flash footprint only, do it whenever.
+1. ~~**Gzip at upload.**~~ Done. 141 KB to 74 KB, measured 2.7 s to 1.8 s.
+2. **Merge the text files.** 11 requests to about 6 saves roughly 0.4 s of pure overhead, which is
+   now the largest remaining lever. Each request costs 0.08 s regardless of size.
+3. **Shrink `is250.webp`.** 32 KB and decorative - the largest single asset on a cold load.
+4. **Traffic light to SVG.** About 16 KB, and it gzips where a PNG does not.
+5. Cat images re-encoded - flash footprint only, no effect on load time.
 6. Restyle, once the structure is settled.
 
 Step 1 is half the win on its own. Do not start at step 6.
