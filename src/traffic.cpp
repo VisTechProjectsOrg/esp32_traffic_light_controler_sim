@@ -194,7 +194,21 @@ void cycleLights()
     if (ped_chained)
     {
       if (currentLightState == ped_chain_phase)
+      {
+        // A pedestrian cannot be hurried across. Real controllers let the clearance
+        // interval set a floor under the concurrent vehicle phase, so the configured
+        // delay is a minimum here rather than an absolute - otherwise a snappy cycle
+        // means the ped phase never gets served at all.
+        unsigned long needed = pedPhaseDuration();
+        if (currentDelay < needed)
+        {
+          Serial.println("Vehicle phase held to " + String(needed) +
+                         "ms for the pedestrian movement (configured " +
+                         String(currentDelay) + "ms)");
+          currentDelay = needed;
+        }
         startPedPhase(currentDelay);
+      }
       else if (currentPedState != PED_DONT_WALK)
         setPedState(PED_DONT_WALK);
     }

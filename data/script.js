@@ -464,6 +464,7 @@ function applyPedConfig(cfg) {
     };
     set("ped_walk", cfg.walk);
     set("ped_fdw", cfg.fdw);
+    set("ped_dw", cfg.dw);
     set("ped_chain_phase", cfg.chain_phase);
 
     const chained = document.getElementById("ped_chained");
@@ -507,6 +508,7 @@ function savePedConfig() {
             action: "set_config",
             walk: num("ped_walk", 7),
             fdw: num("ped_fdw", 15),
+            dw: num("ped_dw", 3),
             chained: document.getElementById("ped_chained").checked,
             chain_phase: document.getElementById("ped_chain_phase").value
         })

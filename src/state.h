@@ -52,6 +52,9 @@ extern PedState currentPedState;
 extern unsigned long ped_walk_duration;
 extern unsigned long ped_walk_effective;
 extern unsigned long ped_fdw_duration;
+// Steady DON'T WALK. Connected: the minimum rest before the vehicle phase may end.
+// Disconnected: how long the ped head rests before recycling to WALK.
+extern unsigned long ped_dw_duration;
 extern bool ped_chained;
 extern LightState ped_chain_phase;
 extern unsigned long pedPhaseStart;

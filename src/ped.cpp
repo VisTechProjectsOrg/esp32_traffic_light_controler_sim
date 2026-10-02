@@ -59,6 +59,11 @@ void setPedState(PedState state)
   ws.textAll(jsonResponse);
 }
 
+unsigned long pedPhaseDuration()
+{
+  return ped_walk_duration + ped_fdw_duration + ped_dw_duration;
+}
+
 void startPedPhase(unsigned long availableTime)
 {
   if (availableTime < ped_fdw_duration)
@@ -100,6 +105,13 @@ void updatePedSignal(unsigned long currentMillis)
     }
     if (elapsed >= ped_fdw_duration)
       setPedState(PED_DONT_WALK);
+    break;
+
+  case PED_DONT_WALK:
+    // Free-running: rest, then recycle. When chained the vehicle cycle starts the
+    // next movement instead, so leave the head at rest.
+    if (!ped_chained && elapsed >= ped_dw_duration)
+      setPedState(PED_WALK);
     break;
 
   default:

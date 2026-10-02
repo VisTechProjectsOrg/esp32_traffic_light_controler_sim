@@ -440,12 +440,14 @@ void handlePedControl(AsyncWebServerRequest *request, uint8_t *data, size_t len,
   {
     ped_walk_duration = doc["walk"].as<unsigned long>() * 1000;
     ped_fdw_duration = doc["fdw"].as<unsigned long>() * 1000;
+    ped_dw_duration = doc["dw"].as<unsigned long>() * 1000;
     ped_chained = doc["chained"].as<bool>();
     ped_chain_phase = doc["chain_phase"].as<String>() == "green" ? GREEN : RED;
     ped_walk_effective = ped_walk_duration;
 
     preferences.putULong("ped_walk", ped_walk_duration);
     preferences.putULong("ped_fdw", ped_fdw_duration);
+    preferences.putULong("ped_dw", ped_dw_duration);
     preferences.putBool("ped_chained", ped_chained);
     preferences.putInt("ped_chain_ph", ped_chain_phase);
 
@@ -458,6 +460,8 @@ void handlePedControl(AsyncWebServerRequest *request, uint8_t *data, size_t len,
   out["ped_state"] = pedStateName(currentPedState);
   out["walk"] = ped_walk_duration / 1000;
   out["fdw"] = ped_fdw_duration / 1000;
+  out["dw"] = ped_dw_duration / 1000;
+  out["phase_total"] = pedPhaseDuration() / 1000;
   out["chained"] = ped_chained;
   out["chain_phase"] = ped_chain_phase == GREEN ? "green" : "red";
   out["test_mode"] = testMode;

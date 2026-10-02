@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8" />
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="style.css?v=0.1.10">
-    <link rel="stylesheet" href="car-distance-style.css?v=0.1.10" />
-    <script src="effect.js?v=0.1.10"></script>
-    <script src="script.js?v=0.1.10"></script>
-    <script src="car-distance.js?v=0.1.10"></script>
+    <link rel="stylesheet" href="style.css?v=0.1.11">
+    <link rel="stylesheet" href="car-distance-style.css?v=0.1.11" />
+    <script src="effect.js?v=0.1.11"></script>
+    <script src="script.js?v=0.1.11"></script>
+    <script src="car-distance.js?v=0.1.11"></script>
 </head>
 
 <body>
@@ -101,6 +101,8 @@
                                 <input type="number" id="ped_walk" name="ped_walk" min="1" max="120" step="1"><br>
                                 <label title="This is the number the countdown module displays">Flashing hand (s):</label>
                                 <input type="number" id="ped_fdw" name="ped_fdw" min="3" max="99" step="1"><br>
+                                <label title="Steady hand. Minimum rest before the vehicle phase may end when chained; the rest between movements when free-running">Steady hand (s):</label>
+                                <input type="number" id="ped_dw" name="ped_dw" min="1" max="60" step="1"><br>
                                 <label>Walk during:</label>
                                 <select id="ped_chain_phase" name="ped_chain_phase">
                                     <option value="red">Red</option>

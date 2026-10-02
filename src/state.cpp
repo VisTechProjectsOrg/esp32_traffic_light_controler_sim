@@ -24,6 +24,7 @@ PedState currentPedState = PED_OFF;
 unsigned long ped_walk_duration = 7000;  // variable, safe to change at any time
 unsigned long ped_walk_effective = 7000; // walk length after trimming to fit the phase
 unsigned long ped_fdw_duration = 15000;  // fixed, this is the countdown value
+unsigned long ped_dw_duration = 3000;    // steady rest / minimum before the phase ends
 bool ped_chained = true;                 // follow the vehicle cycle vs manual control
 LightState ped_chain_phase = RED;        // vehicle phase the WALK runs under
 unsigned long pedPhaseStart = 0;

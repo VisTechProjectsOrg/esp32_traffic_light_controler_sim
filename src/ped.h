@@ -15,4 +15,8 @@ void startPedPhase(unsigned long availableTime);
 
 void updatePedSignal(unsigned long currentMillis);
 
+// Wall time one complete pedestrian movement needs: WALK + FDW + the steady rest.
+// When chained, this is the floor the vehicle phase has to clear.
+unsigned long pedPhaseDuration();
+
 #endif
