@@ -35,6 +35,36 @@ Keep the two apart when deciding what to do:
 Gzip helps text only. The images are already compressed formats, so gzipping them saves nothing -
 which is why the image column above barely moves.
 
+## Measure before optimising
+
+Everything above is payload arithmetic. Whether payload is actually the bottleneck is a separate
+question, and worth ten seconds with the board on the network:
+
+```bash
+# small text file vs large image - run both
+curl -o /dev/null -s -w 'total %{time_total}s  size %{size_download}  speed %{speed_download} B/s
+' http://<esp-ip>/style.css
+curl -o /dev/null -s -w 'total %{time_total}s  size %{size_download}  speed %{speed_download} B/s
+' http://<esp-ip>/img/is250/is250.webp
+```
+
+Read it like this:
+
+- **Similar B/s on both** - throughput bound. Shipping fewer bytes wins, so gzip first.
+- **The small file takes nearly as long as the big one** - per-request bound. Fewer *files* wins, so
+  merging matters more than compressing, and the 11 requests a cold load makes are the target.
+
+The second is the likelier answer. Espressif put ESP32 TCP throughput at 2-15 Mbit/s in practice and
+around 20 Mbit/s in lab air, which is 250 KB/s at the pessimistic end. 141 KB should cross the radio
+in well under a second, so a load that feels slow is probably SPIFFS reads and per-request overhead
+rather than bandwidth. Each request is a separate flash open, and ESPAsyncWebServer serves few
+connections at once.
+
+**AP mode**: no benchmark found showing a clear throughput difference against station mode. AP removes
+the router hop, so it should help a little, but nothing measured suggests a large gap. The practical
+differences are that an AP client has no internet while connected, and the softAP defaults to four
+concurrent clients. Worth testing both with the commands above rather than assuming.
+
 ## Targets
 
 - Cold load under 80 KB transferred.
