@@ -482,12 +482,6 @@ void handleProximityControl(AsyncWebServerRequest *request, uint8_t *data, size_
   {
     proximityRelearnBaseline();
   }
-  else if (action == "set_config")
-  {
-    prox_use_ped = doc["use_ped"].as<bool>();
-    preferences.putBool("prox_use_ped", prox_use_ped);
-    Serial.println("Proximity indicator: " + String(prox_use_ped ? "ped head" : "vehicle head"));
-  }
 
   JsonDocument out;
   out["state"] = proximityStateName(proximityState());
@@ -497,7 +491,6 @@ void handleProximityControl(AsyncWebServerRequest *request, uint8_t *data, size_
   out["strength"] = proximityStrength();
   out["baseline"] = proximityBaseline();
   out["baseline_valid"] = proximityBaselineValid();
-  out["use_ped"] = prox_use_ped;
 
   String body;
   serializeJson(out, body);

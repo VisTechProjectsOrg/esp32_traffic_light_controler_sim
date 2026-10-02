@@ -488,8 +488,6 @@ function loadPedConfig() {
     })
         .then(function (r) { return r.json(); })
         .then(function (p) {
-            const usePed = document.getElementById("prox_use_ped");
-            if (usePed && p.use_ped !== undefined) usePed.checked = !!p.use_ped;
             updateSensorDiagnostics(p);
         })
         .catch(function (e) { console.error("Error loading proximity config:", e); });
@@ -514,14 +512,6 @@ function savePedConfig() {
         })
     }).catch(function (e) { console.error("Error saving ped config:", e); });
 
-    fetch("/proximity_control", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-            action: "set_config",
-            use_ped: document.getElementById("prox_use_ped").checked
-        })
-    }).catch(function (e) { console.error("Error saving proximity config:", e); });
 }
 
 

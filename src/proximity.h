@@ -36,7 +36,8 @@ enum ProximityState
 
 void setupProximity();
 
-// Returns true when the traffic cycle may run this pass.
+// Returns true when proximity is driving the vehicle lamps this pass. The traffic
+// cycle keeps running either way - this only says who owns the output.
 bool proximityUpdate(unsigned long now);
 
 ProximityZone proximityZone();

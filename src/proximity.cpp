@@ -1,6 +1,5 @@
 #include "proximity.h"
 #include "signals.h"
-#include "ped.h"
 #include "webserver.h"
 #include <config.h>
 
@@ -74,9 +73,6 @@ static unsigned long lastFlashToggle = 0;
 static int flashCycles = 0;
 static bool flashOn = false;
 static bool alertShown = false;
-
-static unsigned long lastPedIndicatorBlink = 0;
-static bool pedIndicatorBlinkOn = false;
 
 // --- helpers --------------------------------------------------------------
 
@@ -238,42 +234,6 @@ static ProximityZone classify(float distance)
   return ZONE_DANGER;
 }
 
-// Paint the zone onto the hand/man head. Only ever touches the combo head, never
-// the countdown - the countdown has its own channels precisely so it keeps seeing a
-// clean pedestrian cycle while this flashes for an unrelated reason. A real ped
-// phase outranks this; proximity only paints while the phase is at rest.
-static void updatePedIndicator(unsigned long now)
-{
-#ifdef PED_SIGNAL_ENABLED
-  if (currentPedState == PED_WALK || currentPedState == PED_FDW)
-    return;
-
-  switch (zone)
-  {
-  case ZONE_CLEAR:
-    set_ped_signal(true, false); // man
-    break;
-
-  case ZONE_WARNING:
-    if (now - lastPedIndicatorBlink >= ALERT_FLASH_INTERVAL)
-    {
-      lastPedIndicatorBlink = now;
-      pedIndicatorBlinkOn = !pedIndicatorBlinkOn;
-      set_ped_signal(false, pedIndicatorBlinkOn); // flashing hand
-    }
-    break;
-
-  case ZONE_DANGER:
-    set_ped_signal(false, true); // solid hand
-    break;
-
-  default:
-    set_ped_signal(false, true); // at rest, hand
-    break;
-  }
-#endif
-}
-
 static void pushDiagnostics(unsigned long now)
 {
   if (now - lastDiagPush < DIAG_PUSH_INTERVAL)
@@ -333,6 +293,11 @@ static bool sample(unsigned long now)
 
 // --- state machine --------------------------------------------------------
 
+// Returns true while proximity is driving the vehicle lamps. The traffic cycle is
+// never stopped - it keeps advancing in the background and simply has its output
+// suppressed, so releasing the lamps resumes at the phase the clock has reached
+// rather than the one it was on when proximity took over. The pedestrian phase is
+// never touched at all; it runs its own cycle throughout.
 bool proximityUpdate(unsigned long now)
 {
   if (!distance_sensor_enabled)
@@ -343,7 +308,7 @@ bool proximityUpdate(unsigned long now)
       zone = ZONE_LOST;
       resetWindow();
     }
-    return true; // cycle freely
+    return false; // lamps belong to the cycle
   }
 
   if (state == PROX_DISABLED)
@@ -448,19 +413,9 @@ bool proximityUpdate(unsigned long now)
 
   // --- output ---
 
-  if (prox_use_ped)
-  {
-    // Vehicle light keeps cycling; the hand/man head carries the warning.
-    if (state == PROX_GUIDING)
-      updatePedIndicator(now);
-    else if (state == PROX_PARKED)
-      set_ped_signal(false, true); // settled, steady hand
-    return true;
-  }
-
-  // Legacy behaviour: proximity paints the vehicle head directly.
+  // Only GUIDING paints anything. Everything else leaves the lamps to the cycle.
   if (state != PROX_GUIDING)
-    return true;
+    return false;
 
   // First entry into danger gets the attention flash, once per approach.
   if (zone == ZONE_DANGER && !alertShown)
@@ -480,7 +435,7 @@ bool proximityUpdate(unsigned long now)
         lastFlashToggle = 0;
       }
     }
-    return false;
+    return true;
   }
 
   if (zone == ZONE_DANGER)
@@ -489,5 +444,7 @@ bool proximityUpdate(unsigned long now)
     set_traffic_light(0, 1, 0);
   else if (zone == ZONE_CLEAR)
     set_traffic_light(0, 0, 1);
-  return false;
+  else
+    return false; // no usable reading, hand the lamps back
+  return true;
 }

@@ -36,6 +36,5 @@ float distance_warning = 0;
 float distance_danger = 0;
 int zone_persistence = 3; // consecutive readings required before changing zone
 bool distance_sensor_enabled = false;
-bool prox_use_ped = true;
 
 bool testMode = false;

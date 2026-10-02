@@ -115,7 +115,6 @@ void setup()
   ped_chained = preferences.getBool("ped_chained", true);
   ped_chain_phase = (LightState)preferences.getInt("ped_chain_ph", RED);
 #endif
-  prox_use_ped = preferences.getBool("prox_use_ped", true);
 
 
   setupWebServer();
@@ -134,14 +133,16 @@ void loop()
   if (testMode)
     return; // the bench GUI owns the outputs
 
-  // Proximity decides whether the vehicle cycle may run this pass. It never returns
-  // early out of loop(), so the ped phase below keeps advancing either way.
-  bool cycleAllowed = true;
+  // Proximity can borrow the vehicle lamps, but nothing stops a clock. The traffic
+  // phase machine and the pedestrian phase both advance every pass regardless; all
+  // proximity decides is who writes the vehicle lamps right now. When it hands them
+  // back the cycle repaints at whatever phase it has reached in the meantime.
+  bool proximityOwnsLamps = false;
   if (!otaPageActive)
-    cycleAllowed = proximityUpdate(now);
+    proximityOwnsLamps = proximityUpdate(now);
 
-  if (cycleAllowed)
-    cycleLights();
+  setTrafficOutputOwner(proximityOwnsLamps);
+  cycleLights();
 
 #ifdef PED_SIGNAL_ENABLED
   updatePedSignal(now);

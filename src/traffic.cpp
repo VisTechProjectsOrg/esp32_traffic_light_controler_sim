@@ -3,6 +3,20 @@
 #include "ped.h"
 #include <config.h>
 
+// Proximity may own the lamps without stopping the clock. While it does, the phase
+// machine keeps running and its writes are suppressed; the moment it lets go, one
+// forced repaint puts the current phase back on the lamps rather than waiting for
+// the next phase boundary.
+static bool outputSuppressed = false;
+static bool repaintPending = false;
+
+void setTrafficOutputOwner(bool proximityOwnsLamps)
+{
+  if (outputSuppressed && !proximityOwnsLamps)
+    repaintPending = true;
+  outputSuppressed = proximityOwnsLamps;
+}
+
 void randomBlink()
 {
   // Randomly select a pin to blink
@@ -40,9 +54,12 @@ void cycleLights()
       blinkState = !blinkState;
       if (blinkAllColors)
       {
-        digitalWrite(LED_red_pin, !blinkState); // Invert all the output state
-        digitalWrite(LED_yellow_pin, !blinkState);
-        digitalWrite(LED_green_pin, !blinkState);
+        if (!outputSuppressed)
+        {
+          digitalWrite(LED_red_pin, !blinkState); // Invert all the output state
+          digitalWrite(LED_yellow_pin, !blinkState);
+          digitalWrite(LED_green_pin, !blinkState);
+        }
 #ifdef RGB_LED_ENABLED
         setRgbLedColor(blinkState, blinkState, blinkState);
 #endif
@@ -146,8 +163,16 @@ void cycleLights()
     }
   }
 
-  if (currentLightState != previousLightState) // if the light state has changed, update the light output
+  if (currentLightState != previousLightState || repaintPending)
   {
+    repaintPending = false;
+    if (outputSuppressed)
+    {
+      // Track the phase but leave the lamps to whoever owns them.
+      previousLightState = currentLightState;
+      return;
+    }
+
     switch (currentLightState)
     {
     case RED:

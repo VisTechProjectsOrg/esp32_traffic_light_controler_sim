@@ -65,11 +65,6 @@ extern float distance_danger;
 extern int zone_persistence;
 extern bool distance_sensor_enabled;
 
-// Where proximity shows itself. true = the hand/man head carries the warning and the
-// vehicle light keeps cycling undisturbed; false = legacy, proximity paints the
-// vehicle head directly.
-extern bool prox_use_ped;
-
 // Bench test mode: suspends the automatic cycle so the test GUI can assert
 // individual relay channels without the cycle overwriting them.
 extern bool testMode;
