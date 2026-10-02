@@ -1,5 +1,6 @@
 // WifiManager.cpp
 #include "WiFiManager.h"
+#include <DNSServer.h>
 #include <ESPmDNS.h>
 
 using namespace WifiManager;
@@ -48,6 +49,13 @@ void WifiManager::beginStation(const char* ssid, const char* pass,
     Serial.printf("Connecting to STA %s…\n", ssid);
 }
 
+static DNSServer dnsServer;
+static bool dnsRunning = false;
+
+void WifiManager::captivePortalLoop() {
+    if (dnsRunning) dnsServer.processNextRequest();
+}
+
 void WifiManager::beginAP(const char* ssid, const char* pass,
                           AsyncWebServer &server) {
     _serverPtr = &server;
@@ -57,4 +65,16 @@ void WifiManager::beginAP(const char* ssid, const char* pass,
     WiFi.mode(WIFI_AP);
     WiFi.softAP(ssid, pass);
     Serial.printf("Starting AP %s…\n", ssid);
+
+    // Answer every DNS query with our own address. Clients on this AP already use us
+    // as their DNS server because we handed that out with the lease, so any hostname
+    // typed into a browser lands here - no IP to remember, and no mDNS to wait on.
+    IPAddress ip = WiFi.softAPIP();
+    if (dnsServer.start(53, "*", ip)) {
+        dnsRunning = true;
+        Serial.printf("Captive DNS up on %s - any hostname reaches the device\n",
+                      ip.toString().c_str());
+    } else {
+        Serial.println("Captive DNS failed to start; reach the device by IP");
+    }
 }

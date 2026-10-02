@@ -40,7 +40,19 @@ than once per request. Verified on hardware: Windows UA by name redirects and la
 same UA by IP does not redirect at all (no loop), and a macOS UA keeps the friendly name because
 Apple platforms resolve `.local` natively in milliseconds.
 
-This is a workaround, not a fix. The router reservation is still the right answer.
+**AP mode is the real deployment** - in the garage the phone connects to the device directly, and
+there is no router to put a reservation on. So the captive DNS is the fix there, not a workaround:
+in AP mode the device is its own DHCP server, hands out itself as the DNS server, and now answers
+every query with its own address. Any hostname typed into a browser reaches it, with no IP to
+remember and no mDNS to wait on. `WifiManager::captivePortalLoop()` is pumped from `loop()` under
+`#ifdef AP_SSID`.
+
+**Untested on hardware.** It compiles in both AP and station builds, but the board has only ever run
+in station mode this session, so nobody has watched a phone resolve a name through it. Verify that
+first: flip `config.h` to `AP_SSID`, join the AP, and type any hostname.
+
+For station mode on a network you control, a router reservation is still the better answer - but that
+is not available here.
 
 ## Hardware
 

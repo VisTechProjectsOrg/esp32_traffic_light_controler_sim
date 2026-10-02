@@ -151,6 +151,10 @@ void loop()
   updatePedSignal(now);
 #endif
 
+#ifdef AP_SSID
+  WifiManager::captivePortalLoop(); // no-op unless the captive DNS actually started
+#endif
+
   if (shouldReboot && millis() >= rebootTime)
   {
     Serial.println("ESP Rebooting now...");
