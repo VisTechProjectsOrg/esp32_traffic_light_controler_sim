@@ -1177,3 +1177,75 @@ input[type="checkbox"] {
     .boot-lamp { animation: none; background: var(--lamp); opacity: 0.55; }
     .boot-splash { transition: none; }
 }
+
+
+/* ---- pedestrian signal ---- */
+.heads-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 22px;
+    flex-wrap: wrap;
+}
+
+.ped-head {
+    width: 110px;
+    height: auto;
+    flex: none;
+}
+
+/* Only one symbol is ever lit, and the other is simply not there - a dark lens
+   shows nothing, it does not show a grey shape behind the lit one. */
+.ped-sym {
+    fill: transparent;
+    stroke: transparent;
+    opacity: 0;
+    transition: opacity 90ms linear;
+}
+
+.ped-sym.lit-hand,
+.ped-sym.lit-man {
+    opacity: 1;
+}
+
+.ped-sym.lit-hand {
+    fill: #ff7a1a;
+    stroke: #ff7a1a;
+    filter: drop-shadow(0 0 7px rgba(255, 122, 26, 0.65));
+}
+
+.ped-sym.lit-man {
+    fill: #f2f2f2;
+    stroke: #f2f2f2;
+    filter: drop-shadow(0 0 7px rgba(255, 255, 255, 0.5));
+}
+
+.ped-digits .seg {
+    fill: #262626;
+    transition: fill 90ms linear;
+}
+
+.ped-digits .seg.on {
+    fill: #ff7a1a;
+    filter: drop-shadow(0 0 5px rgba(255, 122, 26, 0.6));
+}
+
+.phase-total {
+    margin: 10px 0 0;
+    font-size: 0.85rem;
+    color: #607d8b;
+}
+
+.phase-total.held {
+    color: #b45309;
+    font-weight: 600;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ped-sym, .ped-digits .seg { transition: none; }
+}
+
+@media (max-width: 560px) {
+    .heads-row { gap: 14px; }
+    .ped-head { width: 88px; }
+}

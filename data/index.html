@@ -6,11 +6,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta charset="UTF-8" />
     <link rel="icon" href="data:,">
-    <link rel="stylesheet" href="style.css?v=0.1.11">
-    <link rel="stylesheet" href="car-distance-style.css?v=0.1.11" />
-    <script src="effect.js?v=0.1.11"></script>
-    <script src="script.js?v=0.1.11"></script>
-    <script src="car-distance.js?v=0.1.11"></script>
+    <link rel="stylesheet" href="style.css?v=0.1.12">
+    <link rel="stylesheet" href="car-distance-style.css?v=0.1.12" />
+    <script src="effect.js?v=0.1.12"></script>
+    <script src="script.js?v=0.1.12"></script>
+    <script src="car-distance.js?v=0.1.12"></script>
 </head>
 
 <body>
@@ -42,8 +42,50 @@
 
 
     <div class="container">
-        <img onclick="openPopup_time_waisted()" class="traffic-light" id="traffic-light"
-            src="img/traffic_lt/all_off.png" alt="Traffic Light">
+        <div class="heads-row">
+            <img onclick="openPopup_time_waisted()" class="traffic-light" id="traffic-light"
+                src="img/traffic_lt/all_off.png" alt="Traffic Light">
+        <svg class="ped-head" id="pedHead" viewBox="0 0 132 250" role="img"
+            aria-label="Pedestrian signal: hand and walking person above a two digit countdown">
+            <rect x="2" y="2" width="128" height="246" rx="10" fill="#242424" stroke="#111" stroke-width="2"/>
+            <rect x="12" y="12" width="108" height="108" rx="6" fill="#0b0b0b"/>
+            <rect x="12" y="130" width="108" height="108" rx="6" fill="#0b0b0b"/>
+
+            <g id="pedHand" class="ped-sym">
+                <rect x="52" y="34" width="11" height="34" rx="5.5"/>
+                <rect x="65" y="30" width="11" height="38" rx="5.5"/>
+                <rect x="78" y="34" width="11" height="34" rx="5.5"/>
+                <rect x="39" y="42" width="11" height="26" rx="5.5"/>
+                <path d="M39 60 q-9 4 -11 13 q-2 9 4 14 l10 10 q7 7 17 7 h12 q13 0 20 -10 q6 -9 6 -21 v-12 h-58 z"/>
+            </g>
+
+            <g id="pedMan" class="ped-sym">
+                <circle cx="66" cy="30" r="9"/>
+                <path d="M66 41 l-13 9 l-7 17" stroke-width="9" stroke-linecap="round" fill="none"/>
+                <path d="M66 41 l14 7 l9 15" stroke-width="9" stroke-linecap="round" fill="none"/>
+                <path d="M66 41 l-3 28" stroke-width="13" stroke-linecap="round" fill="none"/>
+                <path d="M63 69 l-14 24" stroke-width="10" stroke-linecap="round" fill="none"/>
+                <path d="M63 69 l17 21 l2 10" stroke-width="10" stroke-linecap="round" fill="none"/>
+            </g>
+
+            <g id="pedDigits" class="ped-digits">
+        <rect class="seg" id="d0a" x="29" y="160" width="20" height="7" rx="1.5"/>
+        <rect class="seg" id="d0b" x="49" y="167" width="7" height="18.5" rx="1.5"/>
+        <rect class="seg" id="d0c" x="49" y="192.5" width="7" height="18.5" rx="1.5"/>
+        <rect class="seg" id="d0d" x="29" y="211" width="20" height="7" rx="1.5"/>
+        <rect class="seg" id="d0e" x="22" y="192.5" width="7" height="18.5" rx="1.5"/>
+        <rect class="seg" id="d0f" x="22" y="167" width="7" height="18.5" rx="1.5"/>
+        <rect class="seg" id="d0g" x="29" y="185.5" width="20" height="7" rx="1.5"/>
+        <rect class="seg" id="d1a" x="81" y="160" width="20" height="7" rx="1.5"/>
+        <rect class="seg" id="d1b" x="101" y="167" width="7" height="18.5" rx="1.5"/>
+        <rect class="seg" id="d1c" x="101" y="192.5" width="7" height="18.5" rx="1.5"/>
+        <rect class="seg" id="d1d" x="81" y="211" width="20" height="7" rx="1.5"/>
+        <rect class="seg" id="d1e" x="74" y="192.5" width="7" height="18.5" rx="1.5"/>
+        <rect class="seg" id="d1f" x="74" y="167" width="7" height="18.5" rx="1.5"/>
+        <rect class="seg" id="d1g" x="81" y="185.5" width="20" height="7" rx="1.5"/>
+            </g>
+        </svg>
+        </div>
         <div>
 
             <!-- Light Cycle Delay Popup -->
@@ -103,6 +145,7 @@
                                 <input type="number" id="ped_fdw" name="ped_fdw" min="3" max="99" step="1"><br>
                                 <label title="Steady hand. Minimum rest before the vehicle phase may end when chained; the rest between movements when free-running">Steady hand (s):</label>
                                 <input type="number" id="ped_dw" name="ped_dw" min="1" max="60" step="1"><br>
+                                <p class="phase-total" id="pedPhaseTotal">Movement takes 25s</p>
                                 <label>Walk during:</label>
                                 <select id="ped_chain_phase" name="ped_chain_phase">
                                     <option value="red">Red</option>

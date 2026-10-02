@@ -205,7 +205,7 @@ document.addEventListener("DOMContentLoaded", function () {
             updateSensorDiagnostics(data.proximity);
 
         } else if (data.ped_state) {
-            console.log("Ped state:", data.ped_state);
+            setPedVisual(data.ped_state);
 
         } else if (data.state) {
             updateTrafficLight(data.state);
@@ -479,7 +479,7 @@ function loadPedConfig() {
         body: JSON.stringify({ action: "query" })
     })
         .then(function (r) { return r.json(); })
-        .then(applyPedConfig)
+        .then(function (cfg) { applyPedConfig(cfg); updatePhaseTotal(); })
         .catch(function (e) { console.error("Error loading ped config:", e); });
 
     fetch("/proximity_control", {
@@ -557,3 +557,127 @@ function savePedConfig() {
         fetch("/get_current_state").then(function () { mark("state"); }).catch(function () { mark("state"); });
     });
 })();
+
+
+// ---- pedestrian head ----
+// The board reports phase changes only, so the 1Hz flash and the countdown run
+// locally - which is also what the real module does: it watches the hot and times
+// the digits itself.
+
+var SEGMENTS = {
+    0: "abcdef", 1: "bc", 2: "abdeg", 3: "abcdg", 4: "bcfg",
+    5: "acdfg", 6: "acdefg", 7: "abc", 8: "abcdefg", 9: "abcdfg"
+};
+
+var pedFlashTimer = null;
+var pedCountTimer = null;
+var pedCount = null;
+
+function setDigits(value) {
+    var text = (value === null || value === undefined) ? "  " : String(value).padStart(2, " ");
+    for (var i = 0; i < 2; i++) {
+        var ch = text.charAt(i);
+        var lit = (ch === " ") ? "" : SEGMENTS[Number(ch)] || "";
+        "abcdefg".split("").forEach(function (seg) {
+            var el = document.getElementById("d" + i + seg);
+            if (el) el.classList.toggle("on", lit.indexOf(seg) !== -1);
+        });
+    }
+}
+
+function setSymbols(hand, man) {
+    var h = document.getElementById("pedHand");
+    var m = document.getElementById("pedMan");
+    if (h) h.classList.toggle("lit-hand", !!hand);
+    if (m) m.classList.toggle("lit-man", !!man);
+}
+
+function clearPedTimers() {
+    if (pedFlashTimer) { clearInterval(pedFlashTimer); pedFlashTimer = null; }
+    if (pedCountTimer) { clearInterval(pedCountTimer); pedCountTimer = null; }
+}
+
+function setPedVisual(state) {
+    if (!document.getElementById("pedHead")) return;
+    clearPedTimers();
+
+    if (state === "walk") {
+        setSymbols(false, true);
+        setDigits(null);
+
+    } else if (state === "fdw") {
+        setSymbols(true, false);
+        var on = true;
+        pedFlashTimer = setInterval(function () {
+            on = !on;
+            setSymbols(on, false);
+        }, 500);
+
+        var fdwEl = document.getElementById("ped_fdw");
+        pedCount = fdwEl ? Number.parseInt(fdwEl.value, 10) : 15;
+        if (Number.isNaN(pedCount)) pedCount = 15;
+        setDigits(pedCount);
+        pedCountTimer = setInterval(function () {
+            pedCount -= 1;
+            if (pedCount <= 0) {
+                setDigits(null);
+                clearInterval(pedCountTimer);
+                pedCountTimer = null;
+            } else {
+                setDigits(pedCount);
+            }
+        }, 1000);
+
+    } else if (state === "dont_walk") {
+        setSymbols(true, false);
+        setDigits(null);
+
+    } else {
+        setSymbols(false, false);
+        setDigits(null);
+    }
+}
+
+// ---- live phase readout in settings ----
+
+function updatePhaseTotal() {
+    var el = document.getElementById("pedPhaseTotal");
+    if (!el) return;
+
+    var num = function (id, fallback) {
+        var e = document.getElementById(id);
+        var v = e ? Number.parseInt(e.value, 10) : NaN;
+        return Number.isNaN(v) ? fallback : v;
+    };
+
+    var total = num("ped_walk", 7) + num("ped_fdw", 15) + num("ped_dw", 3);
+    var chained = document.getElementById("ped_chained");
+    var phase = document.getElementById("ped_chain_phase");
+    el.classList.remove("held");
+
+    if (!chained || !chained.checked) {
+        el.textContent = "Movement takes " + total + "s, running on its own clock";
+        return;
+    }
+
+    var which = phase ? phase.value : "red";
+    var configured = num(which === "green" ? "delay_green" : "delay_red", 0);
+    if (configured < total) {
+        el.textContent = which.charAt(0).toUpperCase() + which.slice(1) +
+            " will be held to " + total + "s for the crossing (set to " + configured + "s)";
+        el.classList.add("held");
+    } else {
+        el.textContent = "Movement takes " + total + "s, fits inside the " + configured + "s " + which;
+    }
+}
+
+document.addEventListener("DOMContentLoaded", function () {
+    ["ped_walk", "ped_fdw", "ped_dw", "ped_chained", "ped_chain_phase", "delay_red", "delay_green"]
+        .forEach(function (id) {
+            var el = document.getElementById(id);
+            if (el) el.addEventListener("input", updatePhaseTotal);
+            if (el) el.addEventListener("change", updatePhaseTotal);
+        });
+    setPedVisual("off");
+    updatePhaseTotal();
+});

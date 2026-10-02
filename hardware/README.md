@@ -256,6 +256,11 @@ boot-time conflict.
       the web stack and the message shapes are scattered across four files. Move them behind a notify
       API that only `webserver.cpp` implements. Also drop the `cycleLights()` call from `handleRoot()`
       - serving the index page should not advance the light cycle.
+- [ ] Boot splash waits on `/get_config` and `/get_current_state` but not on the images, so a slow
+      SPIFFS read can still show a half-painted page. Hold it until the assets have decoded too.
+- [ ] Lighter frontend: `data/img/` is 752 KB, 568 KB of it the traffic-light PNGs. Drawing the
+      vehicle head as inline SVG the way the ped head now is would remove most of that and make a
+      cold load over WiFi far quicker. Cat mode still needs its own images.
 - [ ] Green glare: try neutral density film behind the lens. Firmware burst-fire dimming was
       considered and dropped - see *Dimming the green*.
 - [ ] `src/config.h` is listed in `.gitignore` but is actually tracked, so the WiFi credentials are in
