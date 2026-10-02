@@ -1,7 +1,7 @@
 # Hardware notes
 
-Real signal hardware driven by this controller. Reference photos live in `hardware/photos/`
-(gitignored - large phone photos, kept local only).
+Real signal hardware driven by this controller. Reference photos are in `photos/` - nameplates, the
+factory wire splice, the mounted relay boards and the pedestrian cable.
 
 ## Pedestrian signal modules (EOI / Excellence Opto Inc.)
 

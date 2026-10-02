@@ -3,5 +3,4 @@
 src/config.h
 __pycache__/
 .claude/
-hardware/photos/
 .playwright-mcp/
