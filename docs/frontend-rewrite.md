@@ -152,6 +152,36 @@ Websocket keys the UI parses: `state`, `light_mode`, `theme_mode`, `blink_color`
 `notifyAllClientsDistance()` sends `sensor_temp`, not `temp`. That exact key has already been broken
 once in this project.
 
+## Design brief
+
+**Mobile is the primary target, not an afterthought.** The device lives in a garage and is operated
+from a phone standing next to it. Desktop is the secondary case, used at the bench. Design at 360 px
+first and let it grow, rather than shrinking a desktop layout.
+
+What that means concretely:
+
+- **One column at phone width.** The current settings dialog puts two boxes in a row and orphans a
+  third below with dead space beside it; at 360 px that is unusable. One column, full width, ordered
+  by how often each thing is touched.
+- **Touch targets at least 44 px.** The number inputs are currently small and sit close together.
+- **Reachable one-handed.** The things used while standing at the car - current state, the sensor
+  readout - go at the top. Settings live behind a control, as now.
+- **Readable in a garage**, which means poor light and a phone held at arm's length. Generous type,
+  real contrast, no thin grey-on-grey.
+
+**It is a control panel, not a marketing page.** Looking good here means clear state, honest
+hierarchy, and controls that are obviously controls - not a hero section or decorative flourish. The
+signal heads are the subject and should be the largest thing on the page; everything else supports
+them.
+
+Keep the character that is already there. Cat mode is a feature, the console easter egg stays, and
+the pedestrian head drawn as inline SVG in `data/index.html` is the visual standard the rest should
+match - crisp, themeable, drawn rather than photographed.
+
+**Check three widths every round**, per the project's own convention: 360, 800, 1280. Run an overflow
+scan rather than eyeballing it - document scrollWidth against clientWidth, plus any element whose
+right edge exceeds the viewport. A layout that passes at 390 and breaks at 360 is broken.
+
 ## Approach
 
 ### 1. Gzip everything text (do this first, independent of the rest)
@@ -211,7 +241,7 @@ Each step is independently shippable and independently revertable.
 3. **Shrink `is250.webp`.** 32 KB and decorative - the largest single asset on a cold load.
 4. **Traffic light to SVG.** About 16 KB, and it gzips where a PNG does not.
 5. Cat images re-encoded - flash footprint only, no effect on load time.
-6. Restyle, once the structure is settled.
+6. Restyle to the design brief above, once the structure is settled.
 
 Step 1 is half the win on its own. Do not start at step 6.
 
@@ -223,6 +253,7 @@ Step 1 is half the win on its own. Do not start at step 6.
 - Cold load timed on a phone with cache cleared, before and after.
 - `python tools/bump_spiffs_version.py` still rewrites the asset URLs, and the HTML is still sent
   `no-cache` while assets stay on a long `max-age`. That pairing is what makes the cache safe.
-- Three widths: 1280, 800, 360. No horizontal page scroll at any of them.
+- Three widths: 1280, 800, 360, with an overflow scan at each. No horizontal page scroll.
+- Every control reachable and tappable one-handed at 360 px.
 - The websocket keys above still parse - check the browser console for the "Unknown data received"
   branch firing.
