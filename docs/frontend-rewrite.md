@@ -9,29 +9,36 @@ The page is served from SPIFFS on an ESP32 over WiFi. That is the whole constrai
 read off flash by a 240 MHz MCU and pushed through a single-radio TCP stack, so payload size is
 latency, directly.
 
-Today `data/` is **823 KB**. Where it goes is not where you would guess:
+Two numbers matter here and they are not the same number.
 
-| | Size | Share |
+**Cold load is 141 KB.** That is what a browser actually transfers on a first visit - the browser only
+fetches what `index.html` references. Gzipped it would be **72 KB**.
+
+| Cold load | Raw | Gzipped |
 |---|---|---|
-| **Cat mode images** | **477 KB** | **58%** |
-| Other images (404 cat, firmware, car, icons) | 168 KB | 20% |
-| HTML + CSS + JS | 102 KB | 12% |
-| Normal traffic light PNGs | 77 KB | 9% |
+| HTML + CSS + JS | 84.8 KB | **18.8 KB** |
+| Images (car, one lamp, icons) | 56.0 KB | 55.7 KB |
+| **Total** | **140.8 KB** | **72.3 KB** |
 
-Two things follow.
+**SPIFFS footprint is 823 KB.** That is flash space, and it is dominated by cat mode at 477 KB - 58%
+of everything, with `all_on_cat.png` alone at 213 KB. None of it transfers unless cat mode is toggled.
 
-**Cat mode is the payload.** `all_on_cat.png` alone is 213 KB - larger than every stylesheet and
-script combined. Redrawing the *normal* traffic light as SVG, which was the original idea, saves
-77 KB and leaves 58% of the problem untouched.
+Keep the two apart when deciding what to do:
 
-**Nothing is compressed.** There is no gzip anywhere in `data/`, and ESPAsyncWebServer serves a
-`.gz` sibling automatically when one exists, with the right `Content-Encoding`. Text compresses
-around 75%, so the 102 KB of HTML/CSS/JS becomes roughly 25 KB for the cost of a build step. This is
-free and should happen regardless of whether the rewrite goes ahead.
+- To make **loading faster**, gzip the text. 84.8 KB becomes 18.8 KB, saving 66 KB on every cold load,
+  for a build step and no firmware change. Nothing else comes close. After that, images are what is
+  left (53 of the remaining 72 KB), and the single largest is `is250.webp` at 31.6 KB - the car
+  picture, bigger than the traffic light.
+- To **reclaim flash**, re-encode the cat images. That is where the 477 KB lives. It will not make
+  the page load any faster for anyone who never turns cat mode on.
+
+Gzip helps text only. The images are already compressed formats, so gzipping them saves nothing -
+which is why the image column above barely moves.
 
 ## Targets
 
-- `data/` under 250 KB total.
+- Cold load under 80 KB transferred.
+- `data/` footprint under 300 KB.
 - Cold load on a phone over WiFi under 2 s.
 - No feature lost. The list below is the contract.
 - Still editable by hand - no bundler, no framework, no build toolchain beyond a gzip script.
@@ -87,9 +94,10 @@ firmware change.
 Keep the plain files too while verifying, then drop them - a stale uncompressed sibling will be
 served in preference on some versions and silently undo the win.
 
-### 2. Cat mode: the actual decision
+### 2. Cat mode: flash space, not load speed
 
-477 KB for one joke mode. Options, in the order I would consider them:
+477 KB for one joke mode. Worth fixing, but be clear that this reclaims flash and speeds up the first
+cat-mode toggle - it does not touch cold load. Options:
 
 - **Re-encode as WebP.** Same artwork, same behaviour, typically 70-80% smaller. ~100 KB total. No
   code change beyond the file extension. Lowest risk, keeps the joke intact.
@@ -127,17 +135,19 @@ needs, so a slow SPIFFS read cannot show a half-painted page. Check `img.complet
 
 Each step is independently shippable and independently revertable.
 
-1. Gzip at upload. Measure before and after.
-2. Cat images to WebP. Measure.
-3. Traffic light to SVG.
+1. **Gzip at upload.** 141 KB cold load to 75 KB. Biggest single win, no firmware change.
+2. **Shrink `is250.webp`.** At 31.6 KB it is the largest thing on a cold load, and it is decorative.
+3. **Traffic light to SVG.** About 15 KB off the cold load, and it gzips where a PNG does not.
 4. Merge the text files, splash waits on assets.
-5. Restyle, once the structure is settled.
+5. Cat images re-encoded - flash footprint only, do it whenever.
+6. Restyle, once the structure is settled.
 
-Steps 1 and 2 are most of the win and touch almost no code. Do not start at step 5.
+Step 1 is half the win on its own. Do not start at step 6.
 
 ## Verification
 
-- `data/` total under 250 KB.
+- Cold load under 80 KB transferred, measured in devtools with cache disabled.
+- `data/` footprint under 300 KB.
 - Every item in the feature inventory exercised by hand against real hardware.
 - Cold load timed on a phone with cache cleared, before and after.
 - `python tools/bump_spiffs_version.py` still rewrites the asset URLs, and the HTML is still sent
