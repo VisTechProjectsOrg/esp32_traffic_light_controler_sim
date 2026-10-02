@@ -251,6 +251,8 @@ boot-time conflict.
       proximity-on-ped-head toggle) to the web settings menu. Settable over `/ped_control` today but
       no UI yet.
 - [ ] Bench test with the second relay board before connecting mains.
+- [ ] Green glare: try neutral density film behind the lens. Firmware burst-fire dimming was
+      considered and dropped - see *Dimming the green*.
 - [ ] `src/config.h` is listed in `.gitignore` but is actually tracked, so the WiFi credentials are in
       git history. Untrack it, add a `config.example.h`, and rotate the password.
 
@@ -329,36 +331,22 @@ Bench test before committing: fused cord -> dimmer -> one green module, nothing 
 and record whether output changes at all, and whether there is flicker or audible buzz. **Stop on buzz
 or stutter** - that is the SCR failing to latch and it is hard on the driver.
 
-### Burst-fire fallback
+### Not doing it in firmware
 
-If the dimmer fails, the no-hardware option is burst firing: a zero-cross SSR can only switch at mains
-crossings, so the one available modulation is skipping whole half-cycles (8.33 ms at 60 Hz).
+Burst firing - skipping whole mains half-cycles through the zero-cross SSR - was considered and
+dropped. For the record, so it does not get re-proposed:
 
-**Scope: green only.** Red is a safety indication and is never modulated. The ped and countdown hots
-are never modulated either - the countdown learns its clearance interval by watching the hand flash,
-and chopping that hot at 60 Hz would teach it a bogus number.
+- The likeliest outcome is **no dimming at all**. These drivers are specced to ride out brownouts, so
+  the bulk cap holds LED current flat through a skipped half-cycle: all of the driver stress, none of
+  the benefit.
+- Zero-cross switching at 60 Hz gives a 2-3 position brightness switch, not continuous dimming.
+  Envelope frequency is `120/den` Hz, so only 1/2 is even a candidate; below 50% is a visible strobe.
+- The repeated inrush into the electrolytic shortens driver life with no symptom until it fails. Not
+  a trade worth making for a 7.5 W lamp.
 
-Implementation notes worth having before starting:
-
-- **Use `esp_timer`, not a FreeRTOS task.** A task with `vTaskDelayUntil` quantizes to the 1 ms tick,
-  turning an 8.33 ms slot into 8 or 9 ms - a 4-12% period error that manufactures the very beat
-  flicker burst firing is prone to. Core pinning does not help: core 0 shares with the WiFi stack,
-  core 1 with `loop()` and AsyncTCP, and a few hundred microseconds of jitter on an 8333 us slot is
-  tolerable either way.
-- **Suspend dimming during OTA.** Flash writes disable the instruction cache *for both cores*, so a
-  timer callback living in flash will stall or fault mid-update, and pinning it to the other core does
-  not save it. Either mark the callback `IRAM_ATTR` or simply force 100% while `otaPageActive`.
-- **It belongs under `src/signals.cpp`**, the single inversion point. Note that `src/traffic.cpp`
-  blink mode currently bypasses the helper and writes pins directly, so that path needs fixing first
-  or green will blink at full glare while the steady cycle is dimmed.
-- **Expect at best a 2-3 position brightness switch, not continuous dimming.** Envelope frequency is
-  `120/den` Hz, so only 1/2 (60 Hz envelope, 8.33 ms dark gap) is a serious candidate. Anything below
-  50% is an unmistakable strobe.
-- **The likeliest outcome is no dimming at all.** These drivers are specced to ride out brownouts, so
-  the bulk cap may hold LED current flat through a skipped half-cycle - all the driver stress, none of
-  the benefit. Prove it with a throwaway test endpoint before building any settings UI.
-
-If neither looks acceptable, neutral density film behind the lens always works.
+**The fix is optical.** Neutral density or window tint film behind the green lens: no electrical risk,
+reversible, tunable by layering, and it works regardless of what the driver does. One layer is roughly
+half the output, two layers roughly a quarter.
 
 ## Mains safety
 
