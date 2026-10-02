@@ -16,8 +16,24 @@ the dominant cause of the device feeling slow, by an order of magnitude over pay
 fails outright often enough to leave the settings dialog empty and the version labels at `v0.0`,
 because `/get_config` never resolves.
 
-Use the IP while working. Fixing mDNS properly, or dropping it for a static lease, is the single
-highest-value performance task left and nothing else comes close.
+Diagnosed - it is not a firmware bug and cannot be fixed from the ESP32:
+
+```
+unicast DNS (asks the router)   716 ms   no answer
+LLMNR / multicast              1019 ms   10.0.0.102
+default (tries both)           1050 ms   10.0.0.102
+```
+
+Windows queries the router first, waits ~716 ms for an answer no DNS server can give - `.local` is
+reserved for multicast - then falls back to multicast, which takes a further second because Windows
+waits out a fixed response window and the ESP32's responder is slow, sharing the WiFi task.
+
+**Fix it on the router**: give the board a static DHCP reservation with a hostname there. It then
+resolves over ordinary unicast DNS in a millisecond or two, for every device on the network, and
+survives reboots. A hosts-file entry works too but only on one machine. Keep mDNS enabled either way
+as a way to find the board when its address is unknown; just do not make it the daily path.
+
+Use the IP in the meantime.
 
 ## Hardware
 
