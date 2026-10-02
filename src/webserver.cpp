@@ -5,6 +5,7 @@
 #include "proximity.h"
 #include <config.h>
 #include <SPIFFS.h>
+#include <WiFi.h>
 #include <ArduinoJson.h>
 #include <ota_updater.h>
 #include <version.h>
@@ -48,6 +49,36 @@ void handleRoot(AsyncWebServerRequest *request)
   Serial.println(userAgent);
 
   otaPageActive = false;
+
+#ifdef REDIRECT_MDNS_TO_IP
+  // Windows resolves a .local name by asking the router first, waiting out an answer
+  // no DNS server can give, then falling back to multicast - about a second in total,
+  // and unreliable enough to leave /get_config unresolved and the page half-dead.
+  //
+  // Bouncing the first request to the IP changes the origin, so every asset, API call
+  // and the websocket afterwards need no name resolution at all. The name is resolved
+  // once per navigation instead of once per request.
+  //
+  // macOS and iOS resolve .local natively and quickly, so they keep the friendly name.
+  if (userAgent.indexOf("Windows NT") >= 0)
+  {
+    IPAddress addr = (WiFi.status() == WL_CONNECTED) ? WiFi.localIP() : WiFi.softAPIP();
+    String ip = addr.toString();
+    String host = request->host();
+    int colon = host.indexOf(':');
+    if (colon >= 0)
+      host = host.substring(0, colon); // a Host header may carry the port
+
+    // Only redirect when we know our address and are not already on it, or the
+    // browser would follow the same hop forever.
+    if (ip != "0.0.0.0" && host != ip)
+    {
+      Serial.println("Redirecting " + host + " -> " + ip + " (mDNS is slow on Windows)");
+      request->redirect("http://" + ip + "/");
+      return;
+    }
+  }
+#endif
 
   if (spiffsPageExists("/index.html"))
   {

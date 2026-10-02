@@ -33,7 +33,14 @@ resolves over ordinary unicast DNS in a millisecond or two, for every device on 
 survives reboots. A hosts-file entry works too but only on one machine. Keep mDNS enabled either way
 as a way to find the board when its address is unknown; just do not make it the daily path.
 
-Use the IP in the meantime.
+**Mitigated in firmware.** `handleRoot()` now bounces Windows clients that arrive by name to the IP
+(302), gated on `REDIRECT_MDNS_TO_IP` in `config.h`. The redirect changes the origin, so assets, API
+calls and the websocket afterwards resolve nothing - the name is looked up once per navigation rather
+than once per request. Verified on hardware: Windows UA by name redirects and lands in 1.23 s, the
+same UA by IP does not redirect at all (no loop), and a macOS UA keeps the friendly name because
+Apple platforms resolve `.local` natively in milliseconds.
+
+This is a workaround, not a fix. The router reservation is still the right answer.
 
 ## Hardware
 
