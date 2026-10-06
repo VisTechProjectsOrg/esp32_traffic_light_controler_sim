@@ -285,6 +285,29 @@ Seven switched hots in total, across the two 4-channel boards.
 Module pigtails are 18 AWG, so stranded ends terminate in **red** forks (22-16 AWG). Use a ratcheting
 crimper - a pliers-crimped fork on mains is a real failure point.
 
+### Ped head run (as built)
+
+The ped head is extended to the controller on two 3-wire extension cords with the plug ends cut off,
+one cord per module. Both cords use the same pairing:
+
+| Cord wire | Module pigtail | Function | Lands on |
+|---|---|---|---|
+| Black | orange | DON'T WALK / hand | TB4, own island |
+| Green | blue | WALK / man | TB4, own island |
+| White | white | neutral | TB2 |
+
+| Cord | Module | Black -> channel | Green -> channel |
+|---|---|---|---|
+| 1 | Hand/man combo | 5 (GPIO 32) | 6 (GPIO 33) |
+| 2 | Countdown | 7 (GPIO 18) | 8 (GPIO 19) |
+
+**The green conductor in each cord is a switched 120 V hot, not a ground.** Mark it with blue tape at
+both ends. Label the cords "combo" and "countdown" - the conductors are otherwise identical.
+
+The housing is plastic and the modules have no ground pigtail, so no ground runs to the ped head. The
+red and green left over in the original housing cable should not land on either module - VERIFY by
+tracing where they end inside the head.
+
 ### Diagrams
 
 ![AC path](wiring-ac-path.svg)
@@ -311,7 +334,7 @@ combing one row makes every screw on that strip a single node.
 |---|---|---|---|
 | TB1 | yes | Mains hot | fused hot in + 7 SSR channel inputs + 5 V block |
 | TB2 | yes | Neutral | mains neutral + 5 module whites + 5 V block |
-| TB3 | yes | Ground | mains ground + both housing bonds |
+| TB3 | yes | Ground | mains ground only - both housings are plastic, nothing to bond |
 | TB4 | **no** | Switched hots | 7 relay outputs, one island each, out to the lamps |
 | TB5 | cut 4+4 | 5 V DC | +5 V rail on 1-4, GND rail on 5-8 |
 
@@ -329,7 +352,8 @@ Mains disconnected for steps 1-7.
 2. Comb TB1, TB2 and TB3 full width. Cut a comb 4+4 for TB5. **Leave TB4 uncombed.**
 3. **Ring out every pigtail with the heads unpowered.** The ITE colours below match these modules, but
    installer conventions vary and this is the one step firmware cannot undo. Record what you find.
-4. Land neutrals and grounds: five module whites to TB2, both housing bonds to TB3.
+4. Land neutrals and ground: five module whites to TB2, mains ground to TB3. Both housings are plastic
+   and the modules have no ground pigtail, so nothing else lands on TB3.
 5. Fit the **main fuse** in the incoming hot, then land the fused hot on TB1 and jumper TB1 to each of
    the 7 SSR channel inputs. 2 A time-delay: worst case is about 0.8 A with every lamp lit and the 5 V
    block loaded, so that rides out SMPS inrush while still protecting 18 AWG comfortably.
@@ -390,8 +414,9 @@ half the output, two layers roughly a quarter.
 
 ## Mains safety
 
-120 VAC on the relay board. Enclose it, fuse the mains feed, strain-relieve every conductor, bond the
-signal housings to ground, and never probe the logic side while the mains side is live.
+120 VAC on the relay board. Enclose it, fuse the mains feed, strain-relieve every conductor, bond any
+metal enclosure to ground (the signal housings are plastic and need none), and never probe the logic
+side while the mains side is live.
 
 ## Bench test tool
 
