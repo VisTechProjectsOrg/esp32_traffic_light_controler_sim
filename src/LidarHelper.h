@@ -31,3 +31,11 @@ void autoSwitchMode(int16_t dist, int16_t str);
 // sensor gave us nothing at all. Filtering, strength gating and range limits all
 // live in proximity.cpp so there is a single place that decides what is real.
 bool readRawSample(int16_t &outDist_cm, float &outDist_ft, int16_t &outStr, int16_t &outTemp);
+
+// The TF-Luna streams frames unprompted (100Hz out of the box), so a silent UART means
+// there is no sensor. True once bytes have arrived within the last LIDAR_SILENT_MS.
+bool lidarConnected();
+
+// Keep presence detection alive while the sensor feature is switched off: note any
+// traffic and throw the bytes away.
+void lidarPoll();

@@ -116,6 +116,7 @@ void handleGetConfig(AsyncWebServerRequest *request)
                         ",\"distance_danger\":" + String(distance_danger) +
                         ",\"zone_persistence\":" + String(zone_persistence) +
                         ",\"distance_sensor_enabled\":" + String(distance_sensor_enabled ? "true" : "false") +
+                        ",\"distance_sensor_connected\":" + String(proximitySensorConnected() ? "true" : "false") +
                         ",\"version_firmware\":\"" + String(VERSION_FIRMWARE) + "\"" +
                         ",\"version_spiffs\":\"" + getSpiffsVersion() + "\"}";
 
@@ -547,6 +548,7 @@ void handleProximityControl(AsyncWebServerRequest *request, uint8_t *data, size_
   out["strength"] = proximityStrength();
   out["baseline"] = proximityBaseline();
   out["baseline_valid"] = proximityBaselineValid();
+  out["connected"] = proximitySensorConnected();
 
   String body;
   serializeJson(out, body);

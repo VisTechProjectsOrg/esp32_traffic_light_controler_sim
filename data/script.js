@@ -252,6 +252,8 @@ function setDistance(distance) {
 }
 
 function updateSensorDiagnostics(p) {
+    // Nothing on the wire beats whatever the state machine thinks it is doing.
+    if (p.connected === false) p = { state: 'disconnected' };
     const state = $('diag_state');
     state.textContent = p.state || '--';
     state.dataset.state = p.state || '';
@@ -391,10 +393,21 @@ function settingsError(message) {
 }
 
 function toggleDistanceSensorInputs() {
-    const on = $('toggle_distance_sensor_switch').checked;
+    const sw = $('toggle_distance_sensor_switch');
+    const on = sw.checked;
     show($('distanceSettings'), on);
     // Disabled inputs are skipped by validation, which a hidden invalid field would block.
     DISTANCE_IDS.forEach((id) => { $(id).disabled = !on; });
+
+    // Older firmware does not report presence; treat that as connected.
+    const connected = !cfg || cfg.distance_sensor_connected !== false;
+    // Switching it off is always allowed. Switching it on with nothing attached is not.
+    sw.disabled = !connected && !on;
+    const hint = $('sensorHint');
+    hint.textContent = connected ? '' : on
+        ? 'No sensor detected - check the wiring. It picks up again when the sensor answers.'
+        : 'No sensor detected - check the wiring.';
+    show(hint, !connected);
 }
 
 // With the light, the only ped number that can clash with the light is the countdown:
@@ -652,8 +665,11 @@ function onMessage(data) {
         $('diag_baseline').textContent = fmtFt(data.proximity_baseline);
         known = true;
     }
-    if (data.sensor_disconnected) {
-        updateSensorDiagnostics({ state: 'disconnected' });
+    if (data.sensor_disconnected !== undefined) {
+        if (cfg) cfg.distance_sensor_connected = !data.sensor_disconnected;
+        if (data.sensor_disconnected) updateSensorDiagnostics({ state: 'disconnected' });
+        else if (cfg && cfg.distance_sensor_enabled) queryProximity().catch(() => { });
+        if (dialog.open && !settingsBusy) toggleDistanceSensorInputs();
         known = true;
     }
     if (data.distance !== undefined) {

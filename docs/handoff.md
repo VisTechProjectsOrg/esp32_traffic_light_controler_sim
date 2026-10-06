@@ -123,6 +123,21 @@ hold path (`chained` without `fit`: the vehicle phase is held to walk + FDW) is 
 `traffic.cpp` but nothing in the UI selects it any more - delete it or keep it for the API.
 Walk may be 0 in own-timer mode; the movement then starts at the flashing hand.
 
+**Distance sensing ignores everything past the max.** The Green zone setting
+(`distance_max`) is now the farthest a target can be picked up, so with the garage door open
+nobody in the driveway can take over the lamps; before, anything about 2 ft inside the
+learned background could, out to 18-20 ft. The entry-gap check is measured from that same
+boundary, so a short max still accepts a real car. `tools/proximity_sim.py` has the
+door-open scenarios.
+
+**Sensor presence is detected** from the TF-Luna's unprompted 100 Hz stream: no bytes for 1 s
+means no sensor (`lidarConnected()`), reported as `distance_sensor_connected` in
+`/get_config`, `connected` in the diagnostics, and the `sensor_disconnected` websocket key.
+The settings switch cannot be turned on with nothing attached. This also fixed a stall:
+`TFMPlus::getData()` waits up to 1 s for a frame, so an enabled-but-unplugged sensor froze the
+loop on every sample; it is now only called when bytes are waiting. The bench board reports
+no sensor, so detection of a *connected* sensor is still unverified.
+
 ## Known broken
 
 **The WiFi password is in public git history.** `src/config.h` is no longer tracked (copy

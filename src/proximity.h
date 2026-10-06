@@ -51,6 +51,7 @@ float proximityFiltered();
 int16_t proximityStrength();
 float proximityBaseline();
 bool proximityBaselineValid();
+bool proximitySensorConnected();
 
 // Forget the learned background, e.g. after the garage layout changes.
 void proximityRelearnBaseline();

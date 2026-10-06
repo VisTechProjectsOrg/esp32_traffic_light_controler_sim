@@ -582,8 +582,8 @@ legend + .field,
 }
 
 /* With no hint there is no second row to span, and spanning one anyway drops the control low. */
-.field:not(:has(small)) input,
-.field:not(:has(small)) select { grid-row: 1; }
+.field:not(:has(small:not([hidden]))) input,
+.field:not(:has(small:not([hidden]))) select { grid-row: 1; }
 
 .field select { text-align: left; }
 

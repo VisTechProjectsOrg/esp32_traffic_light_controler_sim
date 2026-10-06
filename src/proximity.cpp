@@ -116,6 +116,31 @@ int16_t proximityStrength() { return lastStrength; }
 float proximityBaseline() { return baseline; }
 bool proximityBaselineValid() { return baselineValid; }
 
+bool proximitySensorConnected()
+{
+#ifdef DISTANCE_SENSOR_ENABLED
+  return lidarConnected();
+#else
+  return false;
+#endif
+}
+
+// Tell the page when the sensor appears or disappears, so the setting can be offered
+// only when there is something to switch on.
+static bool reportedConnected = false;
+static bool reportedOnce = false;
+
+static void reportConnection()
+{
+  bool connected = proximitySensorConnected();
+  if (reportedOnce && connected == reportedConnected)
+    return;
+  reportedOnce = true;
+  reportedConnected = connected;
+  Serial.println(connected ? "[PROX] sensor detected" : "[PROX] no sensor detected");
+  ws.textAll(String("{\"sensor_disconnected\":") + (connected ? "false" : "true") + "}");
+}
+
 void proximityRelearnBaseline()
 {
   baselineValid = false;
@@ -214,13 +239,21 @@ static void updateBaseline(unsigned long now, bool haveReading)
   }
 }
 
+// Where a car can first be picked up: just inside the background, but never beyond
+// the configured max. Past the max nothing counts - with the door open the beam runs
+// out into the driveway, and someone walking about out there is not parking.
+static float entryBoundary()
+{
+  return min(baseline - BASELINE_MARGIN_FT, distance_max);
+}
+
 static bool targetPresent()
 {
   if (filteredFt < 0)
     return false;
   if (!baselineValid)
     return false; // refuse to guess before the background is known
-  return filteredFt < (baseline - BASELINE_MARGIN_FT);
+  return filteredFt <= entryBoundary();
 }
 
 static ProximityZone classify(float distance)
@@ -246,7 +279,8 @@ static void pushDiagnostics(unsigned long now)
                ",\"filtered\":" + String(filteredFt, 2) +
                ",\"strength\":" + String(lastStrength) +
                ",\"baseline\":" + String(baseline, 2) +
-               ",\"baseline_valid\":" + String(baselineValid ? "true" : "false") + "}}";
+               ",\"baseline_valid\":" + String(baselineValid ? "true" : "false") +
+               ",\"connected\":" + String(proximitySensorConnected() ? "true" : "false") + "}}";
   ws.textAll(msg);
 
   notifyAllClientsDistance(filteredFt, lastTemp);
@@ -300,8 +334,13 @@ static bool sample(unsigned long now)
 // never touched at all; it runs its own cycle throughout.
 bool proximityUpdate(unsigned long now)
 {
+  reportConnection();
+
   if (!distance_sensor_enabled)
   {
+#ifdef DISTANCE_SENSOR_ENABLED
+    lidarPoll();
+#endif
     if (state != PROX_DISABLED)
     {
       state = PROX_DISABLED;
@@ -333,11 +372,13 @@ bool proximityUpdate(unsigned long now)
     zone = ZONE_LOST;
     if (target)
     {
-      if (filteredFt < baseline - BASELINE_MARGIN_FT - ENTRY_MAX_GAP_FT)
+      // Measured from the entry boundary, not the baseline: with a short max and the
+      // door open, a real car is first seen at the max, far inside the background.
+      if (filteredFt < entryBoundary() - ENTRY_MAX_GAP_FT)
       {
         // Materialised mid-range rather than entering from the far end.
-        Serial.printf("[PROX] ignoring target that appeared at %.2f ft (baseline %.2f)\n",
-                      filteredFt, baseline);
+        Serial.printf("[PROX] ignoring target that appeared at %.2f ft (entry %.2f)\n",
+                      filteredFt, entryBoundary());
         break;
       }
       state = PROX_TRACKING;

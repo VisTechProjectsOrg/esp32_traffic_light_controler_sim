@@ -9,6 +9,10 @@ const int16_t DIST_STR_THRESHOLD = 50;     // mode-switch hint only, not a valid
 DistanceMode currentMode = SHORT_MODE;
 TFMPlus tfm;
 
+static const unsigned long LIDAR_SILENT_MS = 1000;
+static unsigned long lastTrafficMs = 0;
+static bool seenTraffic = false;
+
 // — non-blocking state vars —
 static unsigned long lastModeSwitch = 0;
 static DistanceMode pendingMode = SHORT_MODE;
@@ -69,9 +73,37 @@ void autoSwitchMode(int16_t dist_cm, int16_t str)
     }
 }
 
+static void noteTraffic()
+{
+    if (LIDAR_SERIAL.available())
+    {
+        lastTrafficMs = millis();
+        seenTraffic = true;
+    }
+}
+
+bool lidarConnected()
+{
+    return seenTraffic && millis() - lastTrafficMs < LIDAR_SILENT_MS;
+}
+
+void lidarPoll()
+{
+    noteTraffic();
+    while (LIDAR_SERIAL.available())
+        LIDAR_SERIAL.read();
+}
+
 bool readRawSample(int16_t &outDist_cm, float &outDist_ft, int16_t &outStr, int16_t &outTemp)
 {
     int16_t d, s, t;
+
+    // TFMPlus::getData() waits up to a full second for a frame. With the sensor
+    // unplugged that stalled the whole loop - lights, web server and ped timing -
+    // on every sample. Only ask when bytes are already waiting.
+    noteTraffic();
+    if (!LIDAR_SERIAL.available())
+        return false;
 
     if (!tfm.getData(d, s, t))
         return false;
