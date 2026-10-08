@@ -8,7 +8,7 @@
     <title>Vis Traffic Light Controls</title>
     <link rel="icon" href="data:,">
     <!-- tools/build_spiffs.py inlines these two into the staged page, so the board serves one file -->
-    <link rel="stylesheet" href="style.css?v=0.1.22">
+    <link rel="stylesheet" href="style.css?v=0.1.23">
 </head>
 
 <body>
@@ -109,9 +109,9 @@
 
                 <div class="track" id="track">
                     <div class="car" id="car">
-                        <img class="car-body" data-src="img/is250/is250.webp?v=0.1.22" alt="Lexus IS250">
-                        <img class="car-wheel wheel-rear" data-src="img/is250/is250_wheel.webp?v=0.1.22" alt="">
-                        <img class="car-wheel wheel-front" data-src="img/is250/is250_wheel.webp?v=0.1.22" alt="">
+                        <img class="car-body" data-src="img/is250/is250.webp?v=0.1.23" alt="Lexus IS250">
+                        <img class="car-wheel wheel-rear" data-src="img/is250/is250_wheel.webp?v=0.1.23" alt="">
+                        <img class="car-wheel wheel-front" data-src="img/is250/is250_wheel.webp?v=0.1.23" alt="">
                     </div>
                     <div class="wall"></div>
                 </div>
@@ -227,6 +227,10 @@
                             <input type="number" id="distance_max" min="0.25" max="18" step="0.25"
                                 inputmode="decimal" required>
                         </label>
+                        <label class="field">Approach <small>feet a car must close before the lights react</small>
+                            <input type="number" id="approach_min" min="0.5" max="5" step="0.25"
+                                inputmode="decimal" required>
+                        </label>
                         <label class="field">Zone persistence <small>readings before a zone change counts</small>
                             <input type="number" id="zone_persistence" min="1" max="10" step="1" inputmode="numeric"
                                 required>
@@ -251,7 +255,7 @@
 
     <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-    <script src="script.js?v=0.1.22"></script>
+    <script src="script.js?v=0.1.23"></script>
 </body>
 
 </html>

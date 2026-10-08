@@ -22,8 +22,7 @@ static const float BASELINE_MARGIN_FT = 2.0f;
 static const float BASELINE_STABLE_FT = 0.5f;
 static const unsigned long BASELINE_LEARN_MS = 20000;
 
-// A car closes this much distance on its way in. A person crossing does not.
-static const float APPROACH_MIN_FT = 2.0f;
+// How far a target must close before it counts as a car is approach_min, a setting.
 // A car enters through the far boundary, so its first detection lands just inside
 // the baseline. Someone stepping into the beam appears mid-range out of nowhere.
 // Rejecting that discontinuity is the cheapest filter for a crossing pedestrian.
@@ -399,7 +398,7 @@ bool proximityUpdate(unsigned long now)
       Serial.println("[PROX] target lost before approach confirmed");
       break;
     }
-    if (trackStartDistance - filteredFt >= APPROACH_MIN_FT)
+    if (trackStartDistance - filteredFt >= approach_min)
     {
       state = PROX_GUIDING;
       parkReference = filteredFt;

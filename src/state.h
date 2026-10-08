@@ -66,6 +66,7 @@ extern bool pedBlinkState;
 extern float distance_max;
 extern float distance_warning;
 extern float distance_danger;
+extern float approach_min;
 extern int zone_persistence;
 extern bool distance_sensor_enabled;
 

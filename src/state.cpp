@@ -36,6 +36,7 @@ bool pedBlinkState = false;
 float distance_max = 0;
 float distance_warning = 0;
 float distance_danger = 0;
+float approach_min = 2.0; // feet a target must close before it counts as a car driving in
 int zone_persistence = 3; // consecutive readings required before changing zone
 bool distance_sensor_enabled = false;
 

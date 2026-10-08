@@ -375,7 +375,7 @@ $('lightCat').addEventListener('error', () => {
 const dialog = $('settings');
 const form = $('setConfigForm');
 const fieldsets = Array.from(form.querySelectorAll('fieldset'));
-const DISTANCE_IDS = ['distance_danger', 'distance_warning', 'distance_max', 'zone_persistence'];
+const DISTANCE_IDS = ['distance_danger', 'distance_warning', 'distance_max', 'approach_min', 'zone_persistence'];
 let settingsBusy = false;
 
 // While loading or saving, nothing may dismiss the dialog or edit the form.
@@ -535,8 +535,10 @@ function closeSettings() {
 function validateSettings() {
     const danger = $('distance_danger');
     const warning = $('distance_warning');
+    const approach = $('approach_min');
     warning.setCustomValidity('');
     danger.setCustomValidity('');
+    approach.setCustomValidity('');
 
     if ($('toggle_distance_sensor_switch').checked) {
         if (Number(warning.value) >= Number($('distance_max').value)) {
@@ -544,6 +546,10 @@ function validateSettings() {
         }
         if (Number(danger.value) >= Number(warning.value)) {
             danger.setCustomValidity('The red zone must be smaller than the yellow zone.');
+        }
+        // A car is first seen at the green zone, so it has to be able to close this much.
+        if (Number(approach.value) >= Number($('distance_max').value)) {
+            approach.setCustomValidity('The approach must be smaller than the green zone.');
         }
     }
     return form.reportValidity();
@@ -567,6 +573,7 @@ function saveSettings(event) {
         distance_max: zone('distance_max'),
         distance_warning: zone('distance_warning'),
         distance_danger: zone('distance_danger'),
+        approach_min: zone('approach_min'),
         zone_persistence: zone('zone_persistence')
     };
     const pedConfig = ped && {

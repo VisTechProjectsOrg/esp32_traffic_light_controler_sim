@@ -7,6 +7,11 @@
 
 void setupWebServer();
 
+// One line of JSON saying what this board is and what it runs. Served at /identify,
+// printed at boot, and printed again whenever "id" arrives on the serial port - so a
+// board can be told apart from another project's before anything is flashed to it.
+String identityJson();
+
 // serveStatic() finds a .gz sibling by itself; an explicit beginResponse() does not.
 // The filesystem build stages only the compressed copy, so every hand-served page has
 // to look for it and set Content-Encoding itself or the file appears to be missing.

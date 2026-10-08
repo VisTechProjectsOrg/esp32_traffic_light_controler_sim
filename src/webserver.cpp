@@ -104,6 +104,17 @@ String getSpiffsVersion() {
   return version;
 }
 
+String identityJson()
+{
+  bool ap = WiFi.getMode() == WIFI_AP;
+  return "{\"project\":\"esp32_traffic_light_controler_sim\"" +
+         String(",\"firmware\":\"") + VERSION_FIRMWARE + "\"" +
+         ",\"spiffs\":\"" + getSpiffsVersion() + "\"" +
+         ",\"mac\":\"" + WiFi.macAddress() + "\"" +
+         ",\"mode\":\"" + (ap ? "ap" : "station") + "\"" +
+         ",\"ip\":\"" + (ap ? WiFi.softAPIP() : WiFi.localIP()).toString() + "\"}";
+}
+
 void handleGetConfig(AsyncWebServerRequest *request)
 {
   Serial.println("Sending get config");
@@ -114,6 +125,7 @@ void handleGetConfig(AsyncWebServerRequest *request)
                         ",\"distance_max\":" + String(distance_max) +
                         ",\"distance_warning\":" + String(distance_warning) +
                         ",\"distance_danger\":" + String(distance_danger) +
+                        ",\"approach_min\":" + String(approach_min) +
                         ",\"zone_persistence\":" + String(zone_persistence) +
                         ",\"distance_sensor_enabled\":" + String(distance_sensor_enabled ? "true" : "false") +
                         ",\"distance_sensor_connected\":" + String(proximitySensorConnected() ? "true" : "false") +
@@ -148,6 +160,10 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     distance_max = doc["distance_max"].as<float>();
     distance_warning = doc["distance_warning"].as<float>();
     distance_danger = doc["distance_danger"].as<float>();
+    // Absent from older pages, and a zero here would let anything that appears take
+    // over the lamps, so it is only accepted when sent and always kept in range.
+    if (!doc["approach_min"].isNull())
+      approach_min = constrain(doc["approach_min"].as<float>(), 0.5f, 5.0f);
     zone_persistence = doc["zone_persistence"].as<int>();
     distance_sensor_enabled = doc["distance_sensor_enabled"].as<bool>();
 
@@ -170,6 +186,7 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     preferences.putFloat("dist_max", distance_max);
     preferences.putFloat("dist_warn", distance_warning);
     preferences.putFloat("dist_dang", distance_danger);
+    preferences.putFloat("appr_min", approach_min);
     preferences.putInt("zone_persist", zone_persistence);
     preferences.putBool("dist_sens_en", distance_sensor_enabled);
 
@@ -583,6 +600,8 @@ void setupWebServer()
 #endif
   server.on("/proximity_control", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleProximityControl);
   server.on("/get_config", HTTP_GET, handleGetConfig);
+  server.on("/identify", HTTP_GET, [](AsyncWebServerRequest *request)
+            { request->send(200, "application/json", identityJson()); });
   server.on("/set_config", HTTP_POST, [](AsyncWebServerRequest *request) {}, NULL, handleFormConfig);
   server.on("/blink_mode", HTTP_GET, handlelightMode);
   server.on("/toggle_light_mode", HTTP_GET, handleToggleLightMode);

@@ -110,6 +110,7 @@ void setup()
   distance_max = preferences.getFloat("dist_max", 15.0);
   distance_warning = preferences.getFloat("dist_warn", 5.0);
   distance_danger = preferences.getFloat("dist_dang", 2.0);
+  approach_min = preferences.getFloat("appr_min", 2.0);
   zone_persistence = preferences.getInt("zone_persist", 3);
 
 #ifdef PED_SIGNAL_ENABLED
@@ -128,11 +129,34 @@ void setup()
 #ifdef PED_SIGNAL_ENABLED
   setPedState(PED_DONT_WALK);
 #endif
+
+  Serial.println("IDENTITY " + identityJson());
+}
+
+// Answer "id" on the serial port with the identity line. Read a character at a time
+// so a half-typed line never holds the loop up.
+static void pollSerialIdentity()
+{
+  static String line;
+  while (Serial.available())
+  {
+    char c = Serial.read();
+    if (c == '\n' || c == '\r')
+    {
+      if (line == "id")
+        Serial.println("IDENTITY " + identityJson());
+      line = "";
+    }
+    else if (line.length() < 8)
+      line += c;
+  }
 }
 
 void loop()
 {
   unsigned long now = millis();
+
+  pollSerialIdentity();
 
   ws.cleanupClients();
 

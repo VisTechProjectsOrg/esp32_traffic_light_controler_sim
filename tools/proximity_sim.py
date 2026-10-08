@@ -16,10 +16,11 @@ def const(name):
 
 SAMPLE=const('SAMPLE_INTERVAL'); WIN=int(const('MEDIAN_WINDOW')); MINV=int(const('MEDIAN_MIN_VALID'))
 MAXR=const('MAX_RANGE_FT'); MARGIN=const('BASELINE_MARGIN_FT'); BSTAB=const('BASELINE_STABLE_FT')
-BLEARN=const('BASELINE_LEARN_MS'); APPR=const('APPROACH_MIN_FT'); ENTRY=const('ENTRY_MAX_GAP_FT')
+BLEARN=const('BASELINE_LEARN_MS'); ENTRY=const('ENTRY_MAX_GAP_FT')
 TOUT=const('TRACK_TIMEOUT_MS'); TMAX=const('TRACK_MAX_MS'); PSTAB=const('PARK_STABLE_FT'); PDWELL=const('PARK_DWELL_MS')
-# distance_max is a setting, not a constant: the Green zone in the web UI.
+# Settings rather than constants: the Green zone and the approach distance in the web UI.
 DIST_MAX = 15.0
+APPR = 2.0
 print("window=%d @%.0fms (lag %.0fms)  margin=%.1f entry_gap=%.1f approach=%.1f max=%.1f"%(WIN,SAMPLE,WIN*SAMPLE,MARGIN,ENTRY,APPR,DIST_MAX))
 
 class Prox:

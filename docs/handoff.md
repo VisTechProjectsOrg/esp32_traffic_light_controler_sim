@@ -138,6 +138,18 @@ The settings switch cannot be turned on with nothing attached. This also fixed a
 loop on every sample; it is now only called when bytes are waiting. The bench board reports
 no sensor, so detection of a *connected* sensor is still unverified.
 
+**Written but never run on the board (2026-10-08).** The board was not connected, so these
+compile and nothing more:
+
+- **Approach setting** (`approach_min`, pref `appr_min`, 0.5-5 ft, default 2): how far a
+  target must close before it counts as a car. Replaces the `APPROACH_MIN_FT` constant; the
+  field is in Settings under Distance sensor.
+- **Board identity**: `/identify`, an `IDENTITY {json}` line at boot, and the same line in
+  answer to `id` on the serial port (project, firmware, SPIFFS, MAC, mode, IP). Ask for it
+  before flashing - COM ports move, and another project's ESP has already turned up on one.
+
+SPIFFS is at 0.1.23 in the repo; the board still has 0.1.22. Flash both, then test.
+
 ## Known broken
 
 **The WiFi password is in public git history.** `src/config.h` is no longer tracked (copy

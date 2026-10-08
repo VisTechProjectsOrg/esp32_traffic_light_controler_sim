@@ -230,7 +230,8 @@ Power both boards from the 5 V rail, not the ESP32's regulator: 160 mA each, 320
 
 ## Suggested GPIO assignment
 
-Currently used: 12 (red), 14 (yellow), 27 (green), 16 (onboard RGB), 25/26 (TF-Luna UART2).
+Currently used: 21 (red), 22 (yellow), 23 (green), 32/33 (ped head), 18/19 (countdown), 16 (onboard RGB),
+25/26 (TF-Luna UART2). Before the rewire the vehicle lamps were on 12/14/27.
 
 Free and safe for the ped outputs: **GPIO 32 and GPIO 33** - plain outputs, not strapping pins, no
 boot-time conflict.
