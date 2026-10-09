@@ -99,7 +99,7 @@ countdown would read that warning flash as a clearance interval, count nonsense,
 it**, corrupting the real pedestrian cycle's number too. It cannot tell the two apart; they are
 electrically identical.
 
-So the countdown gets its own pair of channels (GPIO 18 / 19) and is driven only by the real ped
+So the countdown gets its own pair of channels (GPIO 14 / 13) and is driven only by the real ped
 phase. `set_ped_signal()` and `set_countdown_signal()` in `src/signals.cpp` are separate for exactly
 this reason: `ped.cpp` drives both together, `proximity.cpp` only ever touches the combo head.
 
@@ -219,39 +219,58 @@ Power both boards from the 5 V rail, not the ESP32's regulator: 160 mA each, 320
 
 | Channel | Signal | GPIO | Board |
 |---|---|---|---|
-| 1 | Vehicle red | 21 | existing |
-| 2 | Vehicle yellow | 22 | existing |
-| 3 | Vehicle green | 23 | existing |
+| 1 | Vehicle red | 25 | existing |
+| 2 | Vehicle yellow | 27 | existing |
+| 3 | Vehicle green | 26 | existing |
 | 4 | spare | - | existing |
 | 5 | Ped DON'T WALK (orange) | 32 | second |
 | 6 | Ped WALK (blue) | 33 | second |
-| 7 | Countdown DON'T WALK (orange) | 18 | second |
-| 8 | Countdown WALK (blue) | 19 | second |
+| 7 | Countdown DON'T WALK (orange) | 14 | second |
+| 8 | Countdown WALK (blue) | 13 | second |
 
-## Suggested GPIO assignment
+## GPIO assignment
 
-Currently used: 21 (red), 22 (yellow), 23 (green), 32/33 (ped head), 18/19 (countdown), 16 (onboard RGB),
-25/26 (TF-Luna UART2). Before the rewire the vehicle lamps were on 12/14/27.
+As wired and confirmed lamp by lamp on 2026-10-09:
 
-Free and safe for the ped outputs: **GPIO 32 and GPIO 33** - plain outputs, not strapping pins, no
-boot-time conflict.
+| GPIO | Drives |
+|---|---|
+| 25 | Vehicle red |
+| 27 | Vehicle yellow |
+| 26 | Vehicle green |
+| 32 | Ped DON'T WALK (hand) |
+| 33 | Ped WALK (person) |
+| 14 | Countdown DON'T WALK |
+| 13 | Countdown WALK |
+| 16 | Onboard RGB |
 
-> **The whole pin map was reassigned** during the rewire. Vehicle lamps moved to GPIO 21/22/23 so the
-> ribbon to board 1 runs in channel order, and vehicle red specifically had to leave GPIO 12: that is a
-> strapping pin (MTDI), and held high at reset the ESP32 selects 1.8 V flash and will not boot. A
-> low-level-trigger SSR input is weakly pulled toward 5 V through its opto, so it had been booting on
-> luck rather than design. 16 (onboard RGB) and 25/26 (TF-Luna UART) stay clear.
+All seven relay inputs sit on one side of the DevKit. That side runs 13, 12, 14, 27, 26, 25, 33, 32,
+35, 34, and three of those cannot be used:
+
+- **GPIO 12 is a strapping pin** (MTDI). A low-level-trigger relay input pulls it toward 5 V through
+  its opto, and held high at reset the ESP32 selects 1.8 V flash: it boot-loops on
+  `invalid header: 0xffffffff` and refuses to be flashed. This happened on the bench with the red
+  relay on it.
+- **GPIO 34 and 35 are input-only.** No output driver, so a relay on them never switches.
+
+GPIO 14 puts out a short burst at boot, so the countdown's hand relay may blip once at power-up.
+
+The TF-Luna's UART was on 25/26 and has no pins at the moment - see the TODO.
+
+To find which lamp a wire really drives, use the serial console (`help` at 115200 baud): type an
+output name or its position number to toggle one relay. Header labels are easy to read one pin off.
 
 ## TODO
 
-- [x] Move the vehicle **red** output off GPIO 12 - now on GPIO 21.
+- [x] Move the vehicle **red** output off GPIO 12 - now on GPIO 25.
 - [x] Fix `handleToggleLightMode()` active-low bug - it wrote `LOW` to the three light pins to "turn
       off", which on an active-low board turned all three heads on. Now calls `set_traffic_light(0,0,0)`.
 - [x] Ped outputs on GPIO 32 / 33 with the WALK -> FDW -> DW state machine and mutual exclusion.
 - [ ] Add the ped controls (WALK length, FDW length, chained on/off, chain phase, and the
       proximity-on-ped-head toggle) to the web settings menu. Settable over `/ped_control` today but
       no UI yet.
-- [ ] Bench test with the second relay board before connecting mains.
+- [x] Bench test with the second relay board - all seven channels confirmed on mains, 2026-10-09.
+- [ ] Give the TF-Luna new UART pins. 25/26 in `LidarHelper.h` now carry relays, so the sensor is
+      compiled out until it has somewhere to go.
 - [ ] Decouple the subsystems from the websocket: `signals.cpp`, `ped.cpp`, `traffic.cpp` and
       `proximity.cpp` each reach for `ws` directly and hand-build JSON, so the relay layer depends on
       the web stack and the message shapes are scattered across four files. Move them behind a notify
@@ -293,14 +312,14 @@ one cord per module. Both cords use the same pairing:
 
 | Cord wire | Module pigtail | Function | Lands on |
 |---|---|---|---|
-| Black | orange | DON'T WALK / hand | TB4, own island |
-| Green | blue | WALK / man | TB4, own island |
+| Black | orange | DON'T WALK / hand | TB3, own position |
+| Green | blue | WALK / man | TB3, own position |
 | White | white | neutral | TB2 |
 
-| Cord | Module | Black -> channel | Green -> channel |
+| Cord | Module | Black -> channel, TB3 position | Green -> channel, TB3 position |
 |---|---|---|---|
-| 1 | Hand/man combo | 5 (GPIO 32) | 6 (GPIO 33) |
-| 2 | Countdown | 7 (GPIO 18) | 8 (GPIO 19) |
+| 1 | Hand/man combo | 5 (GPIO 32), position 4 | 6 (GPIO 33), position 5 |
+| 2 | Countdown | 7 (GPIO 14), position 6 | 8 (GPIO 13), position 7 |
 
 **The green conductor in each cord is a switched 120 V hot, not a ground.** Mark it with blue tape at
 both ends. Label the cords "combo" and "countdown" - the conductors are otherwise identical.
@@ -314,33 +333,45 @@ tracing where they end inside the head.
 ![AC path](wiring-ac-path.svg)
 
 One circuit end to end: fused hot into the combed hot bus, out through an SSR channel, across its own
-island on TB4, to the lamp, and back on the commoned neutral.
+island on TB3, to the lamp, and back on the commoned neutral.
 
-![Bus strips and DC side](wiring-buses-dc.svg)
+![5 V side](wiring-buses-dc.svg)
 
-Combs are fork-ended and cut cleanly between positions. A full comb makes one bus; a comb cut 4+4 turns
-a single strip into two rails, which is how TB5 carries both +5 V and ground.
+5 V runs on the breadboard rails, or two jumpers, not on a barrier strip. Keep it physically clear of
+the mains strips so a slipped fork cannot put 120 V on the logic rail.
 
 `wiring.html` in this folder is the same material as a single self-contained page - open it on a phone
-at the bench. Any bus that does not need all eight positions can share a strip, with two rules: keep
-mains and DC on **separate** strips so a slipped fork cannot put 120 V on the logic rail, and give each
-rail its own comb colour so a half-strip is never ambiguous.
+at the bench.
 
 ### Bus strips
 
-Five Glarks barrier strips. A dual-row strip ties each position's left and right screw internally, so
-combing one row makes every screw on that strip a single node.
+Three Glarks barrier strips, all on the 120 V side. A dual-row strip ties each position's left and
+right screw internally, so combing one row makes every screw on that strip a single node. A position
+is only common with its neighbour where a comb ties them.
 
 | Strip | Combed | Node | Lands |
 |---|---|---|---|
 | TB1 | yes | Mains hot | fused hot in + 7 SSR channel inputs + 5 V block |
 | TB2 | yes | Neutral | mains neutral + 5 module whites + 5 V block |
-| TB3 | yes | Ground | mains ground only - both housings are plastic, nothing to bond |
-| TB4 | **no** | Switched hots | 7 relay outputs, one island each, out to the lamps |
-| TB5 | cut 4+4 | 5 V DC | +5 V rail on 1-4, GND rail on 5-8 |
+| TB3 | **no** | Switched hots | 7 relay outputs, one position each, out to the lamps |
 
-**TB4 is the strip you do not comb.** Combing it would tie all seven switched hots together and light
-every lamp at once. Eight independent islands - relay output on one row, field wire on the other. It
+TB1 takes nine wires on eight positions, so the 5 V block's line shares a screw on the comb side.
+Mains ground has nothing to bond to - both housings are plastic - so it gets no strip: cap it or park
+it on TB3 position 8.
+
+| TB3 position | Lamp | Channel |
+|---|---|---|
+| 1 | Vehicle red | 1 |
+| 2 | Vehicle yellow | 2 |
+| 3 | Vehicle green | 3 |
+| 4 | Ped DON'T WALK (combo cord, black) | 5 |
+| 5 | Ped WALK (combo cord, green) | 6 |
+| 6 | Countdown DON'T WALK (countdown cord, black) | 7 |
+| 7 | Countdown WALK (countdown cord, green) | 8 |
+| 8 | spare | - |
+
+**TB3 is the strip you do not comb.** Combing it would tie all seven switched hots together and light
+every lamp at once. Independent islands - relay output on one row, field wire on the other. It
 also gives one place to disconnect any lamp without opening the relay board.
 
 SSR channel *outputs* run point to point to their module hot - they do not bus.
@@ -349,17 +380,17 @@ SSR channel *outputs* run point to point to their module hot - they do not bus.
 
 Mains disconnected for steps 1-7.
 
-1. Mount the five strips near the SSR boards, keeping TB1/TB4 away from the 5 V logic wiring.
-2. Comb TB1, TB2 and TB3 full width. Cut a comb 4+4 for TB5. **Leave TB4 uncombed.**
+1. Mount the three strips near the SSR boards, keeping them away from the 5 V logic wiring.
+2. Comb TB1 and TB2 full width. **Leave TB3 uncombed.**
 3. **Ring out every pigtail with the heads unpowered.** The ITE colours below match these modules, but
    installer conventions vary and this is the one step firmware cannot undo. Record what you find.
-4. Land neutrals and ground: five module whites to TB2, mains ground to TB3. Both housings are plastic
-   and the modules have no ground pigtail, so nothing else lands on TB3.
+4. Land neutrals: five module whites to TB2. Both housings are plastic and the modules have no ground
+   pigtail, so mains ground is capped or parked on TB3 position 8.
 5. Fit the **main fuse** in the incoming hot, then land the fused hot on TB1 and jumper TB1 to each of
    the 7 SSR channel inputs. 2 A time-delay: worst case is about 0.8 A with every lamp lit and the 5 V
    block loaded, so that rides out SMPS inrush while still protecting 18 AWG comfortably.
-6. Land the 7 channel outputs on their own TB4 islands, then field wires out to the module hots.
-7. **Charging block**: line and neutral from TB1 and TB2, 5 V output to the TB5 rails, then feed the
+6. Land the 7 channel outputs on their own TB3 positions, then field wires out to the module hots.
+7. **Charging block**: line and neutral from TB1 and TB2, 5 V output to the breadboard rails, then feed the
    ESP32 and both relay boards from there. Both boards draw 160 mA each - 320 mA together will brown
    out the ESP32's regulator, so they must come off the block, not the board. The ESP32 ground and both
    relay board grounds have to be the same node or the low-level triggers have nothing to pull against.

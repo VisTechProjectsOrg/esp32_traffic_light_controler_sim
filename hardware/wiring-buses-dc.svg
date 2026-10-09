@@ -1,68 +1,34 @@
-<svg xmlns="http://www.w3.org/2000/svg" font-family="Overpass, Helvetica Neue, Arial, sans-serif" viewBox="0 0 820 260" role="img" aria-label="A full eight-position comb ties every screw on a strip into one node. Cutting the same comb into two four-position pieces makes one strip carry two separate buses, used here for the five volt and ground rails.">
-  <rect x="0" y="0" width="820" height="260" fill="#f6f5f1"/>
+<svg xmlns="http://www.w3.org/2000/svg" font-family="Overpass, Helvetica Neue, Arial, sans-serif" viewBox="0 0 820 96" role="img" aria-label="The five volt block feeds the breadboard power rails, which feed the ESP32 and both relay boards. All three share one ground.">
+  <rect x="0" y="0" width="820" height="96" fill="#f6f5f1"/>
       <defs>
         <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
           <polygon points="0,1 10,5 0,9" fill="#16191d"/>
         </marker>
       </defs>
 
-      <text x="20" y="24" font-size="12" font-weight="700" fill="#16191d">FULL 8 COMB -> one bus</text>
-      <rect x="20" y="36" width="360" height="56" rx="5" fill="#ffffff" stroke="#16191d" stroke-width="1.4"/>
-      <g fill="#b45309">
-        <rect x="34" y="46" width="20" height="16" rx="2"/><rect x="78" y="46" width="20" height="16" rx="2"/>
-        <rect x="122" y="46" width="20" height="16" rx="2"/><rect x="166" y="46" width="20" height="16" rx="2"/>
-        <rect x="210" y="46" width="20" height="16" rx="2"/><rect x="254" y="46" width="20" height="16" rx="2"/>
-        <rect x="298" y="46" width="20" height="16" rx="2"/><rect x="342" y="46" width="20" height="16" rx="2"/>
-        <rect x="34" y="52" width="328" height="5"/>
-      </g>
-      <g fill="none" stroke="#d7d3cb" stroke-width="1">
-        <rect x="34" y="70" width="20" height="14" rx="2"/><rect x="78" y="70" width="20" height="14" rx="2"/>
-        <rect x="122" y="70" width="20" height="14" rx="2"/><rect x="166" y="70" width="20" height="14" rx="2"/>
-        <rect x="210" y="70" width="20" height="14" rx="2"/><rect x="254" y="70" width="20" height="14" rx="2"/>
-        <rect x="298" y="70" width="20" height="14" rx="2"/><rect x="342" y="70" width="20" height="14" rx="2"/>
-      </g>
-      <text x="20" y="112" font-size="11" fill="#5c656e">Each position already ties its own two screws, so combing one row</text>
-      <text x="20" y="128" font-size="11" fill="#5c656e">makes all 16 a single node. This is TB1, TB2 and TB3.</text>
+      <text x="20" y="16" font-size="12" font-weight="700" fill="#16191d">5 V DISTRIBUTION</text>
+      <rect x="20" y="30" width="150" height="46" rx="5" fill="#efede7" stroke="#16191d" stroke-width="1.2"/>
+      <text x="95" y="48" text-anchor="middle" font-size="11.5" font-weight="600" fill="#16191d">5 V BLOCK</text>
+      <text x="95" y="64" text-anchor="middle" font-size="10.5" fill="#5c656e">from TB1 / TB2</text>
 
-      <text x="440" y="24" font-size="12" font-weight="700" fill="#16191d">CUT 4 + 4 -> two buses</text>
-      <rect x="440" y="36" width="360" height="56" rx="5" fill="#ffffff" stroke="#16191d" stroke-width="1.4"/>
-      <g fill="#c62828">
-        <rect x="454" y="46" width="20" height="16" rx="2"/><rect x="498" y="46" width="20" height="16" rx="2"/>
-        <rect x="542" y="46" width="20" height="16" rx="2"/><rect x="586" y="46" width="20" height="16" rx="2"/>
-        <rect x="454" y="52" width="152" height="5"/>
-      </g>
-      <g fill="#7b848d">
-        <rect x="630" y="46" width="20" height="16" rx="2"/><rect x="674" y="46" width="20" height="16" rx="2"/>
-        <rect x="718" y="46" width="20" height="16" rx="2"/><rect x="762" y="46" width="20" height="16" rx="2"/>
-        <rect x="630" y="52" width="152" height="5"/>
-      </g>
-      <line x1="618" y1="30" x2="618" y2="98" stroke="#16191d" stroke-width="1.4" stroke-dasharray="4 3"/>
-      <text x="618" y="112" text-anchor="middle" font-size="11" font-weight="600" fill="#16191d">cut here</text>
-      <text x="440" y="134" font-size="11" fill="#5c656e">One strip, two independent rails: +5 V on 1-4, GND on 5-8.</text>
+      <line x1="170" y1="44" x2="228" y2="44" stroke="#c62828" stroke-width="2" marker-end="url(#ar2)"/>
+      <line x1="170" y1="62" x2="228" y2="62" stroke="#7b848d" stroke-width="2" marker-end="url(#ar2)"/>
 
-      <!-- DC side -->
-      <text x="20" y="176" font-size="12" font-weight="700" fill="#16191d">TB5 - 5 V DISTRIBUTION</text>
-      <rect x="20" y="186" width="150" height="46" rx="5" fill="#efede7" stroke="#16191d" stroke-width="1.2"/>
-      <text x="95" y="204" text-anchor="middle" font-size="11.5" font-weight="600" fill="#16191d">5 V BLOCK</text>
-      <text x="95" y="220" text-anchor="middle" font-size="10.5" fill="#5c656e">from TB1 / TB2</text>
+      <rect x="232" y="22" width="120" height="62" rx="5" fill="#ffffff" stroke="#16191d" stroke-width="1.2"/>
+      <text x="292" y="40" text-anchor="middle" font-size="10.5" fill="#5c656e">breadboard</text>
+      <text x="292" y="58" text-anchor="middle" font-size="11.5" font-weight="600" fill="#c62828">+5 V rail</text>
+      <text x="292" y="75" text-anchor="middle" font-size="11.5" font-weight="600" fill="#7b848d">GND rail</text>
 
-      <line x1="170" y1="200" x2="228" y2="200" stroke="#c62828" stroke-width="2" marker-end="url(#ar2)"/>
-      <line x1="170" y1="218" x2="228" y2="218" stroke="#7b848d" stroke-width="2" marker-end="url(#ar2)"/>
+      <line x1="352" y1="44" x2="410" y2="44" stroke="#16191d" stroke-width="1.6" marker-end="url(#ar2)"/>
+      <line x1="352" y1="62" x2="410" y2="62" stroke="#16191d" stroke-width="1.6" marker-end="url(#ar2)"/>
 
-      <rect x="232" y="186" width="120" height="46" rx="5" fill="#ffffff" stroke="#16191d" stroke-width="1.2"/>
-      <text x="292" y="204" text-anchor="middle" font-size="11.5" font-weight="600" fill="#c62828">+5 V rail</text>
-      <text x="292" y="221" text-anchor="middle" font-size="11.5" font-weight="600" fill="#7b848d">GND rail</text>
+      <rect x="414" y="22" width="118" height="30" rx="5" fill="#ffffff" stroke="#16191d" stroke-width="1.2"/>
+      <text x="473" y="42" text-anchor="middle" font-size="11.5" fill="#16191d">ESP32 5V / GND</text>
+      <rect x="414" y="58" width="118" height="30" rx="5" fill="#ffffff" stroke="#16191d" stroke-width="1.2"/>
+      <text x="473" y="78" text-anchor="middle" font-size="11.5" fill="#16191d">SSR 1 &amp; 2 DC+/- </text>
 
-      <line x1="352" y1="200" x2="410" y2="200" stroke="#16191d" stroke-width="1.6" marker-end="url(#ar2)"/>
-      <line x1="352" y1="218" x2="410" y2="218" stroke="#16191d" stroke-width="1.6" marker-end="url(#ar2)"/>
-
-      <rect x="414" y="178" width="118" height="30" rx="5" fill="#ffffff" stroke="#16191d" stroke-width="1.2"/>
-      <text x="473" y="198" text-anchor="middle" font-size="11.5" fill="#16191d">ESP32 5V / GND</text>
-      <rect x="414" y="214" width="118" height="30" rx="5" fill="#ffffff" stroke="#16191d" stroke-width="1.2"/>
-      <text x="473" y="234" text-anchor="middle" font-size="11.5" fill="#16191d">SSR 1 &amp; 2 DC+/- </text>
-
-      <path d="M548 193 L560 193 L560 229 L548 229" fill="none" stroke="#b45309" stroke-width="1.8"/>
-      <text x="570" y="206" font-size="11.5" font-weight="600" fill="#b45309">grounds must be</text>
-      <text x="570" y="222" font-size="11.5" font-weight="600" fill="#b45309">common - or the</text>
-      <text x="570" y="238" font-size="11.5" font-weight="600" fill="#b45309">triggers float</text>
+      <path d="M548 37 L560 37 L560 73 L548 73" fill="none" stroke="#b45309" stroke-width="1.8"/>
+      <text x="570" y="50" font-size="11.5" font-weight="600" fill="#b45309">grounds must be</text>
+      <text x="570" y="66" font-size="11.5" font-weight="600" fill="#b45309">common - or the</text>
+      <text x="570" y="82" font-size="11.5" font-weight="600" fill="#b45309">triggers float</text>
     </svg>

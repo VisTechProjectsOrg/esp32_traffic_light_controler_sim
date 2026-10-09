@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" font-family="Overpass, Helvetica Neue, Arial, sans-serif" viewBox="0 0 820 588" role="img" aria-label="Mains enters through a 2 amp fuse to the hot bus, which feeds all seven SSR channel inputs and the 5 volt block. Board 1 switches the three vehicle lamps, board 2 switches the two pedestrian hots and the two countdown hots. Each channel output lands on its own island of an uncombed strip, then runs to its lamp. All lamp neutrals return to a commoned neutral bus.">
+<svg xmlns="http://www.w3.org/2000/svg" font-family="Overpass, Helvetica Neue, Arial, sans-serif" viewBox="0 0 820 588" role="img" aria-label="Mains enters through a 2 amp fuse to the hot bus, which feeds all seven SSR channel inputs and the 5 volt block. Board 1 switches the three vehicle lamps, board 2 switches the two pedestrian hots and the two countdown hots. Each channel output lands on its own position of an uncombed strip, numbered one to seven, then runs to its lamp. All lamp neutrals return to a commoned neutral bus.">
   <rect x="0" y="0" width="820" height="588" fill="#f6f5f1"/>
       <defs>
         <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
@@ -35,15 +35,15 @@
       <rect x="56" y="222" width="7" height="7" rx="1.5" fill="#c62828"/>
       <text x="70" y="229" font-size="11" fill="#5c656e">ch1</text>
       <text x="100" y="229" font-size="11" fill="#16191d">vehicle red</text>
-      <text x="274" y="229" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="#5c656e">GPIO 21</text>
+      <text x="274" y="229" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="#5c656e">GPIO 25</text>
       <rect x="56" y="240" width="7" height="7" rx="1.5" fill="#b45309"/>
       <text x="70" y="247" font-size="11" fill="#5c656e">ch2</text>
       <text x="100" y="247" font-size="11" fill="#16191d">vehicle yellow</text>
-      <text x="274" y="247" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="#5c656e">GPIO 22</text>
+      <text x="274" y="247" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="#5c656e">GPIO 27</text>
       <rect x="56" y="258" width="7" height="7" rx="1.5" fill="#2e7d32"/>
       <text x="70" y="265" font-size="11" fill="#5c656e">ch3</text>
       <text x="100" y="265" font-size="11" fill="#16191d">vehicle green</text>
-      <text x="274" y="265" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="#5c656e">GPIO 23</text>
+      <text x="274" y="265" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="#5c656e">GPIO 26</text>
       <rect x="56" y="276" width="7" height="7" rx="1.5" fill="#5c656e"/>
       <text x="70" y="283" font-size="11" fill="#5c656e">ch4</text>
       <text x="100" y="283" font-size="11" fill="#16191d">spare</text>
@@ -62,11 +62,11 @@
       <rect x="336" y="258" width="7" height="7" rx="1.5" fill="#d84a00"/>
       <text x="350" y="265" font-size="11" fill="#5c656e">ch3</text>
       <text x="380" y="265" font-size="11" fill="#16191d">countdown DON'T WALK</text>
-      <text x="634" y="265" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="#5c656e">GPIO 18</text>
+      <text x="634" y="265" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="#5c656e">GPIO 14</text>
       <rect x="336" y="276" width="7" height="7" rx="1.5" fill="#1565c0"/>
       <text x="350" y="283" font-size="11" fill="#5c656e">ch4</text>
       <text x="380" y="283" font-size="11" fill="#16191d">countdown WALK</text>
-      <text x="634" y="283" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="#5c656e">GPIO 19</text>
+      <text x="634" y="283" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="#5c656e">GPIO 13</text>
 
       <rect x="686" y="196" width="94" height="44" rx="5" fill="#efede7" stroke="#16191d" stroke-width="1.2"/>
       <text x="733" y="214" text-anchor="middle" font-size="11.5" font-weight="600" fill="#16191d">5 V BLOCK</text>
@@ -84,36 +84,46 @@
       <line x1="500" y1="342" x2="500" y2="380" stroke="#d7d3cb" stroke-width="1"/>
       <line x1="592" y1="342" x2="592" y2="380" stroke="#d7d3cb" stroke-width="1"/>
       <line x1="684" y1="342" x2="684" y2="380" stroke="#d7d3cb" stroke-width="1"/>
-      <text x="56" y="366" font-size="12.5" font-weight="700" fill="#16191d">TB4 SWITCHED OUT</text>
-      <text x="764" y="366" text-anchor="end" font-size="11" fill="#5c656e">not combed, 8 islands</text>
+      <text x="86" y="366" text-anchor="middle" font-size="11" fill="#16191d"><tspan fill="#5c656e">1</tspan> red</text>
+      <text x="178" y="366" text-anchor="middle" font-size="11" fill="#16191d"><tspan fill="#5c656e">2</tspan> yellow</text>
+      <text x="270" y="366" text-anchor="middle" font-size="11" fill="#16191d"><tspan fill="#5c656e">3</tspan> green</text>
+      <text x="362" y="366" text-anchor="middle" font-size="11" fill="#16191d"><tspan fill="#5c656e">4</tspan> hand</text>
+      <text x="454" y="366" text-anchor="middle" font-size="11" fill="#16191d"><tspan fill="#5c656e">5</tspan> walk</text>
+      <text x="546" y="366" text-anchor="middle" font-size="11" fill="#16191d"><tspan fill="#5c656e">6</tspan> cd hand</text>
+      <text x="638" y="366" text-anchor="middle" font-size="11" fill="#16191d"><tspan fill="#5c656e">7</tspan> cd walk</text>
+      <text x="730" y="366" text-anchor="middle" font-size="11" fill="#16191d"><tspan fill="#5c656e">8</tspan> spare</text>
+      <text x="764" y="314" text-anchor="end" font-size="12.5" font-weight="700" fill="#16191d">TB3 HEADS</text>
+      <text x="764" y="331" text-anchor="end" font-size="11" fill="#5c656e">not combed, 7 islands + 1 spare</text>
 
-      <line x1="140" y1="380" x2="140" y2="422" stroke="#c62828" stroke-width="1.6" marker-end="url(#arh)"/>
-      <line x1="392" y1="380" x2="392" y2="422" stroke="#d84a00" stroke-width="1.8"/>
-      <line x1="440" y1="380" x2="440" y2="422" stroke="#1565c0" stroke-width="1.8"/>
-      <line x1="620" y1="380" x2="620" y2="422" stroke="#d84a00" stroke-width="1.8"/>
-      <line x1="668" y1="380" x2="668" y2="422" stroke="#1565c0" stroke-width="1.8"/>
+      <line x1="86" y1="380" x2="86" y2="422" stroke="#c62828" stroke-width="1.8"/>
+      <line x1="178" y1="380" x2="178" y2="422" stroke="#b45309" stroke-width="1.8"/>
+      <line x1="270" y1="380" x2="270" y2="422" stroke="#2e7d32" stroke-width="1.8"/>
+      <line x1="362" y1="380" x2="362" y2="422" stroke="#d84a00" stroke-width="1.8"/>
+      <line x1="454" y1="380" x2="454" y2="422" stroke="#1565c0" stroke-width="1.8"/>
+      <line x1="546" y1="380" x2="546" y2="422" stroke="#d84a00" stroke-width="1.8"/>
+      <line x1="638" y1="380" x2="638" y2="422" stroke="#1565c0" stroke-width="1.8"/>
 
-      <rect x="40" y="428" width="230" height="56" rx="6" fill="#efede7" stroke="#16191d" stroke-width="1.2"/>
+      <rect x="40" y="428" width="250" height="56" rx="6" fill="#efede7" stroke="#16191d" stroke-width="1.2"/>
       <text x="56" y="449" font-size="12.5" font-weight="700" fill="#16191d">VEHICLE HEAD</text>
       <text x="56" y="467" font-size="11" fill="#5c656e">red, yellow, green</text>
 
-      <rect x="316" y="428" width="200" height="56" rx="6" fill="#efede7" stroke="#16191d" stroke-width="1.2"/>
-      <text x="332" y="449" font-size="12.5" font-weight="700" fill="#16191d">PED COMBO</text>
-      <text x="332" y="467" font-size="11" fill="#5c656e">hand, walking person</text>
+      <rect x="320" y="428" width="180" height="56" rx="6" fill="#efede7" stroke="#16191d" stroke-width="1.2"/>
+      <text x="336" y="449" font-size="12.5" font-weight="700" fill="#16191d">PED COMBO</text>
+      <text x="336" y="467" font-size="11" fill="#5c656e">hand, walking person</text>
 
-      <rect x="548" y="428" width="200" height="56" rx="6" fill="#efede7" stroke="#16191d" stroke-width="1.2"/>
-      <text x="564" y="449" font-size="12.5" font-weight="700" fill="#16191d">COUNTDOWN</text>
-      <text x="564" y="467" font-size="11" fill="#5c656e">2 digit</text>
+      <rect x="520" y="428" width="180" height="56" rx="6" fill="#efede7" stroke="#16191d" stroke-width="1.2"/>
+      <text x="536" y="449" font-size="12.5" font-weight="700" fill="#16191d">COUNTDOWN</text>
+      <text x="536" y="467" font-size="11" fill="#5c656e">2 digit</text>
 
-      <line x1="155" y1="484" x2="155" y2="518" stroke="#7b848d" stroke-width="1.8" marker-end="url(#arn)"/>
-      <line x1="416" y1="484" x2="416" y2="518" stroke="#7b848d" stroke-width="1.8" marker-end="url(#arn)"/>
-      <line x1="648" y1="484" x2="648" y2="518" stroke="#7b848d" stroke-width="1.8" marker-end="url(#arn)"/>
+      <line x1="165" y1="484" x2="165" y2="518" stroke="#7b848d" stroke-width="1.8" marker-end="url(#arn)"/>
+      <line x1="410" y1="484" x2="410" y2="518" stroke="#7b848d" stroke-width="1.8" marker-end="url(#arn)"/>
+      <line x1="610" y1="484" x2="610" y2="518" stroke="#7b848d" stroke-width="1.8" marker-end="url(#arn)"/>
 
       <rect x="40" y="522" width="740" height="28" rx="5" fill="#ffffff" stroke="#7b848d" stroke-width="2"/>
       <text x="56" y="541" font-size="12.5" font-weight="700" fill="#7b848d">TB2 NEUTRAL BUS</text>
       <text x="764" y="541" text-anchor="end" font-size="11" fill="#5c656e">from mains N, never switched</text>
 
       <rect x="40" y="558" width="740" height="26" rx="5" fill="none" stroke="#2e7d32" stroke-width="2" stroke-dasharray="5 4"/>
-      <text x="56" y="576" font-size="12.5" font-weight="700" fill="#2e7d32">TB3 GROUND BUS</text>
-      <text x="764" y="576" text-anchor="end" font-size="11" fill="#5c656e">from mains G only, housings are plastic</text>
+      <text x="56" y="576" font-size="12.5" font-weight="700" fill="#2e7d32">MAINS GROUND</text>
+      <text x="764" y="576" text-anchor="end" font-size="11" fill="#5c656e">no strip - cap it or park it on TB3 position 8</text>
     </svg>

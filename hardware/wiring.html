@@ -96,6 +96,15 @@
 
   figure { margin: 18px 0 8px; }
   svg { max-width: 100%; height: auto; display: block; }
+  .strips {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 14px;
+    margin: 14px 0;
+  }
+  .strips figure { margin: 0; }
+  .strips h4 { margin: 0 0 10px; font-size: 0.98rem; font-weight: 800; }
+  .strips svg { width: 100%; max-width: 400px; margin: 0 auto; }
   figcaption {
     color: var(--muted);
     font-size: 0.88rem;
@@ -192,9 +201,9 @@
   colours before trusting them, confirm relay polarity before the mains ever goes live.</p>
 
   <h2>What you're working with</h2>
-  <div class="card">
+  <div class="card scroll">
     <table>
-      <tr><td>5 x 8-position dual-row barrier strips</td><td class="n">600 V / 15 A</td></tr>
+      <tr><td>3 x 8-position dual-row barrier strips</td><td class="n">600 V / 15 A</td></tr>
       <tr><td>Comb jumper strips, fork-ended</td><td class="n">cut to length</td></tr>
       <tr><td>Fork terminals, red</td><td class="n">22-16 AWG</td></tr>
       <tr><td>2 x SSR boards, G3MB-202P</td><td class="n">4 ch, zero-cross</td></tr>
@@ -208,7 +217,7 @@
   <h2>The AC path</h2>
 
   <figure>
-    <svg viewBox="0 0 820 588" role="img" aria-label="Mains enters through a 2 amp fuse to the hot bus, which feeds all seven SSR channel inputs and the 5 volt block. Board 1 switches the three vehicle lamps, board 2 switches the two pedestrian hots and the two countdown hots. Each channel output lands on its own island of an uncombed strip, then runs to its lamp. All lamp neutrals return to a commoned neutral bus.">
+    <svg viewBox="0 0 820 588" role="img" aria-label="Mains enters through a 2 amp fuse to the hot bus, which feeds all seven SSR channel inputs and the 5 volt block. Board 1 switches the three vehicle lamps, board 2 switches the two pedestrian hots and the two countdown hots. Each channel output lands on its own position of an uncombed strip, numbered one to seven, then runs to its lamp. All lamp neutrals return to a commoned neutral bus.">
       <defs>
         <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
           <polygon points="0,1 10,5 0,9" fill="currentColor"/>
@@ -244,15 +253,15 @@
       <rect x="56" y="222" width="7" height="7" rx="1.5" fill="var(--hot)"/>
       <text x="70" y="229" font-size="11" fill="var(--muted)">ch1</text>
       <text x="100" y="229" font-size="11" fill="currentColor">vehicle red</text>
-      <text x="274" y="229" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="var(--muted)">GPIO 21</text>
+      <text x="274" y="229" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="var(--muted)">GPIO 25</text>
       <rect x="56" y="240" width="7" height="7" rx="1.5" fill="var(--accent)"/>
       <text x="70" y="247" font-size="11" fill="var(--muted)">ch2</text>
       <text x="100" y="247" font-size="11" fill="currentColor">vehicle yellow</text>
-      <text x="274" y="247" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="var(--muted)">GPIO 22</text>
+      <text x="274" y="247" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="var(--muted)">GPIO 27</text>
       <rect x="56" y="258" width="7" height="7" rx="1.5" fill="var(--gnd)"/>
       <text x="70" y="265" font-size="11" fill="var(--muted)">ch3</text>
       <text x="100" y="265" font-size="11" fill="currentColor">vehicle green</text>
-      <text x="274" y="265" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="var(--muted)">GPIO 23</text>
+      <text x="274" y="265" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="var(--muted)">GPIO 26</text>
       <rect x="56" y="276" width="7" height="7" rx="1.5" fill="var(--muted)"/>
       <text x="70" y="283" font-size="11" fill="var(--muted)">ch4</text>
       <text x="100" y="283" font-size="11" fill="currentColor">spare</text>
@@ -271,11 +280,11 @@
       <rect x="336" y="258" width="7" height="7" rx="1.5" fill="var(--orange)"/>
       <text x="350" y="265" font-size="11" fill="var(--muted)">ch3</text>
       <text x="380" y="265" font-size="11" fill="currentColor">countdown DON'T WALK</text>
-      <text x="634" y="265" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="var(--muted)">GPIO 18</text>
+      <text x="634" y="265" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="var(--muted)">GPIO 14</text>
       <rect x="336" y="276" width="7" height="7" rx="1.5" fill="var(--blue)"/>
       <text x="350" y="283" font-size="11" fill="var(--muted)">ch4</text>
       <text x="380" y="283" font-size="11" fill="currentColor">countdown WALK</text>
-      <text x="634" y="283" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="var(--muted)">GPIO 19</text>
+      <text x="634" y="283" text-anchor="end" font-size="11" font-family="Overpass Mono, monospace" fill="var(--muted)">GPIO 13</text>
 
       <rect x="686" y="196" width="94" height="44" rx="5" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
       <text x="733" y="214" text-anchor="middle" font-size="11.5" font-weight="600" fill="currentColor">5 V BLOCK</text>
@@ -293,63 +302,441 @@
       <line x1="500" y1="342" x2="500" y2="380" stroke="var(--line)" stroke-width="1"/>
       <line x1="592" y1="342" x2="592" y2="380" stroke="var(--line)" stroke-width="1"/>
       <line x1="684" y1="342" x2="684" y2="380" stroke="var(--line)" stroke-width="1"/>
-      <text x="56" y="366" font-size="12.5" font-weight="700" fill="currentColor">TB4 SWITCHED OUT</text>
-      <text x="764" y="366" text-anchor="end" font-size="11" fill="var(--muted)">not combed, 8 islands</text>
+      <text x="86" y="366" text-anchor="middle" font-size="11" fill="currentColor"><tspan fill="var(--muted)">1</tspan> red</text>
+      <text x="178" y="366" text-anchor="middle" font-size="11" fill="currentColor"><tspan fill="var(--muted)">2</tspan> yellow</text>
+      <text x="270" y="366" text-anchor="middle" font-size="11" fill="currentColor"><tspan fill="var(--muted)">3</tspan> green</text>
+      <text x="362" y="366" text-anchor="middle" font-size="11" fill="currentColor"><tspan fill="var(--muted)">4</tspan> hand</text>
+      <text x="454" y="366" text-anchor="middle" font-size="11" fill="currentColor"><tspan fill="var(--muted)">5</tspan> walk</text>
+      <text x="546" y="366" text-anchor="middle" font-size="11" fill="currentColor"><tspan fill="var(--muted)">6</tspan> cd hand</text>
+      <text x="638" y="366" text-anchor="middle" font-size="11" fill="currentColor"><tspan fill="var(--muted)">7</tspan> cd walk</text>
+      <text x="730" y="366" text-anchor="middle" font-size="11" fill="currentColor"><tspan fill="var(--muted)">8</tspan> spare</text>
+      <text x="764" y="314" text-anchor="end" font-size="12.5" font-weight="700" fill="currentColor">TB3 HEADS</text>
+      <text x="764" y="331" text-anchor="end" font-size="11" fill="var(--muted)">not combed, 7 islands + 1 spare</text>
 
-      <line x1="140" y1="380" x2="140" y2="422" stroke="var(--hot)" stroke-width="1.6" marker-end="url(#arh)"/>
-      <line x1="392" y1="380" x2="392" y2="422" stroke="var(--orange)" stroke-width="1.8"/>
-      <line x1="440" y1="380" x2="440" y2="422" stroke="var(--blue)" stroke-width="1.8"/>
-      <line x1="620" y1="380" x2="620" y2="422" stroke="var(--orange)" stroke-width="1.8"/>
-      <line x1="668" y1="380" x2="668" y2="422" stroke="var(--blue)" stroke-width="1.8"/>
+      <line x1="86" y1="380" x2="86" y2="422" stroke="var(--hot)" stroke-width="1.8"/>
+      <line x1="178" y1="380" x2="178" y2="422" stroke="var(--accent)" stroke-width="1.8"/>
+      <line x1="270" y1="380" x2="270" y2="422" stroke="var(--gnd)" stroke-width="1.8"/>
+      <line x1="362" y1="380" x2="362" y2="422" stroke="var(--orange)" stroke-width="1.8"/>
+      <line x1="454" y1="380" x2="454" y2="422" stroke="var(--blue)" stroke-width="1.8"/>
+      <line x1="546" y1="380" x2="546" y2="422" stroke="var(--orange)" stroke-width="1.8"/>
+      <line x1="638" y1="380" x2="638" y2="422" stroke="var(--blue)" stroke-width="1.8"/>
 
-      <rect x="40" y="428" width="230" height="56" rx="6" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="40" y="428" width="250" height="56" rx="6" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
       <text x="56" y="449" font-size="12.5" font-weight="700" fill="currentColor">VEHICLE HEAD</text>
       <text x="56" y="467" font-size="11" fill="var(--muted)">red, yellow, green</text>
 
-      <rect x="316" y="428" width="200" height="56" rx="6" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
-      <text x="332" y="449" font-size="12.5" font-weight="700" fill="currentColor">PED COMBO</text>
-      <text x="332" y="467" font-size="11" fill="var(--muted)">hand, walking person</text>
+      <rect x="320" y="428" width="180" height="56" rx="6" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <text x="336" y="449" font-size="12.5" font-weight="700" fill="currentColor">PED COMBO</text>
+      <text x="336" y="467" font-size="11" fill="var(--muted)">hand, walking person</text>
 
-      <rect x="548" y="428" width="200" height="56" rx="6" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
-      <text x="564" y="449" font-size="12.5" font-weight="700" fill="currentColor">COUNTDOWN</text>
-      <text x="564" y="467" font-size="11" fill="var(--muted)">2 digit</text>
+      <rect x="520" y="428" width="180" height="56" rx="6" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <text x="536" y="449" font-size="12.5" font-weight="700" fill="currentColor">COUNTDOWN</text>
+      <text x="536" y="467" font-size="11" fill="var(--muted)">2 digit</text>
 
-      <line x1="155" y1="484" x2="155" y2="518" stroke="var(--neu)" stroke-width="1.8" marker-end="url(#arn)"/>
-      <line x1="416" y1="484" x2="416" y2="518" stroke="var(--neu)" stroke-width="1.8" marker-end="url(#arn)"/>
-      <line x1="648" y1="484" x2="648" y2="518" stroke="var(--neu)" stroke-width="1.8" marker-end="url(#arn)"/>
+      <line x1="165" y1="484" x2="165" y2="518" stroke="var(--neu)" stroke-width="1.8" marker-end="url(#arn)"/>
+      <line x1="410" y1="484" x2="410" y2="518" stroke="var(--neu)" stroke-width="1.8" marker-end="url(#arn)"/>
+      <line x1="610" y1="484" x2="610" y2="518" stroke="var(--neu)" stroke-width="1.8" marker-end="url(#arn)"/>
 
       <rect x="40" y="522" width="740" height="28" rx="5" fill="var(--surface)" stroke="var(--neu)" stroke-width="2"/>
       <text x="56" y="541" font-size="12.5" font-weight="700" fill="var(--neu)">TB2 NEUTRAL BUS</text>
       <text x="764" y="541" text-anchor="end" font-size="11" fill="var(--muted)">from mains N, never switched</text>
 
       <rect x="40" y="558" width="740" height="26" rx="5" fill="none" stroke="var(--gnd)" stroke-width="2" stroke-dasharray="5 4"/>
-      <text x="56" y="576" font-size="12.5" font-weight="700" fill="var(--gnd)">TB3 GROUND BUS</text>
-      <text x="764" y="576" text-anchor="end" font-size="11" fill="var(--muted)">from mains G only, housings are plastic</text>
+      <text x="56" y="576" font-size="12.5" font-weight="700" fill="var(--gnd)">MAINS GROUND</text>
+      <text x="764" y="576" text-anchor="end" font-size="11" fill="var(--muted)">no strip - cap it or park it on TB3 position 8</text>
     </svg>
     <figcaption>One circuit end to end: fused hot into the combed hot bus, out through an SSR channel,
-    across its own island on TB4, to the lamp, and back on the commoned neutral. The hot bus feeds all
+    across its own island on TB3, to the lamp, and back on the commoned neutral. The hot bus feeds all
     seven channel inputs plus the 5 V block; only the lamp side of each relay is individual.</figcaption>
   </figure>
 
   <div class="note">
-    <strong>TB4 is the one strip you don't comb.</strong> Combing it would tie all seven switched hots
-    together and light every lamp at once. Leave it as eight independent islands - relay output on one
+    <strong>TB3 is the one strip you don't comb.</strong> Combing it would tie all seven switched hots
+    together and light every lamp at once. Leave it as independent islands - relay output on one
     row, field wire to the lamp on the other. It also gives you a single place to disconnect any lamp
     without opening the relay board.
   </div>
 
-  <h3>Where everything lands</h3>
-  <div class="card scroll">
-    <table>
-      <thead><tr><th>Strip</th><th>Combed</th><th>Carries</th><th>Lands</th></tr></thead>
-      <tbody>
-        <tr><td class="n">TB1</td><td>yes</td><td><span class="sw" style="background:var(--hot)"></span>Hot</td><td>fused hot in - 7 SSR inputs - 5 V block</td></tr>
-        <tr><td class="n">TB2</td><td>yes</td><td><span class="sw" style="background:var(--neu)"></span>Neutral</td><td>mains N - 5 module whites - 5 V block</td></tr>
-        <tr><td class="n">TB3</td><td>yes</td><td><span class="sw" style="background:var(--gnd)"></span>Ground</td><td>mains G only - housings are plastic</td></tr>
-        <tr><td class="n">TB4</td><td><strong>no</strong></td><td>switched hots</td><td>7 relay outputs -> 7 lamp hots</td></tr>
-        <tr><td class="n">TB5</td><td>cut 4+4</td><td>5 V DC</td><td>+5 V bus and GND bus - see below</td></tr>
-      </tbody>
-    </table>
+  <h3>Screw by screw</h3>
+  <p>Follow one lamp left to right: TB1 feeds the relay, the relay feeds TB3, TB3 feeds the lamp,
+  and the lamp's white comes back to TB2.</p>
+  <div class="strips">
+  <figure class="card">
+    <h4>TB1 - Hot</h4>
+    <svg viewBox="0 0 360 334" role="img" aria-label="Strip one, the hot bus. A red comb joins all eight positions. The fused hot comes in on position one and a jumper leaves each of the other seven positions for a relay input.">
+      <text x="112" y="18" text-anchor="end" font-size="10.5" font-weight="700" fill="var(--muted)"></text>
+      <text x="248" y="18" font-size="10.5" font-weight="700" fill="var(--muted)">JUMPER TO RELAY IN</text>
+      <rect x="118" y="30" width="124" height="296" rx="6" fill="var(--surface)" stroke="currentColor" stroke-width="1.4"/>
+      <rect x="124" y="47" width="8" height="262" rx="2" fill="var(--hot)"/>
+      <rect x="124" y="47" width="26" height="10" rx="2" fill="var(--hot)"/>
+      <rect x="124" y="83" width="26" height="10" rx="2" fill="var(--hot)"/>
+      <rect x="124" y="119" width="26" height="10" rx="2" fill="var(--hot)"/>
+      <rect x="124" y="155" width="26" height="10" rx="2" fill="var(--hot)"/>
+      <rect x="124" y="191" width="26" height="10" rx="2" fill="var(--hot)"/>
+      <rect x="124" y="227" width="26" height="10" rx="2" fill="var(--hot)"/>
+      <rect x="124" y="263" width="26" height="10" rx="2" fill="var(--hot)"/>
+      <rect x="124" y="299" width="26" height="10" rx="2" fill="var(--hot)"/>
+      <text x="104" y="182" text-anchor="end" font-size="11" font-weight="600" fill="var(--hot)">comb joins</text>
+      <text x="104" y="197" text-anchor="end" font-size="11" font-weight="600" fill="var(--hot)">all 8</text>
+      <rect x="150" y="49" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="45" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="56" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">1</text>
+      <line x1="112" y1="52" x2="141" y2="52" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="108" y="56" text-anchor="end" font-size="11" fill="currentColor">5 V block L</text>
+      <line x1="219" y1="52" x2="248" y2="52" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="252" y="56" font-size="11" fill="currentColor">fused hot IN</text>
+      <circle cx="150" cy="52" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="55" x2="155" y2="49" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="52" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="55" x2="215" y2="49" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="85" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="81" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="92" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">2</text>
+      <line x1="219" y1="88" x2="248" y2="88" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="252" y="92" font-size="11" fill="currentColor">board 1 ch 1</text>
+      <circle cx="150" cy="88" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="91" x2="155" y2="85" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="88" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="91" x2="215" y2="85" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="121" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="117" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="128" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">3</text>
+      <line x1="219" y1="124" x2="248" y2="124" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="252" y="128" font-size="11" fill="currentColor">board 1 ch 2</text>
+      <circle cx="150" cy="124" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="127" x2="155" y2="121" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="124" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="127" x2="215" y2="121" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="157" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="153" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="164" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">4</text>
+      <line x1="219" y1="160" x2="248" y2="160" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="252" y="164" font-size="11" fill="currentColor">board 1 ch 3</text>
+      <circle cx="150" cy="160" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="163" x2="155" y2="157" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="160" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="163" x2="215" y2="157" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="193" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="189" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="200" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">5</text>
+      <line x1="219" y1="196" x2="248" y2="196" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="252" y="200" font-size="11" fill="currentColor">board 2 ch 1</text>
+      <circle cx="150" cy="196" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="199" x2="155" y2="193" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="196" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="199" x2="215" y2="193" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="229" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="225" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="236" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">6</text>
+      <line x1="219" y1="232" x2="248" y2="232" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="252" y="236" font-size="11" fill="currentColor">board 2 ch 2</text>
+      <circle cx="150" cy="232" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="235" x2="155" y2="229" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="232" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="235" x2="215" y2="229" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="265" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="261" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="272" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">7</text>
+      <line x1="219" y1="268" x2="248" y2="268" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="252" y="272" font-size="11" fill="currentColor">board 2 ch 3</text>
+      <circle cx="150" cy="268" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="271" x2="155" y2="265" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="268" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="271" x2="215" y2="265" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="301" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="297" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="308" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">8</text>
+      <line x1="219" y1="304" x2="248" y2="304" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="252" y="308" font-size="11" fill="currentColor">board 2 ch 4</text>
+      <circle cx="150" cy="304" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="307" x2="155" y2="301" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="304" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="307" x2="215" y2="301" stroke="currentColor" stroke-width="1.2"/>
+    </svg>
+    <figcaption>Every screw on this strip is live. Position 1 takes two wires.</figcaption>
+  </figure>
+  <figure class="card">
+    <h4>Relay boards</h4>
+    <svg viewBox="0 0 360 380" role="img" aria-label="The two relay boards. Each channel has two screws: hot in from strip one on the left, switched hot out to strip three on the right.">
+      <text x="112" y="18" text-anchor="end" font-size="10.5" font-weight="700" fill="var(--muted)">HOT IN</text>
+      <text x="248" y="18" font-size="10.5" font-weight="700" fill="var(--muted)">SWITCHED OUT</text>
+      <text x="180" y="41" text-anchor="middle" font-size="10.5" font-weight="700" fill="currentColor">BOARD 1</text>
+      <rect x="118" y="46" width="124" height="152" rx="6" fill="var(--surface)" stroke="currentColor" stroke-width="1.4"/>
+      <text x="180" y="215" text-anchor="middle" font-size="10.5" font-weight="700" fill="currentColor">BOARD 2</text>
+      <rect x="118" y="220" width="124" height="152" rx="6" fill="var(--surface)" stroke="currentColor" stroke-width="1.4"/>
+      <line x1="150" y1="68" x2="210" y2="68" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <rect x="167" y="61" width="26" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="72" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">ch1</text>
+      <line x1="112" y1="68" x2="141" y2="68" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="108" y="72" text-anchor="end" font-size="11" fill="currentColor">TB1 pos 2</text>
+      <line x1="219" y1="68" x2="248" y2="68" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="252" y="72" font-size="11" fill="currentColor">TB3 pos 1</text>
+      <circle cx="150" cy="68" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="71" x2="155" y2="65" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="68" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="71" x2="215" y2="65" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="150" y1="104" x2="210" y2="104" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <rect x="167" y="97" width="26" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="108" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">ch2</text>
+      <line x1="112" y1="104" x2="141" y2="104" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="108" y="108" text-anchor="end" font-size="11" fill="currentColor">TB1 pos 3</text>
+      <line x1="219" y1="104" x2="248" y2="104" stroke="var(--accent)" stroke-width="2.2"/>
+      <text x="252" y="108" font-size="11" fill="currentColor">TB3 pos 2</text>
+      <circle cx="150" cy="104" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="107" x2="155" y2="101" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="104" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="107" x2="215" y2="101" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="150" y1="140" x2="210" y2="140" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <rect x="167" y="133" width="26" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="144" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">ch3</text>
+      <line x1="112" y1="140" x2="141" y2="140" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="108" y="144" text-anchor="end" font-size="11" fill="currentColor">TB1 pos 4</text>
+      <line x1="219" y1="140" x2="248" y2="140" stroke="var(--gnd)" stroke-width="2.2"/>
+      <text x="252" y="144" font-size="11" fill="currentColor">TB3 pos 3</text>
+      <circle cx="150" cy="140" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="143" x2="155" y2="137" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="140" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="143" x2="215" y2="137" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="150" y1="176" x2="210" y2="176" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <rect x="167" y="169" width="26" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="180" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">ch4</text>
+      <circle cx="150" cy="176" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="179" x2="155" y2="173" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="176" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="179" x2="215" y2="173" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="150" y1="242" x2="210" y2="242" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <rect x="167" y="235" width="26" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="246" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">ch1</text>
+      <line x1="112" y1="242" x2="141" y2="242" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="108" y="246" text-anchor="end" font-size="11" fill="currentColor">TB1 pos 5</text>
+      <line x1="219" y1="242" x2="248" y2="242" stroke="var(--orange)" stroke-width="2.2"/>
+      <text x="252" y="246" font-size="11" fill="currentColor">TB3 pos 4</text>
+      <circle cx="150" cy="242" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="245" x2="155" y2="239" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="242" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="245" x2="215" y2="239" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="150" y1="278" x2="210" y2="278" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <rect x="167" y="271" width="26" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="282" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">ch2</text>
+      <line x1="112" y1="278" x2="141" y2="278" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="108" y="282" text-anchor="end" font-size="11" fill="currentColor">TB1 pos 6</text>
+      <line x1="219" y1="278" x2="248" y2="278" stroke="var(--blue)" stroke-width="2.2"/>
+      <text x="252" y="282" font-size="11" fill="currentColor">TB3 pos 5</text>
+      <circle cx="150" cy="278" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="281" x2="155" y2="275" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="278" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="281" x2="215" y2="275" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="150" y1="314" x2="210" y2="314" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <rect x="167" y="307" width="26" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="318" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">ch3</text>
+      <line x1="112" y1="314" x2="141" y2="314" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="108" y="318" text-anchor="end" font-size="11" fill="currentColor">TB1 pos 7</text>
+      <line x1="219" y1="314" x2="248" y2="314" stroke="var(--orange)" stroke-width="2.2"/>
+      <text x="252" y="318" font-size="11" fill="currentColor">TB3 pos 6</text>
+      <circle cx="150" cy="314" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="317" x2="155" y2="311" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="314" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="317" x2="215" y2="311" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="150" y1="350" x2="210" y2="350" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="3 3"/>
+      <rect x="167" y="343" width="26" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="354" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">ch4</text>
+      <line x1="112" y1="350" x2="141" y2="350" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="108" y="354" text-anchor="end" font-size="11" fill="currentColor">TB1 pos 8</text>
+      <line x1="219" y1="350" x2="248" y2="350" stroke="var(--blue)" stroke-width="2.2"/>
+      <text x="252" y="354" font-size="11" fill="currentColor">TB3 pos 7</text>
+      <circle cx="150" cy="350" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="353" x2="155" y2="347" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="350" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="353" x2="215" y2="347" stroke="currentColor" stroke-width="1.2"/>
+    </svg>
+    <figcaption>Each channel is a switch between its two screws. Board 1 channel 4 is spare.</figcaption>
+  </figure>
+  <figure class="card">
+    <h4>TB3 - Heads</h4>
+    <svg viewBox="0 0 360 334" role="img" aria-label="Strip three, the heads. No comb. Each position joins one relay output on the left to one lamp wire on the right.">
+      <text x="112" y="18" text-anchor="end" font-size="10.5" font-weight="700" fill="var(--muted)">FROM RELAY OUT</text>
+      <text x="248" y="18" font-size="10.5" font-weight="700" fill="var(--muted)">WIRE TO THE LAMP</text>
+      <rect x="118" y="30" width="124" height="296" rx="6" fill="var(--surface)" stroke="currentColor" stroke-width="1.4"/>
+      <rect x="150" y="49" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="45" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="56" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">1</text>
+      <line x1="112" y1="52" x2="141" y2="52" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="108" y="56" text-anchor="end" font-size="11" fill="currentColor">board 1 ch 1</text>
+      <line x1="219" y1="52" x2="248" y2="52" stroke="var(--hot)" stroke-width="2.2"/>
+      <text x="252" y="56" font-size="11" fill="currentColor">vehicle red</text>
+      <circle cx="150" cy="52" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="55" x2="155" y2="49" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="52" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="55" x2="215" y2="49" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="85" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="81" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="92" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">2</text>
+      <line x1="112" y1="88" x2="141" y2="88" stroke="var(--accent)" stroke-width="2.2"/>
+      <text x="108" y="92" text-anchor="end" font-size="11" fill="currentColor">board 1 ch 2</text>
+      <line x1="219" y1="88" x2="248" y2="88" stroke="var(--accent)" stroke-width="2.2"/>
+      <text x="252" y="92" font-size="11" fill="currentColor">vehicle yellow</text>
+      <circle cx="150" cy="88" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="91" x2="155" y2="85" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="88" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="91" x2="215" y2="85" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="121" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="117" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="128" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">3</text>
+      <line x1="112" y1="124" x2="141" y2="124" stroke="var(--gnd)" stroke-width="2.2"/>
+      <text x="108" y="128" text-anchor="end" font-size="11" fill="currentColor">board 1 ch 3</text>
+      <line x1="219" y1="124" x2="248" y2="124" stroke="var(--gnd)" stroke-width="2.2"/>
+      <text x="252" y="128" font-size="11" fill="currentColor">vehicle green</text>
+      <circle cx="150" cy="124" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="127" x2="155" y2="121" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="124" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="127" x2="215" y2="121" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="157" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="153" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="164" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">4</text>
+      <line x1="112" y1="160" x2="141" y2="160" stroke="var(--orange)" stroke-width="2.2"/>
+      <text x="108" y="164" text-anchor="end" font-size="11" fill="currentColor">board 2 ch 1</text>
+      <line x1="219" y1="160" x2="248" y2="160" stroke="var(--orange)" stroke-width="2.2"/>
+      <text x="252" y="164" font-size="11" fill="currentColor">combo cord black</text>
+      <circle cx="150" cy="160" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="163" x2="155" y2="157" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="160" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="163" x2="215" y2="157" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="193" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="189" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="200" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">5</text>
+      <line x1="112" y1="196" x2="141" y2="196" stroke="var(--blue)" stroke-width="2.2"/>
+      <text x="108" y="200" text-anchor="end" font-size="11" fill="currentColor">board 2 ch 2</text>
+      <line x1="219" y1="196" x2="248" y2="196" stroke="var(--blue)" stroke-width="2.2"/>
+      <text x="252" y="200" font-size="11" fill="currentColor">combo cord green</text>
+      <circle cx="150" cy="196" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="199" x2="155" y2="193" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="196" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="199" x2="215" y2="193" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="229" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="225" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="236" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">6</text>
+      <line x1="112" y1="232" x2="141" y2="232" stroke="var(--orange)" stroke-width="2.2"/>
+      <text x="108" y="236" text-anchor="end" font-size="11" fill="currentColor">board 2 ch 3</text>
+      <line x1="219" y1="232" x2="248" y2="232" stroke="var(--orange)" stroke-width="2.2"/>
+      <text x="252" y="236" font-size="11" fill="currentColor">countdn cord black</text>
+      <circle cx="150" cy="232" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="235" x2="155" y2="229" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="232" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="235" x2="215" y2="229" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="265" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="261" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="272" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">7</text>
+      <line x1="112" y1="268" x2="141" y2="268" stroke="var(--blue)" stroke-width="2.2"/>
+      <text x="108" y="272" text-anchor="end" font-size="11" fill="currentColor">board 2 ch 4</text>
+      <line x1="219" y1="268" x2="248" y2="268" stroke="var(--blue)" stroke-width="2.2"/>
+      <text x="252" y="272" font-size="11" fill="currentColor">countdn cord green</text>
+      <circle cx="150" cy="268" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="271" x2="155" y2="265" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="268" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="271" x2="215" y2="265" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="301" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="297" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="308" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">8</text>
+      <line x1="219" y1="304" x2="248" y2="304" stroke="var(--gnd)" stroke-width="2.2"/>
+      <text x="252" y="308" font-size="11" fill="currentColor">spare / mains ground</text>
+      <circle cx="150" cy="304" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="307" x2="155" y2="301" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="304" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="307" x2="215" y2="301" stroke="currentColor" stroke-width="1.2"/>
+    </svg>
+    <figcaption>No comb. A position only joins its own two screws, so each lamp stays separate.</figcaption>
+  </figure>
+  <figure class="card">
+    <h4>TB2 - Neutral</h4>
+    <svg viewBox="0 0 360 334" role="img" aria-label="Strip two, the neutral bus. A comb joins all eight positions. Mains neutral comes in on position one and the lamp whites land on the others.">
+      <text x="112" y="18" text-anchor="end" font-size="10.5" font-weight="700" fill="var(--muted)"></text>
+      <text x="248" y="18" font-size="10.5" font-weight="700" fill="var(--muted)">WHITE WIRES</text>
+      <rect x="118" y="30" width="124" height="296" rx="6" fill="var(--surface)" stroke="currentColor" stroke-width="1.4"/>
+      <rect x="124" y="47" width="8" height="262" rx="2" fill="var(--neu)"/>
+      <rect x="124" y="47" width="26" height="10" rx="2" fill="var(--neu)"/>
+      <rect x="124" y="83" width="26" height="10" rx="2" fill="var(--neu)"/>
+      <rect x="124" y="119" width="26" height="10" rx="2" fill="var(--neu)"/>
+      <rect x="124" y="155" width="26" height="10" rx="2" fill="var(--neu)"/>
+      <rect x="124" y="191" width="26" height="10" rx="2" fill="var(--neu)"/>
+      <rect x="124" y="227" width="26" height="10" rx="2" fill="var(--neu)"/>
+      <rect x="124" y="263" width="26" height="10" rx="2" fill="var(--neu)"/>
+      <rect x="124" y="299" width="26" height="10" rx="2" fill="var(--neu)"/>
+      <text x="104" y="182" text-anchor="end" font-size="11" font-weight="600" fill="var(--neu)">comb joins</text>
+      <text x="104" y="197" text-anchor="end" font-size="11" font-weight="600" fill="var(--neu)">all 8</text>
+      <rect x="150" y="49" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="45" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="56" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">1</text>
+      <line x1="219" y1="52" x2="248" y2="52" stroke="var(--neu)" stroke-width="2.2"/>
+      <text x="252" y="56" font-size="11" fill="currentColor">mains neutral IN</text>
+      <circle cx="150" cy="52" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="55" x2="155" y2="49" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="52" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="55" x2="215" y2="49" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="85" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="81" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="92" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">2</text>
+      <line x1="219" y1="88" x2="248" y2="88" stroke="var(--neu)" stroke-width="2.2"/>
+      <text x="252" y="92" font-size="11" fill="currentColor">vehicle head white</text>
+      <circle cx="150" cy="88" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="91" x2="155" y2="85" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="88" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="91" x2="215" y2="85" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="121" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="117" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="128" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">3</text>
+      <line x1="219" y1="124" x2="248" y2="124" stroke="var(--neu)" stroke-width="2.2"/>
+      <text x="252" y="128" font-size="11" fill="currentColor">combo cord white</text>
+      <circle cx="150" cy="124" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="127" x2="155" y2="121" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="124" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="127" x2="215" y2="121" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="157" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="153" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="164" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">4</text>
+      <line x1="219" y1="160" x2="248" y2="160" stroke="var(--neu)" stroke-width="2.2"/>
+      <text x="252" y="164" font-size="11" fill="currentColor">countdn cord white</text>
+      <circle cx="150" cy="160" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="163" x2="155" y2="157" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="160" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="163" x2="215" y2="157" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="193" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="189" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="200" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">5</text>
+      <line x1="219" y1="196" x2="248" y2="196" stroke="var(--neu)" stroke-width="2.2"/>
+      <text x="252" y="200" font-size="11" fill="currentColor">5 V block N</text>
+      <circle cx="150" cy="196" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="199" x2="155" y2="193" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="196" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="199" x2="215" y2="193" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="229" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="225" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="236" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">6</text>
+      <circle cx="150" cy="232" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="235" x2="155" y2="229" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="232" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="235" x2="215" y2="229" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="265" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="261" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="272" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">7</text>
+      <circle cx="150" cy="268" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="271" x2="155" y2="265" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="268" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="271" x2="215" y2="265" stroke="currentColor" stroke-width="1.2"/>
+      <rect x="150" y="301" width="60" height="6" fill="var(--line)"/>
+      <rect x="172" y="297" width="16" height="14" rx="3" fill="var(--surface)"/>
+      <text x="180" y="308" text-anchor="middle" font-size="10.5" font-family="Overpass Mono, monospace" fill="var(--muted)">8</text>
+      <circle cx="150" cy="304" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="145" y1="307" x2="155" y2="301" stroke="currentColor" stroke-width="1.2"/>
+      <circle cx="210" cy="304" r="9" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <line x1="205" y1="307" x2="215" y2="301" stroke="currentColor" stroke-width="1.2"/>
+    </svg>
+    <figcaption>Every white ends here. Spare positions take any extra vehicle whites.</figcaption>
+  </figure>
+  </div>
+
+  <div class="note">
+    <strong>The green conductor in each ped cord is a switched 120 V hot, not a ground.</strong> Mark
+    it with blue tape at both ends.
   </div>
 
   <h3>Channel assignment</h3>
@@ -357,14 +744,14 @@
     <table>
       <thead><tr><th>Board</th><th>Ch</th><th>Lamp</th><th>Wire</th><th>GPIO</th></tr></thead>
       <tbody>
-        <tr><td class="n">1</td><td class="n">1</td><td>Vehicle red</td><td><span class="sw" style="background:var(--hot)"></span>red</td><td class="n">21</td></tr>
-        <tr><td class="n">1</td><td class="n">2</td><td>Vehicle yellow</td><td><span class="sw" style="background:var(--accent)"></span>yellow</td><td class="n">22</td></tr>
-        <tr><td class="n">1</td><td class="n">3</td><td>Vehicle green</td><td><span class="sw" style="background:var(--gnd)"></span>green</td><td class="n">23</td></tr>
+        <tr><td class="n">1</td><td class="n">1</td><td>Vehicle red</td><td><span class="sw" style="background:var(--hot)"></span>red</td><td class="n">25</td></tr>
+        <tr><td class="n">1</td><td class="n">2</td><td>Vehicle yellow</td><td><span class="sw" style="background:var(--accent)"></span>yellow</td><td class="n">27</td></tr>
+        <tr><td class="n">1</td><td class="n">3</td><td>Vehicle green</td><td><span class="sw" style="background:var(--gnd)"></span>green</td><td class="n">26</td></tr>
         <tr><td class="n">1</td><td class="n">4</td><td>spare</td><td>-</td><td class="n">-</td></tr>
         <tr><td class="n">2</td><td class="n">1</td><td>Ped DON'T WALK (hand)</td><td><span class="sw" style="background:var(--orange)"></span>orange</td><td class="n">32</td></tr>
         <tr><td class="n">2</td><td class="n">2</td><td>Ped WALK (person)</td><td><span class="sw" style="background:var(--blue)"></span>blue</td><td class="n">33</td></tr>
-        <tr><td class="n">2</td><td class="n">3</td><td>Countdown DON'T WALK</td><td><span class="sw" style="background:var(--orange)"></span>orange</td><td class="n">18</td></tr>
-        <tr><td class="n">2</td><td class="n">4</td><td>Countdown WALK</td><td><span class="sw" style="background:var(--blue)"></span>blue</td><td class="n">19</td></tr>
+        <tr><td class="n">2</td><td class="n">3</td><td>Countdown DON'T WALK</td><td><span class="sw" style="background:var(--orange)"></span>orange</td><td class="n">14</td></tr>
+        <tr><td class="n">2</td><td class="n">4</td><td>Countdown WALK</td><td><span class="sw" style="background:var(--blue)"></span>blue</td><td class="n">13</td></tr>
       </tbody>
     </table>
   </div>
@@ -373,86 +760,45 @@
   orange, because proximity mode flashes that hand symbol for an unrelated warning and a parallel
   countdown would read it as a clearance interval.</p>
 
-  <h2>Cutting the combs</h2>
+  <h2>The 5 V side</h2>
 
   <figure>
-    <svg viewBox="0 0 820 260" role="img" aria-label="A full eight-position comb ties every screw on a strip into one node. Cutting the same comb into two four-position pieces makes one strip carry two separate buses, used here for the five volt and ground rails.">
+    <svg viewBox="0 0 820 96" role="img" aria-label="The five volt block feeds the breadboard power rails, which feed the ESP32 and both relay boards. All three share one ground.">
       <defs>
         <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
           <polygon points="0,1 10,5 0,9" fill="currentColor"/>
         </marker>
       </defs>
 
-      <text x="20" y="24" font-size="12" font-weight="700" fill="currentColor">FULL 8 COMB -> one bus</text>
-      <rect x="20" y="36" width="360" height="56" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.4"/>
-      <g fill="var(--accent)">
-        <rect x="34" y="46" width="20" height="16" rx="2"/><rect x="78" y="46" width="20" height="16" rx="2"/>
-        <rect x="122" y="46" width="20" height="16" rx="2"/><rect x="166" y="46" width="20" height="16" rx="2"/>
-        <rect x="210" y="46" width="20" height="16" rx="2"/><rect x="254" y="46" width="20" height="16" rx="2"/>
-        <rect x="298" y="46" width="20" height="16" rx="2"/><rect x="342" y="46" width="20" height="16" rx="2"/>
-        <rect x="34" y="52" width="328" height="5"/>
-      </g>
-      <g fill="none" stroke="var(--line)" stroke-width="1">
-        <rect x="34" y="70" width="20" height="14" rx="2"/><rect x="78" y="70" width="20" height="14" rx="2"/>
-        <rect x="122" y="70" width="20" height="14" rx="2"/><rect x="166" y="70" width="20" height="14" rx="2"/>
-        <rect x="210" y="70" width="20" height="14" rx="2"/><rect x="254" y="70" width="20" height="14" rx="2"/>
-        <rect x="298" y="70" width="20" height="14" rx="2"/><rect x="342" y="70" width="20" height="14" rx="2"/>
-      </g>
-      <text x="20" y="112" font-size="11" fill="var(--muted)">Each position already ties its own two screws, so combing one row</text>
-      <text x="20" y="128" font-size="11" fill="var(--muted)">makes all 16 a single node. This is TB1, TB2 and TB3.</text>
+      <text x="20" y="16" font-size="12" font-weight="700" fill="currentColor">5 V DISTRIBUTION</text>
+      <rect x="20" y="30" width="150" height="46" rx="5" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
+      <text x="95" y="48" text-anchor="middle" font-size="11.5" font-weight="600" fill="currentColor">5 V BLOCK</text>
+      <text x="95" y="64" text-anchor="middle" font-size="10.5" fill="var(--muted)">from TB1 / TB2</text>
 
-      <text x="440" y="24" font-size="12" font-weight="700" fill="currentColor">CUT 4 + 4 -> two buses</text>
-      <rect x="440" y="36" width="360" height="56" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.4"/>
-      <g fill="var(--hot)">
-        <rect x="454" y="46" width="20" height="16" rx="2"/><rect x="498" y="46" width="20" height="16" rx="2"/>
-        <rect x="542" y="46" width="20" height="16" rx="2"/><rect x="586" y="46" width="20" height="16" rx="2"/>
-        <rect x="454" y="52" width="152" height="5"/>
-      </g>
-      <g fill="var(--neu)">
-        <rect x="630" y="46" width="20" height="16" rx="2"/><rect x="674" y="46" width="20" height="16" rx="2"/>
-        <rect x="718" y="46" width="20" height="16" rx="2"/><rect x="762" y="46" width="20" height="16" rx="2"/>
-        <rect x="630" y="52" width="152" height="5"/>
-      </g>
-      <line x1="618" y1="30" x2="618" y2="98" stroke="currentColor" stroke-width="1.4" stroke-dasharray="4 3"/>
-      <text x="618" y="112" text-anchor="middle" font-size="11" font-weight="600" fill="currentColor">cut here</text>
-      <text x="440" y="134" font-size="11" fill="var(--muted)">One strip, two independent rails: +5 V on 1-4, GND on 5-8.</text>
+      <line x1="170" y1="44" x2="228" y2="44" stroke="var(--hot)" stroke-width="2" marker-end="url(#ar2)"/>
+      <line x1="170" y1="62" x2="228" y2="62" stroke="var(--neu)" stroke-width="2" marker-end="url(#ar2)"/>
 
-      <!-- DC side -->
-      <text x="20" y="176" font-size="12" font-weight="700" fill="currentColor">TB5 - 5 V DISTRIBUTION</text>
-      <rect x="20" y="186" width="150" height="46" rx="5" fill="var(--surface-2)" stroke="currentColor" stroke-width="1.2"/>
-      <text x="95" y="204" text-anchor="middle" font-size="11.5" font-weight="600" fill="currentColor">5 V BLOCK</text>
-      <text x="95" y="220" text-anchor="middle" font-size="10.5" fill="var(--muted)">from TB1 / TB2</text>
+      <rect x="232" y="22" width="120" height="62" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+      <text x="292" y="40" text-anchor="middle" font-size="10.5" fill="var(--muted)">breadboard</text>
+      <text x="292" y="58" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--hot)">+5 V rail</text>
+      <text x="292" y="75" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--neu)">GND rail</text>
 
-      <line x1="170" y1="200" x2="228" y2="200" stroke="var(--hot)" stroke-width="2" marker-end="url(#ar2)"/>
-      <line x1="170" y1="218" x2="228" y2="218" stroke="var(--neu)" stroke-width="2" marker-end="url(#ar2)"/>
+      <line x1="352" y1="44" x2="410" y2="44" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar2)"/>
+      <line x1="352" y1="62" x2="410" y2="62" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar2)"/>
 
-      <rect x="232" y="186" width="120" height="46" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
-      <text x="292" y="204" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--hot)">+5 V rail</text>
-      <text x="292" y="221" text-anchor="middle" font-size="11.5" font-weight="600" fill="var(--neu)">GND rail</text>
+      <rect x="414" y="22" width="118" height="30" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+      <text x="473" y="42" text-anchor="middle" font-size="11.5" fill="currentColor">ESP32 5V / GND</text>
+      <rect x="414" y="58" width="118" height="30" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
+      <text x="473" y="78" text-anchor="middle" font-size="11.5" fill="currentColor">SSR 1 &amp; 2 DC+/- </text>
 
-      <line x1="352" y1="200" x2="410" y2="200" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar2)"/>
-      <line x1="352" y1="218" x2="410" y2="218" stroke="currentColor" stroke-width="1.6" marker-end="url(#ar2)"/>
-
-      <rect x="414" y="178" width="118" height="30" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
-      <text x="473" y="198" text-anchor="middle" font-size="11.5" fill="currentColor">ESP32 5V / GND</text>
-      <rect x="414" y="214" width="118" height="30" rx="5" fill="var(--surface)" stroke="currentColor" stroke-width="1.2"/>
-      <text x="473" y="234" text-anchor="middle" font-size="11.5" fill="currentColor">SSR 1 &amp; 2 DC+/- </text>
-
-      <path d="M548 193 L560 193 L560 229 L548 229" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
-      <text x="570" y="206" font-size="11.5" font-weight="600" fill="var(--accent)">grounds must be</text>
-      <text x="570" y="222" font-size="11.5" font-weight="600" fill="var(--accent)">common - or the</text>
-      <text x="570" y="238" font-size="11.5" font-weight="600" fill="var(--accent)">triggers float</text>
+      <path d="M548 37 L560 37 L560 73 L548 73" fill="none" stroke="var(--accent)" stroke-width="1.8"/>
+      <text x="570" y="50" font-size="11.5" font-weight="600" fill="var(--accent)">grounds must be</text>
+      <text x="570" y="66" font-size="11.5" font-weight="600" fill="var(--accent)">common - or the</text>
+      <text x="570" y="82" font-size="11.5" font-weight="600" fill="var(--accent)">triggers float</text>
     </svg>
-    <figcaption>Combs are fork-ended, so they cut cleanly between positions. A full comb makes one bus;
-    a comb cut 4+4 turns a single strip into two rails, which is how TB5 carries both +5 V and
-    ground for the ESP32 and the two relay boards.</figcaption>
+    <figcaption>5 V runs on the breadboard rails, or two jumpers, not on a barrier strip. Keep it
+    physically clear of the three mains strips.</figcaption>
   </figure>
-
-  <p>Any bus that doesn't need all eight positions can share a strip this way - ground only has three
-  or four lands, so it has room to spare. Two things to hold to: keep <strong>mains and DC on separate
-  strips</strong> so a slipped fork can't put 120 V on the logic rail, and give each rail its own
-  comb colour so a half-strip is never ambiguous at a glance. Strips are cheap; use another one rather
-  than crowding two unrelated nodes together.</p>
 
   <div class="note">
     <strong>Power the relay boards from the 5 V block, not the ESP32's regulator.</strong> 160 mA
@@ -465,7 +811,7 @@
   <ul class="checklist">
     <li><span class="box"></span><span><strong>Ring out every pigtail</strong> with the heads unpowered. The ITE colours match these modules, but installer conventions vary and this is the one step firmware can't undo.</span></li>
     <li><span class="box"></span><span><strong>Confirm LOW = ON</strong> on a bare relay channel with a meter. The boards are low-level trigger and the product listing contradicts itself on this.</span></li>
-    <li><span class="box"></span><span><strong>Continuity-check each bus</strong> - every screw on TB1, TB2 and TB3 should read as one node, and no two islands on TB4 should connect.</span></li>
+    <li><span class="box"></span><span><strong>Continuity-check each bus</strong> - every screw on TB1 and TB2 should read as one node, and no two positions on TB3 should connect.</span></li>
     <li><span class="box"></span><span><strong>Fuse the incoming hot</strong> and strain-relieve every conductor entering the housing.</span></li>
     <li><span class="box"></span><span><strong>Fit the clear covers</strong> on the barrier strips. They're open-frame at 120 V without them.</span></li>
   </ul>

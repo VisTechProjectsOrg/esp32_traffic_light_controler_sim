@@ -1,6 +1,6 @@
 # Handoff
 
-State as of 2026-10-02. Everything described is committed and pushed to `dev`.
+State as of 2026-10-09. Committed on `dev`.
 
 ## Read this first
 
@@ -83,9 +83,24 @@ Verified live on the board:
 - Serial shows `Vehicle phase held to 25000ms for the pedestrian movement (configured 5000ms)` - the
   connected-mode floor working on real hardware.
 
-**Nothing downstream of the ESP32 has been tested.** No relays, no signal heads, no mains. The entire
-pedestrian phase, the countdown feed and the proximity rewrite have only ever run against serial
-output and HTTP.
+**Wired and running on mains, 2026-10-09.** All seven relays were confirmed one lamp at a time from
+the serial console, then the normal cycle was left running: vehicle lamps, WALK, flashing hand and
+the countdown, which learned and counted to 0. Pins as wired: red 25, yellow 27, green 26, ped hand
+32, ped walk 33, countdown hand 14, countdown walk 13. `hardware/README.md` has the reasons.
+
+That board is a different one from the bench board above: MAC `EC:C9:FF:E2:F7:B4`, on COM5, in AP
+mode at 192.168.4.1. The proximity rewrite is still untested on hardware - the sensor is compiled
+out, because its UART pins (25/26) now carry relays.
+
+**Serial console** (`src/bench.cpp`, 115200 baud, `help` lists it): toggle or flash any relay by
+name or strip position, `flash` for the clearance interval on both ped heads, `set fdw 5` for the
+pedestrian times, `run` to hand the outputs back to the cycle. It shares its held state with
+`/test_mode` and `/set_output`.
+
+**The partition table changed.** With the pedestrian code in, the image is 1.35 MB (1.38 MB with
+FastLED) and no longer fits the default 1.25 MB app slot. `partitions.csv` gives each app slot
+1.5 MB and SPIFFS 896 KB. A board flashed over USB picks it up; a board still on the old layout
+cannot take these builds over OTA and has to be reflashed by cable once.
 
 ## What was built this session
 
@@ -138,8 +153,8 @@ The settings switch cannot be turned on with nothing attached. This also fixed a
 loop on every sample; it is now only called when bytes are waiting. The bench board reports
 no sensor, so detection of a *connected* sensor is still unverified.
 
-**Written but never run on the board (2026-10-08).** The board was not connected, so these
-compile and nothing more:
+**Written 2026-10-08.** Board identity is verified on hardware (boot line and `id`). The approach
+setting still only compiles - the sensor is off:
 
 - **Approach setting** (`approach_min`, pref `appr_min`, 0.5-5 ft, default 2): how far a
   target must close before it counts as a car. Replaces the `APPROACH_MIN_FT` constant; the
@@ -148,7 +163,7 @@ compile and nothing more:
   answer to `id` on the serial port (project, firmware, SPIFFS, MAC, mode, IP). Ask for it
   before flashing - COM ports move, and another project's ESP has already turned up on one.
 
-SPIFFS is at 0.1.23 in the repo; the board still has 0.1.22. Flash both, then test.
+SPIFFS 0.1.23 is on the garage board.
 
 ## Known broken
 
@@ -161,14 +176,19 @@ fix; history scrubbing does not help once public.
 
 1. **Phone test of AP mode** - the DHCP-hands-out-DNS half, above.
 2. **Rotate the WiFi password** that is in git history.
-3. **Bench-test the wiring** with `tools/signal_test_gui.py` before mains. See `hardware/README.md`.
+3. **Give the TF-Luna new UART pins** in `LidarHelper.h` and turn `DISTANCE_SENSOR_ENABLED` back on.
+   Pick pins with a pull-up available - 34-39 have none, and a floating RX would look like a sensor.
 4. **Validate `/set_config` and `/ped_control` in the firmware.** The UI bounds every field, but
    the handlers store whatever arrives, so a hand-made request can still save a zero delay.
 5. Decouple the subsystems from the websocket; drop the `cycleLights()` call out of `handleRoot()`.
 6. The sensor card has only been driven with injected messages - the sensor is disabled on the
    bench board. Exercise it against the real TF-Luna.
 
-7. **`zone_persistence` is a dead setting.** It is saved, loaded and shown in the dialog, but
+7. **`/img/traffic_lt/all_off_cat.webp` never reaches the board.** The path is 32 characters and SPIFFS
+   stops at 31, so `buildfs` logs an error and skips it. Cat mode has no all-off picture until it is
+   renamed.
+
+8. **`zone_persistence` is a dead setting.** It is saved, loaded and shown in the dialog, but
    `proximity.cpp` never reads it - the median filter replaced it. Left in place on purpose
    for now; either remove the field or wire it back in.
 
@@ -186,7 +206,8 @@ fix; history scrubbing does not help once public.
   interval the instant it began; `updatePedSignal()` takes its own reading now.
 - **Walk may be 0.** The movement then starts at the flashing hand, never passing through
   WALK, so the relay does not click.
-- **GPIO 12 is a strapping pin** - vehicle red was moved to 21 for that reason.
+- **GPIO 12 is a strapping pin** - a relay input on it boot-loops the board and blocks flashing.
+  34 and 35 are input-only. Both cost time on the bench; see `hardware/README.md`.
 - Upload flow is `bump_spiffs_version.py`, then `build_spiffs.py`, then `pio run -t uploadfs`.
   `platformio.ini` points `data_dir` at `data_build/`.
 - **`build_spiffs.py` inlines `style.css` and `script.js` into the staged `index.html`**, so
