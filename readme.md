@@ -33,9 +33,9 @@ Use [VSCode](https://code.visualstudio.com/) **with** [PlatformIO](https://platf
 
 Copy `src/config.example.h` to `src/config.h` (it is ignored by git, since it holds your WiFi credentials), then configure the pinouts and WiFi there:
 ```cpp
-#define LED_red_pin 21
-#define LED_yellow_pin 22
-#define LED_green_pin 23
+#define LED_red_pin 25
+#define LED_yellow_pin 27
+#define LED_green_pin 26
 ```
 
 Configure delays and distance sensor
