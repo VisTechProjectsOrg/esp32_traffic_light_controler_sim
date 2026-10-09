@@ -59,7 +59,6 @@ extern bool ped_chained;
 extern bool ped_fit_lights;
 extern LightState ped_chain_phase;
 extern unsigned long pedPhaseStart;
-extern unsigned long pedBlinkPrevious;
 extern bool pedBlinkState;
 
 // --- proximity (owned by proximity.cpp) ---

@@ -42,7 +42,6 @@ void setPedState(PedState state)
     // FDW starts lit, then chops at 1Hz. The flashing is what tells the
     // countdown module to start counting.
     pedBlinkState = true;
-    pedBlinkPrevious = pedPhaseStart;
     driveBothHeads(false, true);
     break;
 
@@ -107,15 +106,20 @@ void updatePedSignal(unsigned long currentMillis)
     break;
 
   case PED_FDW:
-    if (currentMillis - pedBlinkPrevious >= pedFdwFlashInterval)
+  {
+    // Take the flash from the time since the interval began, not from the last toggle.
+    // A slow pass through loop() then delays one edge instead of every edge after it,
+    // so the hand cannot drift behind the countdown's own clock.
+    bool lit = (elapsed / pedFdwFlashInterval) % 2 == 0;
+    if (lit != pedBlinkState)
     {
-      pedBlinkPrevious = currentMillis;
-      pedBlinkState = !pedBlinkState;
+      pedBlinkState = lit;
       driveBothHeads(false, pedBlinkState);
     }
     if (elapsed >= ped_fdw_duration)
       setPedState(PED_DONT_WALK);
     break;
+  }
 
   case PED_DONT_WALK:
     // Free-running: rest, then recycle. When chained the vehicle cycle starts the
