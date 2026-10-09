@@ -10,6 +10,7 @@
 #include "ped.h"
 #include "proximity.h"
 #include "webserver.h"
+#include "bench.h"
 #include "WiFiManager.h"
 #include <ota_updater.h>
 
@@ -133,35 +134,19 @@ void setup()
   Serial.println("IDENTITY " + identityJson());
 }
 
-// Answer "id" on the serial port with the identity line. Read a character at a time
-// so a half-typed line never holds the loop up.
-static void pollSerialIdentity()
-{
-  static String line;
-  while (Serial.available())
-  {
-    char c = Serial.read();
-    if (c == '\n' || c == '\r')
-    {
-      if (line == "id")
-        Serial.println("IDENTITY " + identityJson());
-      line = "";
-    }
-    else if (line.length() < 8)
-      line += c;
-  }
-}
-
 void loop()
 {
   unsigned long now = millis();
 
-  pollSerialIdentity();
+  pollSerialConsole();
 
   ws.cleanupClients();
 
   if (testMode)
-    return; // the bench GUI owns the outputs
+  {
+    updateTestFlash(now); // the bench GUI or the serial console owns the outputs
+    return;
+  }
 
   // Proximity can borrow the vehicle lamps, but nothing stops a clock. The traffic
   // phase machine and the pedestrian phase both advance every pass regardless; all

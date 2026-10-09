@@ -1,4 +1,5 @@
 #include "webserver.h"
+#include "bench.h"
 #include "signals.h"
 #include "traffic.h"
 #include "ped.h"
@@ -393,22 +394,7 @@ void handleTestMode(AsyncWebServerRequest *request, uint8_t *data, size_t len, s
     return;
   }
 
-  testMode = doc["enabled"].as<bool>();
-  Serial.println("Test mode: " + String(testMode ? "on" : "off"));
-
-  if (testMode)
-  {
-    // everything dark so the operator starts from a known state
-    set_traffic_light(0, 0, 0);
-    set_ped_signal(0, 0);
-    set_countdown_signal(0, 0);
-  }
-  else
-  {
-    previousLightState = OFF;
-    currentLightState = OFF;
-    setPedState(PED_DONT_WALK);
-  }
+  setTestMode(doc["enabled"].as<bool>());
 
   request->send(200, "application/json", "{\"test_mode\":" + String(testMode ? "true" : "false") + "}");
 }
@@ -431,44 +417,16 @@ void handleSetOutput(AsyncWebServerRequest *request, uint8_t *data, size_t len, 
   String output = doc["output"].as<String>();
   bool state = doc["state"].as<bool>();
 
-  // Held outputs, so the GUI can light several channels at once while ringing out wires.
-  static bool red = false, yellow = false, green = false, walk = false, dontWalk = false;
-  static bool cdWalk = false, cdDontWalk = false;
-
-  if (output == "red")
-    red = state;
-  else if (output == "yellow")
-    yellow = state;
-  else if (output == "green")
-    green = state;
-  else if (output == "walk")
-    walk = state;
-  else if (output == "dont_walk")
-    dontWalk = state;
-  else if (output == "cd_walk")
-    cdWalk = state;
-  else if (output == "cd_dont_walk")
-    cdDontWalk = state;
-  else if (output == "all_off")
-    red = yellow = green = walk = dontWalk = cdWalk = cdDontWalk = false;
-  else
+  // Outputs are held, so the GUI can light several channels at once while ringing out wires.
+  if (!setTestOutput(output, state))
   {
     request->send(400, "application/json", "{\"error\": \"Unknown output\"}");
     return;
   }
 
-  set_traffic_light(red, yellow, green);
-  set_ped_signal(walk, dontWalk);
-  set_countdown_signal(cdWalk, cdDontWalk);
-
   JsonDocument out;
-  out["red"] = red;
-  out["yellow"] = yellow;
-  out["green"] = green;
-  out["walk"] = walk;
-  out["dont_walk"] = dontWalk;
-  out["cd_walk"] = cdWalk;
-  out["cd_dont_walk"] = cdDontWalk;
+  for (const char *name : {"red", "yellow", "green", "walk", "dont_walk", "cd_walk", "cd_dont_walk"})
+    out[name] = testOutputHeld(name);
   String body;
   serializeJson(out, body);
   request->send(200, "application/json", body);
