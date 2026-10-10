@@ -84,7 +84,7 @@ function timeWasted() {
 // ---- traffic light ----
 
 const LAMPS = ['red', 'yellow', 'green', 'all_on', 'all_off'];
-const catUrl = (name) => versioned('img/traffic_lt/' + name + '_cat.webp');
+const catUrl = (name) => versioned('img/cat/' + name + '.webp');
 let catFailed = false;
 let catPreloaded = false;
 

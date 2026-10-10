@@ -46,6 +46,9 @@ SCRIPT_RE = re.compile(r'<script src="(?P<file>[\w./-]+\.js)(?:\?v=[^"]*)?"></sc
 MIN_BYTES = 512
 
 
+SPIFFS_MAX_PATH = 31
+
+
 def inline_assets(html, inlined):
     def embed(tag):
         def sub(match):
@@ -99,6 +102,14 @@ def main():
         dest.write_bytes(raw)
         out_total += len(raw)
         rows.append((str(rel), len(raw), len(raw)))
+
+    # SPIFFS stores the whole path in 32 bytes including the terminator. mkspiffs only
+    # logs a longer one and carries on, so the file is silently missing on the board.
+    too_long = sorted("/" + p.relative_to(OUT).as_posix() for p in OUT.rglob("*")
+                      if p.is_file() and len("/" + p.relative_to(OUT).as_posix()) > SPIFFS_MAX_PATH)
+    if too_long:
+        raise SystemExit("path longer than %d characters, SPIFFS would drop it:\n  %s"
+                         % (SPIFFS_MAX_PATH, "\n  ".join(too_long)))
 
     width = max(len(r[0]) for r in rows)
     print("%-*s %10s %10s" % (width, "asset", "raw", "staged"))

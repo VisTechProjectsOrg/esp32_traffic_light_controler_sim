@@ -184,11 +184,7 @@ fix; history scrubbing does not help once public.
 6. The sensor card has only been driven with injected messages - the sensor is disabled on the
    bench board. Exercise it against the real TF-Luna.
 
-7. **`/img/traffic_lt/all_off_cat.webp` never reaches the board.** The path is 32 characters and SPIFFS
-   stops at 31, so `buildfs` logs an error and skips it. Cat mode has no all-off picture until it is
-   renamed.
-
-8. **`zone_persistence` is a dead setting.** It is saved, loaded and shown in the dialog, but
+7. **`zone_persistence` is a dead setting.** It is saved, loaded and shown in the dialog, but
    `proximity.cpp` never reads it - the median filter replaced it. Left in place on purpose
    for now; either remove the field or wire it back in.
 
