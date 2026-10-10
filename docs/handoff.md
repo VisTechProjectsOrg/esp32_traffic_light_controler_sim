@@ -184,8 +184,9 @@ fix; history scrubbing does not help once public.
 6. The sensor card has only been driven with injected messages - the sensor is disabled on the
    bench board. Exercise it against the real TF-Luna.
 
-7. **Fit a fuse on the incoming hot.** The garage build has none: the only fuse in the housing is
-   on the dimmer board, and the dimmer is mounted but not in any circuit.
+7. **Check the main fuse rating.** The incoming hot is fused by the fuse on the dimmer board, which
+   feeds the whole build; the dimming itself is not used. VERIFY the fuse value - the design
+   called for 2 A time-delay, and these boards usually ship with something much larger.
 
 ## Gotchas that will bite
 
