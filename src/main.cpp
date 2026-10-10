@@ -76,8 +76,6 @@ void setup()
     preferences.putFloat("dist_warn", 5.0);
   if (!preferences.isKey("dist_dang"))
     preferences.putFloat("dist_dang", 2.0);
-  if (!preferences.isKey("zone_persist"))
-    preferences.putInt("zone_persist", 3);
 
 #ifdef PED_SIGNAL_ENABLED
   if (!preferences.isKey("ped_walk"))
@@ -99,6 +97,10 @@ void setup()
   LED_delay_yellow = preferences.getULong("delay_yellow", 3000);
   LED_delay_green = preferences.getULong("delay_green", 6000);
 
+  lamp_test_enabled = preferences.getBool("lamp_test", true);
+  if (lamp_test_enabled)
+    runLampTest();
+
 // Distance sensor: if programaticly enabled, load status from preferences
 #ifdef DISTANCE_SENSOR_ENABLED
   distance_sensor_enabled = preferences.getBool("dist_sens_en", false);
@@ -112,7 +114,6 @@ void setup()
   distance_warning = preferences.getFloat("dist_warn", 5.0);
   distance_danger = preferences.getFloat("dist_dang", 2.0);
   approach_min = preferences.getFloat("appr_min", 2.0);
-  zone_persistence = preferences.getInt("zone_persist", 3);
 
 #ifdef PED_SIGNAL_ENABLED
   ped_walk_duration = preferences.getULong("ped_walk", 7000);

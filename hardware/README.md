@@ -269,6 +269,8 @@ output name or its position number to toggle one relay. Header labels are easy t
       proximity-on-ped-head toggle) to the web settings menu. Settable over `/ped_control` today but
       no UI yet.
 - [x] Bench test with the second relay board - all seven channels confirmed on mains, 2026-10-09.
+- [ ] **Fit the main fuse.** As built there is none on the incoming hot. The dimmer board carries
+      one, but the dimmer is mounted and not wired into anything, so it protects nothing.
 - [ ] Give the TF-Luna new UART pins. 25/26 in `LidarHelper.h` now carry relays, so the sensor is
       compiled out until it has somewhere to go.
 - [ ] Decouple the subsystems from the websocket: `signals.cpp`, `ped.cpp`, `traffic.cpp` and

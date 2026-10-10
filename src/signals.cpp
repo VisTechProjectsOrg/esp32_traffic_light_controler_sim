@@ -44,6 +44,28 @@ void setupSignalPins()
 #endif
 }
 
+void runLampTest()
+{
+  const unsigned long step = 500;
+
+  set_traffic_light(1, 0, 0);
+  delay(step);
+  set_traffic_light(0, 1, 0);
+  delay(step);
+  set_traffic_light(0, 0, 1);
+  delay(step);
+  set_traffic_light(0, 0, 0);
+
+#ifdef PED_SIGNAL_ENABLED
+  // The countdown stays dark: it would try to learn a clearance interval from this.
+  set_ped_signal(0, 1);
+  delay(step);
+  set_ped_signal(1, 0);
+  delay(step);
+  set_ped_signal(0, 0);
+#endif
+}
+
 void set_traffic_light(boolean LED_red_state, boolean LED_yellow_state, boolean LED_green_state)
 {
   // output and invert the logic here for relays

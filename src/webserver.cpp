@@ -127,7 +127,7 @@ void handleGetConfig(AsyncWebServerRequest *request)
                         ",\"distance_warning\":" + String(distance_warning) +
                         ",\"distance_danger\":" + String(distance_danger) +
                         ",\"approach_min\":" + String(approach_min) +
-                        ",\"zone_persistence\":" + String(zone_persistence) +
+                        ",\"lamp_test\":" + String(lamp_test_enabled ? "true" : "false") +
                         ",\"distance_sensor_enabled\":" + String(distance_sensor_enabled ? "true" : "false") +
                         ",\"distance_sensor_connected\":" + String(proximitySensorConnected() ? "true" : "false") +
                         ",\"version_firmware\":\"" + String(VERSION_FIRMWARE) + "\"" +
@@ -165,7 +165,6 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     // over the lamps, so it is only accepted when sent and always kept in range.
     if (!doc["approach_min"].isNull())
       approach_min = constrain(doc["approach_min"].as<float>(), 0.5f, 5.0f);
-    zone_persistence = doc["zone_persistence"].as<int>();
     distance_sensor_enabled = doc["distance_sensor_enabled"].as<bool>();
 
     Serial.println("Action: " + action);
@@ -175,7 +174,6 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     Serial.println("distance_max: " + String(distance_max));
     Serial.println("distance_warning: " + String(distance_warning));
     Serial.println("distance_danger: " + String(distance_danger));
-    Serial.println("zone_persistence: " + String(zone_persistence));
     Serial.println("distance_sensor_enabled: " + String(distance_sensor_enabled));
 
     // Convert float to unsigned long for storage in Preferences
@@ -188,7 +186,12 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     preferences.putFloat("dist_warn", distance_warning);
     preferences.putFloat("dist_dang", distance_danger);
     preferences.putFloat("appr_min", approach_min);
-    preferences.putInt("zone_persist", zone_persistence);
+    // Older pages do not send it; leave the stored choice alone then.
+    if (!doc["lamp_test"].isNull())
+    {
+      lamp_test_enabled = doc["lamp_test"].as<bool>();
+      preferences.putBool("lamp_test", lamp_test_enabled);
+    }
     preferences.putBool("dist_sens_en", distance_sensor_enabled);
 
     JsonDocument responseDoc;
@@ -199,7 +202,6 @@ void handleFormConfig(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     responseDoc["distance_max"] = preferences.getFloat("dist_max", -1);
     responseDoc["distance_warning"] = preferences.getFloat("dist_warn", -1);
     responseDoc["distance_danger"] = preferences.getFloat("dist_dang", -1);
-    responseDoc["zone_persistence"] = preferences.getInt("zone_persist", 3);
     responseDoc["distance_sensor_enabled"] = preferences.getBool("dist_sens_en", false);
 
     String message;

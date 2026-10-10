@@ -9,6 +9,10 @@
 
 void setupSignalPins();
 
+// Power-up lamp test: each vehicle lamp, then the hand and the walk, one at a time.
+// Blocks for a couple of seconds, so call it from setup() only.
+void runLampTest();
+
 void set_traffic_light(boolean LED_red_state, boolean LED_yellow_state, boolean LED_green_state);
 
 #ifdef RGB_LED_ENABLED

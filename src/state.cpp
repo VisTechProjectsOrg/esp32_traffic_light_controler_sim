@@ -12,6 +12,7 @@ unsigned long currentDelay = 0;
 unsigned long LED_delay_red = 0;
 unsigned long LED_delay_yellow = 0;
 unsigned long LED_delay_green = 0;
+bool lamp_test_enabled = true; // run each lamp in turn at power-up
 bool lightMode = false;
 bool themeMode = false;
 bool blinkState = false;
@@ -37,7 +38,6 @@ float distance_max = 0;
 float distance_warning = 0;
 float distance_danger = 0;
 float approach_min = 2.0; // feet a target must close before it counts as a car driving in
-int zone_persistence = 3; // consecutive readings required before changing zone
 bool distance_sensor_enabled = false;
 
 bool testMode = false;

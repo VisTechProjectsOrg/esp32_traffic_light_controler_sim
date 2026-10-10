@@ -39,6 +39,7 @@ extern unsigned long currentDelay;
 extern unsigned long LED_delay_red;
 extern unsigned long LED_delay_yellow;
 extern unsigned long LED_delay_green;
+extern bool lamp_test_enabled;
 extern bool lightMode;
 extern bool themeMode;
 extern bool blinkState;
@@ -67,7 +68,6 @@ extern float distance_max;
 extern float distance_warning;
 extern float distance_danger;
 extern float approach_min;
-extern int zone_persistence;
 extern bool distance_sensor_enabled;
 
 // Bench test mode: suspends the automatic cycle so the test GUI can assert

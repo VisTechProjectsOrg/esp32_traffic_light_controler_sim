@@ -375,7 +375,7 @@ $('lightCat').addEventListener('error', () => {
 const dialog = $('settings');
 const form = $('setConfigForm');
 const fieldsets = Array.from(form.querySelectorAll('fieldset'));
-const DISTANCE_IDS = ['distance_danger', 'distance_warning', 'distance_max', 'approach_min', 'zone_persistence'];
+const DISTANCE_IDS = ['distance_danger', 'distance_warning', 'distance_max', 'approach_min'];
 let settingsBusy = false;
 
 // While loading or saving, nothing may dismiss the dialog or edit the form.
@@ -500,6 +500,8 @@ function fillSettings() {
         .forEach((id) => { $(id).value = cfg[id]; });
     $('toggle_distance_sensor_switch').checked = cfg.distance_sensor_enabled;
     toggleDistanceSensorInputs();
+    // Firmware from before the setting always ran without one; it defaults to on.
+    $('lamp_test').checked = cfg.lamp_test !== false;
 
     if (ped) {
         $('ped_walk').value = ped.walk;
@@ -574,12 +576,12 @@ function saveSettings(event) {
         delay_red: num('delay_red'),
         delay_yellow: num('delay_yellow'),
         delay_green: num('delay_green'),
+        lamp_test: $('lamp_test').checked,
         distance_sensor_enabled: sensorOn,
         distance_max: zone('distance_max'),
         distance_warning: zone('distance_warning'),
         distance_danger: zone('distance_danger'),
-        approach_min: zone('approach_min'),
-        zone_persistence: zone('zone_persistence')
+        approach_min: zone('approach_min')
     };
     const pedConfig = ped && {
         action: 'set_config',

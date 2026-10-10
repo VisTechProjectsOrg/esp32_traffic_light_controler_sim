@@ -184,9 +184,8 @@ fix; history scrubbing does not help once public.
 6. The sensor card has only been driven with injected messages - the sensor is disabled on the
    bench board. Exercise it against the real TF-Luna.
 
-7. **`zone_persistence` is a dead setting.** It is saved, loaded and shown in the dialog, but
-   `proximity.cpp` never reads it - the median filter replaced it. Left in place on purpose
-   for now; either remove the field or wire it back in.
+7. **Fit a fuse on the incoming hot.** The garage build has none: the only fuse in the housing is
+   on the dimmer board, and the dimmer is mounted but not in any circuit.
 
 ## Gotchas that will bite
 
