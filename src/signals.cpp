@@ -14,6 +14,8 @@ void setRgbLedColor(bool red, bool yellow, bool green)
     rgbLed[0] = CRGB(255, 180, 0);
   else if (green)
     rgbLed[0] = CRGB(0, 255, 0);
+  else if (testMode)
+    rgbLed[0] = CRGB(0, 0, 255); // dark lamps because the cycle is suspended, not because it is off
   else
     rgbLed[0] = CRGB(0, 0, 0);
   FastLED.show();
