@@ -312,14 +312,14 @@ one cord per module. Both cords use the same pairing:
 
 | Cord wire | Module pigtail | Function | Lands on |
 |---|---|---|---|
-| Black | orange | DON'T WALK / hand | TB3, own position |
-| Green | blue | WALK / man | TB3, own position |
+| Black | orange | DON'T WALK / hand | its own relay screw |
+| Green | blue | WALK / man | its own relay screw |
 | White | white | neutral | TB2 |
 
-| Cord | Module | Black -> channel, TB3 position | Green -> channel, TB3 position |
+| Cord | Module | Black -> GPIO | Green -> GPIO |
 |---|---|---|---|
-| 1 | Hand/man combo | 5 (GPIO 32), position 4 | 6 (GPIO 33), position 5 |
-| 2 | Countdown | 7 (GPIO 14), position 6 | 8 (GPIO 13), position 7 |
+| 1 | Hand/man combo | 32 | 33 |
+| 2 | Countdown | 14 | 13 |
 
 **The green conductor in each cord is a switched 120 V hot, not a ground.** Mark it with blue tape at
 both ends. Label the cords "combo" and "countdown" - the conductors are otherwise identical.
@@ -332,71 +332,50 @@ tracing where they end inside the head.
 
 ![AC path](wiring-ac-path.svg)
 
-One circuit end to end: fused hot into the combed hot bus, out through an SSR channel, across its own
-island on TB3, to the lamp, and back on the commoned neutral.
+One circuit end to end: fused hot into the combed hot bus, out through an SSR channel, straight to
+the lamp, and back on the commoned neutral.
 
 ![5 V side](wiring-buses-dc.svg)
 
-5 V runs on the breadboard rails, or two jumpers, not on a barrier strip. Keep it physically clear of
-the mains strips so a slipped fork cannot put 120 V on the logic rail.
+A USB charger on the mains strips powers the ESP32 over its USB cable. Both relay boards take 5 V
+from the ESP32's 5V pin through the breadboard, never from 3V3, and share its ground.
 
-`wiring.html` in this folder is the same material as a single self-contained page - open it on a phone
-at the bench.
+`wiring.html` in this folder is the same material as a single self-contained page, with each strip
+drawn screw by screw - open it on a phone at the bench.
 
-### Bus strips
+### As built
 
-Three Glarks barrier strips, all on the 120 V side. A dual-row strip ties each position's left and
-right screw internally, so combing one row makes every screw on that strip a single node. A position
-is only common with its neighbour where a comb ties them.
+![Inside the housing](photos/20261009_194551.jpg)
 
-| Strip | Combed | Node | Lands |
-|---|---|---|---|
-| TB1 | yes | Mains hot | fused hot in + 7 SSR channel inputs + 5 V block |
-| TB2 | yes | Neutral | mains neutral + 5 module whites + 5 V block |
-| TB3 | **no** | Switched hots | 7 relay outputs, one position each, out to the lamps |
+Two Glarks barrier strips, both 120 V. A dual-row strip ties each position's left and right screw
+internally, so combing one row makes every screw on that strip a single node.
 
-TB1 takes nine wires on eight positions, so the 5 V block's line shares a screw on the comb side.
-Mains ground has nothing to bond to - both housings are plastic - so it gets no strip: cap it or park
-it on TB3 position 8.
-
-| TB3 position | Lamp | Channel |
+| Strip | Node | Lands |
 |---|---|---|
-| 1 | Vehicle red | 1 |
-| 2 | Vehicle yellow | 2 |
-| 3 | Vehicle green | 3 |
-| 4 | Ped DON'T WALK (combo cord, black) | 5 |
-| 5 | Ped WALK (combo cord, green) | 6 |
-| 6 | Countdown DON'T WALK (countdown cord, black) | 7 |
-| 7 | Countdown WALK (countdown cord, green) | 8 |
-| 8 | spare | - |
+| TB1, left, red comb | Mains hot | fused hot in + one jumper to each relay + USB charger |
+| TB2, right, black comb | Neutral | mains neutral + every lamp white + USB charger |
 
-**TB3 is the strip you do not comb.** Combing it would tie all seven switched hots together and light
-every lamp at once. Independent islands - relay output on one row, field wire on the other. It
-also gives one place to disconnect any lamp without opening the relay board.
+There is no strip for the switched hots. Each relay has two screws: one takes its jumper from TB1,
+the other takes that lamp's wire directly. Mains ground has nothing to bond to - both housings are
+plastic - and no ground runs to the heads.
 
-SSR channel *outputs* run point to point to their module hot - they do not bus.
+The ESP32 sits on a breadboard under the relay boards and still needs a permanent mount.
 
 ### Order of work
 
-Mains disconnected for steps 1-7.
+Mains disconnected until step 7.
 
-1. Mount the three strips near the SSR boards, keeping them away from the 5 V logic wiring.
-2. Comb TB1 and TB2 full width. **Leave TB3 uncombed.**
-3. **Ring out every pigtail with the heads unpowered.** The ITE colours below match these modules, but
-   installer conventions vary and this is the one step firmware cannot undo. Record what you find.
-4. Land neutrals: five module whites to TB2. Both housings are plastic and the modules have no ground
-   pigtail, so mains ground is capped or parked on TB3 position 8.
-5. Fit the **main fuse** in the incoming hot, then land the fused hot on TB1 and jumper TB1 to each of
-   the 7 SSR channel inputs. 2 A time-delay: worst case is about 0.8 A with every lamp lit and the 5 V
-   block loaded, so that rides out SMPS inrush while still protecting 18 AWG comfortably.
-6. Land the 7 channel outputs on their own TB3 positions, then field wires out to the module hots.
-7. **Charging block**: line and neutral from TB1 and TB2, 5 V output to the breadboard rails, then feed the
-   ESP32 and both relay boards from there. Both boards draw 160 mA each - 320 mA together will brown
-   out the ESP32's regulator, so they must come off the block, not the board. The ESP32 ground and both
-   relay board grounds have to be the same node or the low-level triggers have nothing to pull against.
-8. **Confirm LOW = ON** on a bare channel with a meter before mains. The board is low-level trigger and
-   the product listing contradicts itself on this.
-9. Strain-relieve every conductor entering the housing and fit the clear covers on the strips -
+1. Mount the two strips either side of the relay boards and comb both full width.
+2. **Ring out every pigtail with the heads unpowered.** The ITE colours match these modules, but
+   installer conventions vary and this is the one step firmware cannot undo.
+3. Land every lamp white and the mains neutral on TB2.
+4. Fit the **main fuse** in the incoming hot, then land the fused hot on TB1 and jumper TB1 to one
+   screw of each relay. 2 A time-delay: worst case is about 0.8 A with every lamp lit and the
+   charger loaded, so that rides out SMPS inrush while still protecting 18 AWG comfortably.
+5. Land each lamp wire on the other screw of its own relay.
+6. USB charger: line and neutral from TB1 and TB2. Relay board DC+ and DC- to the ESP32's 5V pin and
+   ground. The grounds have to be the same node or the low-level triggers have nothing to pull against.
+7. Strain-relieve every conductor entering the housing and fit the clear covers on the strips -
    they are open-frame at 120 V without them.
 
 ### Then test before trusting it
@@ -406,6 +385,9 @@ Mains disconnected for steps 1-7.
 - Tick **Test mode** first - it suspends the cycle so it cannot stomp a manual assertion.
 - Assert each channel one at a time and confirm which lamp lights. This is what catches a swapped
   orange/blue before the ped phase ever runs.
+
+The serial console does the same without WiFi: `help` at 115200 baud. That is how this build's pins
+were found - the header labels had been read one pin off, and two relays were on input-only pins.
 - Untick test mode, then use the cycle panel to run WALK -> FDW -> DW.
 
 The countdown stays **blank for its first cycle** - that is the self-learning pass, not a fault.
