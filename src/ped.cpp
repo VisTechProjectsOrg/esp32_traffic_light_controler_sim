@@ -27,8 +27,13 @@ static void driveBothHeads(boolean walk, boolean dont_walk)
   set_countdown_signal(walk, dont_walk);
 }
 
+// Set while the head rests on the steady hand at the top of a chained phase, waiting
+// out ped_start_delay before the movement begins.
+static bool startPending = false;
+
 void setPedState(PedState state)
 {
+  startPending = false;
   currentPedState = state;
   pedPhaseStart = millis();
 
@@ -75,19 +80,26 @@ void startPedPhase(unsigned long availableTime)
   // FDW is the number the countdown learns, so it is never shortened. What gives is
   // the WALK, and when even a minimum WALK will not fit the movement is skipped.
   unsigned long minWalk = ped_fit_lights ? PED_MIN_WALK_MS : ped_walk_duration;
-  if (availableTime < ped_fdw_duration + minWalk)
+  if (availableTime < ped_start_delay + ped_fdw_duration + minWalk)
   {
     Serial.println("Ped phase skipped: vehicle phase (" + String(availableTime) +
-                   "ms) too short for FDW (" + String(ped_fdw_duration) +
-                   "ms) plus a " + String(minWalk) + "ms WALK");
+                   "ms) too short for a " + String(ped_start_delay) + "ms wait, FDW (" +
+                   String(ped_fdw_duration) + "ms) and a " + String(minWalk) + "ms WALK");
     setPedState(PED_DONT_WALK);
     return;
   }
 
   // Rest in WALK: the countdown reaches zero as the vehicle phase ends, so the steady
-  // hand falls on the phase that follows - the yellow, when walking on green.
-  ped_walk_effective = availableTime - ped_fdw_duration;
-  startPedMovement();
+  // hand falls on the phase that follows - the yellow, when walking on green. The wait
+  // comes out of the WALK too, never out of the countdown.
+  ped_walk_effective = availableTime - ped_start_delay - ped_fdw_duration;
+  if (ped_start_delay == 0)
+  {
+    startPedMovement();
+    return;
+  }
+  setPedState(PED_DONT_WALK);
+  startPending = true;
 }
 
 void updatePedSignal(unsigned long currentMillis)
@@ -124,7 +136,12 @@ void updatePedSignal(unsigned long currentMillis)
   case PED_DONT_WALK:
     // Free-running: rest, then recycle. When chained the vehicle cycle starts the
     // next movement instead, so leave the head at rest.
-    if (!ped_chained && elapsed >= ped_dw_duration)
+    if (startPending)
+    {
+      if (elapsed >= ped_start_delay)
+        startPedMovement();
+    }
+    else if (!ped_chained && elapsed >= ped_dw_duration)
       startPedMovement();
     break;
 

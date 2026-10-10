@@ -119,6 +119,7 @@ void setup()
   ped_walk_effective = ped_walk_duration;
   ped_fdw_duration = preferences.getULong("ped_fdw", 15000);
   ped_dw_duration = preferences.getULong("ped_dw", 3000);
+  ped_start_delay = preferences.getULong("ped_delay", 0);
   ped_chained = preferences.getBool("ped_chained", true);
   ped_fit_lights = preferences.getBool("ped_fit", false);
   ped_chain_phase = (LightState)preferences.getInt("ped_chain_ph", RED);

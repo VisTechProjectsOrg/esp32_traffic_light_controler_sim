@@ -156,7 +156,8 @@ static void printHelp()
   Serial.println("  off               everything off");
   Serial.println("  run               leave test mode, back to the normal cycle");
 #ifdef PED_SIGNAL_ENABLED
-  Serial.println("  set walk|fdw|dw <seconds>   pedestrian times, saved (fdw is the countdown)");
+  Serial.println("  set walk|fdw|dw|delay <seconds>   pedestrian times, saved");
+  Serial.println("                    fdw is the countdown, delay the wait after the light changes");
 #endif
   Serial.println("  status, id, help");
   String names = "Outputs:";
@@ -168,37 +169,49 @@ static void printHelp()
 
 #ifdef PED_SIGNAL_ENABLED
 // "set fdw 5": change one pedestrian time and save it, as the settings page would.
+// Bounds match the settings form.
+struct PedTime
+{
+  const char *name;
+  const char *pref;
+  unsigned long *value;
+  long minSeconds, maxSeconds;
+};
+
+static const PedTime pedTimes[] = {
+    {"walk", "ped_walk", &ped_walk_duration, 0, 120},
+    {"fdw", "ped_fdw", &ped_fdw_duration, 3, 99},
+    {"dw", "ped_dw", &ped_dw_duration, 1, 60},
+    {"delay", "ped_delay", &ped_start_delay, 0, (long)PED_MAX_START_DELAY_S},
+};
+
 static void setPedTime(String arg)
 {
   int space = arg.indexOf(' ');
   String which = space < 0 ? arg : arg.substring(0, space);
-  long seconds = space < 0 ? -1 : arg.substring(space + 1).toInt();
+  String number = space < 0 ? "" : arg.substring(space + 1);
+  long seconds = number.toInt();
 
-  // The countdown has two digits, and a zero-length clearance would never flash.
-  long minSeconds = which == "fdw" ? 1 : 0;
-  if ((which != "walk" && which != "fdw" && which != "dw") || seconds < minSeconds || seconds > 99)
+  for (const PedTime &t : pedTimes)
   {
-    Serial.println("Usage: set walk|fdw|dw <seconds>, " + String(minSeconds) + " to 99");
+    if (which != t.name)
+      continue;
+    // toInt() gives 0 for text, so a 0 only counts when it was typed as one.
+    if (number.isEmpty() || (seconds == 0 && number != "0") || seconds < t.minSeconds || seconds > t.maxSeconds)
+    {
+      Serial.println(String(t.name) + " takes " + String(t.minSeconds) + " to " + String(t.maxSeconds) + " seconds");
+      return;
+    }
+    *t.value = seconds * 1000UL;
+    preferences.putULong(t.pref, *t.value);
+    if (which == "walk")
+      ped_walk_effective = ped_walk_duration;
+    Serial.println("Ped times: walk=" + String(ped_walk_duration / 1000) + "s fdw=" +
+                   String(ped_fdw_duration / 1000) + "s dw=" + String(ped_dw_duration / 1000) +
+                   "s delay=" + String(ped_start_delay / 1000) + "s");
     return;
   }
-
-  if (which == "walk")
-  {
-    ped_walk_duration = ped_walk_effective = seconds * 1000UL;
-    preferences.putULong("ped_walk", ped_walk_duration);
-  }
-  else if (which == "fdw")
-  {
-    ped_fdw_duration = seconds * 1000UL;
-    preferences.putULong("ped_fdw", ped_fdw_duration);
-  }
-  else
-  {
-    ped_dw_duration = seconds * 1000UL;
-    preferences.putULong("ped_dw", ped_dw_duration);
-  }
-  Serial.println("Ped times: walk=" + String(ped_walk_duration / 1000) + "s fdw=" +
-                 String(ped_fdw_duration / 1000) + "s dw=" + String(ped_dw_duration / 1000) + "s");
+  Serial.println("Usage: set walk|fdw|dw|delay <seconds>");
 }
 #endif
 

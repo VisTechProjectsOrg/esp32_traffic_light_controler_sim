@@ -469,8 +469,12 @@ void handlePedControl(AsyncWebServerRequest *request, uint8_t *data, size_t len,
     ped_fit_lights = doc["fit"].as<bool>();
     ped_chain_phase = doc["chain_phase"].as<String>() == "green" ? GREEN : RED;
     ped_walk_effective = ped_walk_duration;
+    // Older clients do not send a wait; keep what is stored rather than zeroing it.
+    if (!doc["delay"].isNull())
+      ped_start_delay = min(doc["delay"].as<unsigned long>(), PED_MAX_START_DELAY_S) * 1000;
 
     preferences.putULong("ped_walk", ped_walk_duration);
+    preferences.putULong("ped_delay", ped_start_delay);
     preferences.putULong("ped_fdw", ped_fdw_duration);
     preferences.putULong("ped_dw", ped_dw_duration);
     preferences.putBool("ped_chained", ped_chained);
@@ -487,6 +491,7 @@ void handlePedControl(AsyncWebServerRequest *request, uint8_t *data, size_t len,
   out["walk"] = ped_walk_duration / 1000;
   out["fdw"] = ped_fdw_duration / 1000;
   out["dw"] = ped_dw_duration / 1000;
+  out["delay"] = ped_start_delay / 1000;
   out["phase_total"] = pedPhaseDuration() / 1000;
   out["chained"] = ped_chained;
   out["fit"] = ped_fit_lights;

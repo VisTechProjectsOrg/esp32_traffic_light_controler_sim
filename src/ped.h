@@ -9,7 +9,7 @@ const char *pedStateName(PedState state);
 void setPedState(PedState state);
 
 // Start a ped phase, trimming WALK so the whole thing fits inside the given vehicle
-// phase. FDW is never trimmed - a short clearance interval would teach the countdown
+// phase. The head first rests on the steady hand for ped_start_delay, if one is set. FDW is never trimmed - a short clearance interval would teach the countdown
 // module the wrong number - so if even FDW alone does not fit, the phase is skipped.
 void startPedPhase(unsigned long availableTime);
 
@@ -23,5 +23,8 @@ unsigned long pedPhaseDuration();
 // settings form caps the countdown at the light's length and WALK gets what is left,
 // so the only movement still skipped is one whose light is shorter than the FDW.
 const unsigned long PED_MIN_WALK_MS = 0;
+
+// Longest wait between the light changing and the crossing starting.
+const unsigned long PED_MAX_START_DELAY_S = 30;
 
 #endif

@@ -443,9 +443,11 @@ function updatePhaseTotal(event) {
     show($('pedPhaseField'), mode === 'light');
     show($('pedWalkField'), mode === 'own');
     show($('pedDwField'), mode === 'own');
+    show($('pedDelayField'), mode === 'light');
     // Hidden fields keep the value they loaded with; disabled only so validation skips them.
     $('ped_walk').disabled = mode !== 'own';
     $('ped_dw').disabled = mode !== 'own';
+    $('ped_delay').disabled = mode !== 'light';
     $('pedModeHint').textContent = PED_MODE_HINTS[mode];
     el.classList.remove('held');
     countdown.max = FDW_MAX;
@@ -460,12 +462,14 @@ function updatePhaseTotal(event) {
     }
 
     const which = $('ped_chain_phase').value;
-    const light = num(which === 'green' ? 'delay_green' : 'delay_red');
-    $('pedFdwHint').textContent = 'seconds the hand flashes; at most the ' + which + ' (' + light + 's)';
+    const wait = num('ped_delay');
+    // What the crossing has to fit in: the light, less the wait at the top of it.
+    const light = num(which === 'green' ? 'delay_green' : 'delay_red') - wait;
+    const room = wait ? 'what is left of the ' + which + ' after the wait' : 'the length of the ' + which;
+    $('pedFdwHint').textContent = 'seconds the hand flashes; at most ' + Math.max(light, 0) + 's';
 
     if (light < FDW_MIN) {
-        el.textContent = 'Crossing skipped: the ' + light + 's ' + which +
-            ' is shorter than the shortest countdown (' + FDW_MIN + 's).';
+        el.textContent = 'Crossing skipped: ' + room + ' is shorter than the shortest countdown (' + FDW_MIN + 's).';
         el.classList.add('held');
         return;
     }
@@ -474,19 +478,19 @@ function updatePhaseTotal(event) {
     if (fdw > light) {
         el.classList.add('held');
         if (typed === countdown) {
-            el.textContent = 'The countdown can be at most ' + light + 's, the length of the ' + which + '.';
+            el.textContent = 'The countdown can be at most ' + light + 's, ' + room + '.';
             return;
         }
-        el.textContent = 'Countdown lowered from ' + fdw + 's to ' + light + 's, the length of the ' + which + '.';
+        el.textContent = 'Countdown lowered from ' + fdw + 's to ' + light + 's, ' + room + '.';
         countdown.dataset.before = fdw;
         countdown.value = light;
         countdown.classList.add('auto');
         return;
     }
 
-    el.textContent = 'On ' + which + ': ' +
+    el.textContent = 'On ' + which + ': ' + (wait ? 'wait ' + wait + 's, ' : '') +
         (light > fdw ? 'walk ' + (light - fdw) + 's, countdown ' + fdw + 's.'
-            : 'countdown ' + fdw + 's for the whole light, no walk symbol.') +
+            : 'countdown ' + fdw + 's for the ' + (wait ? 'rest of the' : 'whole') + ' light, no walk symbol.') +
         ' Then solid hand until the next ' + which + '.';
 }
 
@@ -501,6 +505,7 @@ function fillSettings() {
         $('ped_walk').value = ped.walk;
         $('ped_fdw').value = ped.fdw;
         $('ped_dw').value = ped.dw;
+        $('ped_delay').value = ped.delay || 0;
         $('ped_mode').value = ped.chained ? 'light' : 'own';
         $('ped_chain_phase').value = ped.chain_phase;
     }
@@ -581,6 +586,7 @@ function saveSettings(event) {
         walk: num('ped_walk'),
         fdw: num('ped_fdw'),
         dw: num('ped_dw'),
+        delay: num('ped_delay'),
         chained: $('ped_mode').value === 'light',
         // the light's timing always wins; the form keeps the countdown inside it
         fit: true,
@@ -613,7 +619,7 @@ $('cancelSettings').addEventListener('click', closeSettings);
 form.addEventListener('submit', saveSettings);
 $('toggle_distance_sensor_switch').addEventListener('change', toggleDistanceSensorInputs);
 
-['ped_walk', 'ped_fdw', 'ped_dw', 'ped_mode', 'ped_chain_phase', 'delay_red', 'delay_green']
+['ped_walk', 'ped_fdw', 'ped_dw', 'ped_delay', 'ped_mode', 'ped_chain_phase', 'delay_red', 'delay_green']
     .forEach((id) => {
         $(id).addEventListener('input', updatePhaseTotal);
         $(id).addEventListener('change', updatePhaseTotal);

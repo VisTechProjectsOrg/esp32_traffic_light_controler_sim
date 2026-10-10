@@ -201,7 +201,7 @@ void cycleLights()
         // means the ped phase never gets served at all. The steady hand is not part of
         // the floor: it runs under the next phase. In fit mode the light timings win
         // instead, and startPedPhase skips a movement that does not fit.
-        unsigned long needed = ped_walk_duration + ped_fdw_duration;
+        unsigned long needed = ped_start_delay + ped_walk_duration + ped_fdw_duration;
         if (!ped_fit_lights && currentDelay < needed)
         {
           Serial.println("Vehicle phase held to " + String(needed) +
