@@ -203,6 +203,9 @@ fix; history scrubbing does not help once public.
   WALK, so the relay does not click.
 - **GPIO 12 is a strapping pin** - a relay input on it boot-loops the board and blocks flashing.
   34 and 35 are input-only. Both cost time on the bench; see `hardware/README.md`.
+- **`python tools/dev_server.py` serves `data/` with a simulated board** - cycle, pedestrian phase,
+  settings and the websocket - so the page can be worked on with no ESP32. Saving a file under
+  `data/` reloads open pages through the same path a real SPIFFS update takes.
 - Upload flow is `bump_spiffs_version.py`, then `build_spiffs.py`, then `pio run -t uploadfs`.
   `platformio.ini` points `data_dir` at `data_build/`.
 - **`build_spiffs.py` inlines `style.css` and `script.js` into the staged `index.html`**, so
